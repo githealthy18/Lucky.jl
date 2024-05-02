@@ -51,10 +51,20 @@ Base.show(io::IO, volume::Volume{T}) where {T<:Dates.AbstractTime} = show(io, "V
 Units.TimestampType(::Type{Volume{T}}) where {T} = T
 Units.TimestampType(v::Volume{T}) where {T} = T
 
+struct Bar{T<:Dates.AbstractTime}
+    ohlc::Ohlc{T}
+    volume::Volume{T}
+end
+
+Base.show(io::IO, bar::Bar{T}) where {T<:Dates.AbstractTime} = show(io, "Bar @ $(bar.ohlc.timestamp): $(bar.ohlc) $(bar.volume)")
+Units.TimestampType(::Type{Bar{T}}) where {T} = T
+Units.TimestampType(b::Bar{T}) where {T} = T
+
 # Operators
 import Base: +, -, *, /, convert, isless
 +(x::I, y::I) where {I<:Ohlc} = I(x.open, max(x.high, y.high), min(x.low, y.low), y.close, max(x.timestamp, y.timestamp))
 +(x::I, y::N) where {I<:Volume,N<:Number} = I(x.volume + y, x.timestamp)
++(x::I, y::N) where {I<:Ohlc, N<:Volume} = Bar(x, y)
 #-(x::I, y::I) where {I<:Ohlc} = I(x.ohlc - y.ohlc)
 *(x::I, y::N) where {I<:Ohlc,N<:Number} = I(x.open * y, x.high * y, x.low * y, x.close * y, x.timestamp)
 *(x::I, y::N) where {I<:Volume,N<:Number} = I(x.volume * y, x.timestamp)
@@ -69,5 +79,6 @@ isless(x::I, y::I) where {I<:Volume} = isless(x.volume, y.volume)
 # Rocket stuffs
 Rocket.scalarness(::Type{<:Ohlc{T}}) where {T} = Rocket.Scalar()
 Rocket.scalarness(::Type{<:Volume{T}}) where {T} = Rocket.Scalar()
+Rocket.scalarness(::Type{<:Bar{T}}) where {T} = Rocket.Scalar()
 
 end

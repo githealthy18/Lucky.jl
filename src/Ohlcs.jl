@@ -42,6 +42,15 @@ end
     return nothing
 end
 
+struct Volume{T<:Dates.AbstractTime}
+    volume::Float64
+    timestamp::T
+end
+
+Base.show(io::IO, volume::Volume{T}) where {T<:Dates.AbstractTime} = show(io, "Volume @ $(volume.timestamp): $(volume.volume)")
+Units.TimestampType(::Type{Volume{T}}) where {T} = T
+Units.TimestampType(v::Volume{T}) where {T} = T
+
 # Operators
 import Base: +, -, *, /, convert, isless
 +(x::I, y::I) where {I<:Ohlc} = I(x.open, max(x.high, y.high), min(x.low, y.low), y.close, max(x.timestamp, y.timestamp))

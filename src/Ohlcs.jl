@@ -16,10 +16,10 @@ struct Ohlc{T<:Dates.AbstractTime}
     high::Float64
     low::Float64
     close::Float64
-    timestamp::T
+    time::T
 end
 
-Base.show(io::IO, ohlc::Ohlc{T}) where {T<:Dates.AbstractTime} = show(io, "Ohlc @ $(ohlc.timestamp): O:$(ohlc.open) H:$(ohlc.high) L:$(ohlc.low) C:$(ohlc.close)")
+Base.show(io::IO, ohlc::Ohlc{T}) where {T<:Dates.AbstractTime} = show(io, "Ohlc @ $(ohlc.time): O:$(ohlc.open) H:$(ohlc.high) L:$(ohlc.low) C:$(ohlc.close)")
 
 Units.TimestampType(::Type{Ohlc{T}}) where {T} = T
 Units.TimestampType(o::Ohlc{T}) where {T} = T
@@ -44,10 +44,10 @@ end
 
 struct Volume{T<:Dates.AbstractTime}
     volume::Float64
-    timestamp::T
+    time::T
 end
 
-Base.show(io::IO, volume::Volume{T}) where {T<:Dates.AbstractTime} = show(io, "Volume @ $(volume.timestamp): $(volume.volume)")
+Base.show(io::IO, volume::Volume{T}) where {T<:Dates.AbstractTime} = show(io, "Volume @ $(volume.time): $(volume.volume)")
 Units.TimestampType(::Type{Volume{T}}) where {T} = T
 Units.TimestampType(v::Volume{T}) where {T} = T
 
@@ -56,20 +56,28 @@ struct Bar{T<:Dates.AbstractTime}
     volume::Volume{T}
 end
 
-Base.show(io::IO, bar::Bar{T}) where {T<:Dates.AbstractTime} = show(io, "Bar @ $(bar.ohlc.timestamp): $(bar.ohlc) $(bar.volume)")
+Base.show(io::IO, bar::Bar{T}) where {T<:Dates.AbstractTime} = show(io, "Bar @ $(bar.ohlc.time): $(bar.ohlc) $(bar.volume)")
 Units.TimestampType(::Type{Bar{T}}) where {T} = T
 Units.TimestampType(b::Bar{T}) where {T} = T
 
+struct HistoricalData{T<:Dates.AbstractTime}
+    bar::DataFrame
+    time::T
+end
+
 # Operators
-import Base: +, -, *, /, convert, isless
-+(x::I, y::I) where {I<:Ohlc} = I(x.open, max(x.high, y.high), min(x.low, y.low), y.close, max(x.timestamp, y.timestamp))
-+(x::I, y::N) where {I<:Volume,N<:Number} = I(x.volume + y, x.timestamp)
+import Base: +, -, *, /, convert, isless, push!
++(x::I, y::I) where {I<:Ohlc} = I(x.open, max(x.high, y.high), min(x.low, y.low), y.close, max(x.time, y.time))
++(x::I, y::N) where {I<:Volume,N<:Number} = I(x.volume + y, x.time)
 +(x::I, y::N) where {I<:Ohlc, N<:Volume} = Bar(x, y)
+push!(x::I, y::N) where {I<:Ohlc, N<:Volume}  = Bar(x, y)
+push!(x::I, y::N) where {I<:Volume, N<:Ohlc}  = Bar(y, x)
+push!(x::I, y::N) where {I<:HistoricalData, N<:Bar}  = HistoricalData(vcat(x.bar, DataFrame(y)), y.time)
 #-(x::I, y::I) where {I<:Ohlc} = I(x.ohlc - y.ohlc)
-*(x::I, y::N) where {I<:Ohlc,N<:Number} = I(x.open * y, x.high * y, x.low * y, x.close * y, x.timestamp)
-*(x::I, y::N) where {I<:Volume,N<:Number} = I(x.volume * y, x.timestamp)
-/(x::I, y::N) where {I<:Ohlc,N<:Number} = I(x.open / y, x.high / y, x.low / y, x.close / y, x.timestamp)
-/(x::I, y::N) where {I<:Volume,N<:Number} = I(x.volume / y, x.timestamp)
+*(x::I, y::N) where {I<:Ohlc,N<:Number} = I(x.open * y, x.high * y, x.low * y, x.close * y, x.time)
+*(x::I, y::N) where {I<:Volume,N<:Number} = I(x.volume * y, x.time)
+/(x::I, y::N) where {I<:Ohlc,N<:Number} = I(x.open / y, x.high / y, x.low / y, x.close / y, x.time)
+/(x::I, y::N) where {I<:Volume,N<:Number} = I(x.volume / y, x.time)
 # Convert on close
 convert(T::Type{<:Number}, x::Ohlc) = convert(T, x.close)
 isless(x::I, y::I) where {I<:Ohlc} = isless(x.close, y.close)

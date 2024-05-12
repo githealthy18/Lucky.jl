@@ -4,6 +4,22 @@ using Lucky
 
 using InteractiveBrokers
 using Rocket
+using DataFrames
+
+orderId = 1
+
+nextValidId = nothing
+
+available_ids = Vector{Int}()
+
+function validId()
+  function increment()
+    global orderId += 1
+    return orderId
+  end
+  return increment
+end
+
 
 struct InteractiveBrokersObservable <: Subscribable{Nothing}
     events::Vector{Symbol}
@@ -36,22 +52,91 @@ end
 Rocket.as_teardown(::Type{<:InteractiveBrokersObservableSubscription}) = UnsubscribableTeardownLogic()
 
 function Rocket.on_unsubscribe!(subscription::InteractiveBrokersObservableSubscription)
-    disconnect(subscription.connection)
+    InteractiveBrokers.disconnect(subscription.connection)
 end
 
-function Lucky.service(::Val{:interactivebrokers}; host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
+function Lucky.service(::Val{:interactivebrokers}, host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
     obs = InteractiveBrokersObservable(host, port, clientId, connectOptions, optionalCapabilities)
     refCounts[obs] = obs |> share()
-    return obs
+    return refCounts[obs]
 end
 
+abstract type AbstractMsg end
+
+abstract type IBBaseMsg <: AbstractMsg end
+
+struct TickPriceMsg <: IBBaseMsg
+    tickerId::Int
+    field::String
+    price::Union{Float64,Nothing}
+    size::Union{Float64,Nothing}
+    attrib::InteractiveBrokers.TickAttrib
+end
+
+struct TickSizeMsg <: IBBaseMsg
+    tickerId::Int
+    field::String
+    size::Union{Float64,Nothing}
+end
+
+struct TickOptionMsg <: IBBaseMsg
+    tickerId::Int
+    tickType::String
+    tickAttrib::Int
+    impliedVol::Union{Float64,Nothing}
+    delta::Union{Float64,Nothing}
+    optPrice::Union{Float64,Nothing}
+    pvDividend::Union{Float64,Nothing}
+    gamma::Union{Float64,Nothing}
+    vega::Union{Float64,Nothing}
+    theta::Union{Float64,Nothing}
+    undPrice::Union{Float64,Nothing}
+end
+
+struct HistoricalDataMsg <: IBBaseMsg
+    tickerId::Int
+    dataframe::DataFrame
+end
+  
+struct SecDefOptParamsMsg <: IBBaseMsg
+    reqId::Int
+    exchange::String
+    underlyingConId::Int
+    tradingClass::String
+    multiplier::String
+    expirations::Vector{String}
+    strikes::Vector{Float64}
+end
+  
+struct ErrorMsg <: IBBaseMsg
+    id::Union{Int,Nothing}
+    errorCode::Union{Int,Nothing}
+    errorString::String
+    advancedOrderRejectJson::String
+end
+  
+struct AccountSummaryMsg <: IBBaseMsg
+    id::Int
+    account::String
+    tag::String
+    value::String
+    currency::String
+end
+
+struct OrderIdMsg <: IBBaseMsg
+    id::Int
+end
+
+
 defaultMapper = Dict{Symbol,Pair{Function,Type}}()
-defaultMapper[:tickPrice] = (x -> TickPriceMsg(x.tickerId, x.field, x.price, x.size, x.attrib), TickPriceMsg)
-defaultMapper[:tickSize] = (x -> TickSizeMsg(x.tickerId, x.field, x.size), TickSizeMsg)
-defaultMapper[:tickOptionComputation] = (x -> TickOptionMsg(x.tickerId, x.tickType, x.tickAttrib, x.impliedVol, x.delta, x.optPrice, x.pvDividend, x.gamma, x.vega, x.theta, x.undPrice), TickOptionMsg)
-defaultMapper[:historicalData] = (x -> HistoricalDataMsg(x.tickerId, x.dataframe), HistoricalDataMsg)
-defaultMapper[:securityDefinitionOptionParameter] = (x -> SecDefOptParamsMsg(x.reqId, x.exchange, x.underlyingConId, x.tradingClass, x.multiplier, x.expirations, x.strikes), SecDefOptParamsMsg)
-defaultMapper[:error] = (x -> ErrorMsg(x.id, x.errorCode, x.errorString, x.advancedOrderRejectJson), ErrorMsg)
+defaultMapper[:tickPrice] = Pair(x -> TickPriceMsg(x...), TickPriceMsg)
+defaultMapper[:tickSize] = Pair(x -> TickSizeMsg(x...), TickSizeMsg)
+defaultMapper[:tickOptionComputation] = Pair(x -> TickOptionMsg(x...), TickOptionMsg)
+defaultMapper[:historicalData] = Pair(x -> HistoricalDataMsg(x...), HistoricalDataMsg)
+defaultMapper[:securityDefinitionOptionalParameter,] = Pair(x -> SecDefOptParamsMsg(x...), SecDefOptParamsMsg)
+defaultMapper[:error] = Pair(x -> ErrorMsg(x...), ErrorMsg)
+defaultMapper[:nextValidId] = Pair(x -> OrderIdMsg(x...), OrderIdMsg)
+defaultMapper[:accountSummary] = Pair(x -> AccountSummaryMsg(x...), AccountSummaryMsg)
 refCounts = Dict{InteractiveBrokersObservable, Rocket.Subscribable}()
 
 function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, applyFunction::Function, outputType::Type)
@@ -65,32 +150,21 @@ function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, applyFu
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol)
-    haskey(defaultMapper, event) && return feed(client, event, defaultMapper[event][1], defaultMapper[event][2])
+    haskey(defaultMapper, event) && return Lucky.feed(client, event, defaultMapper[event][1], defaultMapper[event][2])
     return faulted("No default mapping function for $(event). Provide one or contribute a default implementation.")
 end
 
 function wrapper(client::InteractiveBrokersObservable)
     wrap = InteractiveBrokers.Wrapper()
-    for idx in client.events
+    for (idx, _) in enumerate(client.events)
         setproperty!(wrap, client.events[idx], x -> next!(targets[idx], applys[idx](x)))
     end
     return wrap
 end
 
-# import Lucky: QuoteType, AbstractQuote, Quote
+import Lucky: QuoteType, AbstractQuote, Quote
 # # import Lucky: IB, IBAccount
 
-# abstract type AbstractMsg end
-
-# abstract type IBBaseMsg <: AbstractMsg end
-
-# struct TickPriceMsg <: IBBaseMsg
-#     tickerId::Int
-#     field::String
-#     price::Union{Float64,Nothing}
-#     size::Union{Float64,Nothing}
-#     attrib::Jib.TickAttrib
-# end
 
 # struct BidQuote <: AbstractQuote
 #     tickerId::Int
@@ -158,11 +232,6 @@ end
 
 # subscribe!(ibPriceQuotes, IBPriceActor())
 
-# struct TickSizeMsg <: IBBaseMsg
-#     tickerId::Int
-#     field::String
-#     size::Union{Float64,Nothing}
-# end
 
 # struct BidSize <: AbstractQuote
 #     tickerId::Int
@@ -208,52 +277,6 @@ end
 # ibSizeQuotes = Subject(TickSizeMsg)
 
 # subscribe!(ibSizeQuotes, IBSizeActor())
-
-# struct TickOptionMsg <: IBBaseMsg
-#     tickerId::Int
-#     tickType::String
-#     tickAttrib::Int
-#     impliedVol::Union{Float64,Nothing}
-#     delta::Union{Float64,Nothing}
-#     optPrice::Union{Float64,Nothing}
-#     pvDividend::Union{Float64,Nothing}
-#     gamma::Union{Float64,Nothing}
-#     vega::Union{Float64,Nothing}
-#     theta::Union{Float64,Nothing}
-#     undPrice::Union{Float64,Nothing}
-# end
-
-# struct HistoricalDataMsg <: IBBaseMsg
-#     tickerId::Int
-#     dataframe::DataFrame
-# end
-  
-# struct SecDefOptParamsMsg <: IBBaseMsg
-#     reqId::Int
-#     exchange::String
-#     underlyingConId::Int
-#     tradingClass::String
-#     multiplier::String
-#     expirations::Vector{String}
-#     strikes::Vector{Float64}
-# end
-
-# secDefOptParams = Subject(SecDefOptParamsMsg)
-  
-# struct ErrorMsg <: IBBaseMsg
-#     id::Union{Int,Nothing}
-#     errorCode::Union{Int,Nothing}
-#     errorString::String
-#     advancedOrderRejectJson::String
-# end
-  
-# struct AccountSummaryMsg <: IBBaseMsg
-#     id::Int
-#     account::String
-#     tag::String
-#     value::String
-#     currency::String
-# end
 
 # mutable struct IBQuoteAggregator{I, R, A} <: Actor{AbstractQuote}
 #     tickerId::Int

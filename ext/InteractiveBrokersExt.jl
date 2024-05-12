@@ -39,7 +39,7 @@ function Rocket.on_unsubscribe!(subscription::InteractiveBrokersObservableSubscr
     disconnect(subscription.connection)
 end
 
-function Lucky.service(::Val{:interactivebrokers}, host=nothing, port::Int=4002, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
+function Lucky.service(::Val{:interactivebrokers}; host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
     obs = InteractiveBrokersObservable(host, port, clientId, connectOptions, optionalCapabilities)
     refCounts[obs] = obs |> share()
     return obs

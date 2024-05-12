@@ -286,7 +286,6 @@ Rocket.on_complete!(actor::IBQuoteAggregator) = begin
         Volume(Dates.now(), actor.volume.volume))
     )
     next!(actor.requestManager, CompleteMsg{actor}())
-
 end
 
 struct RequestManagerChildActorFactory{I, A} <: Rocket.AbstractActorFactory
@@ -298,12 +297,13 @@ __make_request_manager_child_actor_factory(index::Int, main::A) where A = Reques
 Rocket.create_actor(::Type{L}, factory::RequestManagerChildActorFactory{I, A}) where { L, I, A } = IBRequestActor{L, I, A}(factory.main)
 
 
-struct IBRequestManager{I, R, C} <: Actor{Any}
+struct IBRequestManager{R, C} <: Actor{Any}
+    conn::Jib.Connection
     reqId::Int
     completion_status::BitArray{1}
     timeout::Int
-    requests::R
-    cancels::C
+    requests::Vector{R}
+    cancels::Vector{C}
 end
 
 IBRequestManager

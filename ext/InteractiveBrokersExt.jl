@@ -58,7 +58,7 @@ end
 function Lucky.service(::Val{:interactivebrokers}, host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
     obs = InteractiveBrokersObservable(host, port, clientId, connectOptions, optionalCapabilities)
     refCounts[obs] = obs |> share()
-    return refCounts[obs]
+    return obs
 end
 
 abstract type AbstractMsg end
@@ -128,36 +128,36 @@ struct OrderIdMsg <: IBBaseMsg
 end
 
 
-defaultMapper = Dict{Symbol,Pair{Function,Type}}()
+defaultMapper = Dict{Symbol,Type}()
 defaultMapper[:tickPrice] = Pair(x -> TickPriceMsg(x...), TickPriceMsg)
 defaultMapper[:tickSize] = Pair(x -> TickSizeMsg(x...), TickSizeMsg)
 defaultMapper[:tickOptionComputation] = Pair(x -> TickOptionMsg(x...), TickOptionMsg)
 defaultMapper[:historicalData] = Pair(x -> HistoricalDataMsg(x...), HistoricalDataMsg)
 defaultMapper[:securityDefinitionOptionalParameter,] = Pair(x -> SecDefOptParamsMsg(x...), SecDefOptParamsMsg)
-defaultMapper[:error] = Pair(x -> ErrorMsg(x...), ErrorMsg)
-defaultMapper[:nextValidId] = Pair(x -> OrderIdMsg(x...), OrderIdMsg)
-defaultMapper[:accountSummary] = Pair(x -> AccountSummaryMsg(x...), AccountSummaryMsg)
+defaultMapper[:error] = Pair((x...) -> ErrorMsg(x...), ErrorMsg)
+defaultMapper[:nextValidId] = OrderIdMsg
+defaultMapper[:accountSummary] = AccountSummaryMsg
 refCounts = Dict{InteractiveBrokersObservable, Rocket.Subscribable}()
 
-function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, applyFunction::Function, outputType::Type)
+function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, outputType::Type)
     subject = Subject(outputType)
 
     push!(client.events, event)
     push!(client.targets, subject)
-    push!(client.applys, applyFunction)
+    push!(client.applys, outputType)
 
     return subject
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol)
-    haskey(defaultMapper, event) && return Lucky.feed(client, event, defaultMapper[event][1], defaultMapper[event][2])
+    haskey(defaultMapper, event) && return Lucky.feed(client, event, defaultMapper[event])
     return faulted("No default mapping function for $(event). Provide one or contribute a default implementation.")
 end
 
 function wrapper(client::InteractiveBrokersObservable)
     wrap = InteractiveBrokers.Wrapper()
     for (idx, _) in enumerate(client.events)
-        setproperty!(wrap, client.events[idx], x -> next!(targets[idx], applys[idx](x)))
+        setproperty!(wrap, client.events[idx], (x...) -> next!(client.targets[idx], client.applys[idx](x...)))
     end
     return wrap
 end

@@ -15,12 +15,12 @@ export symbol, currency
 
 include("Ohlcs.jl")
 using .Ohlcs
-export Ohlc
+export Ohlc, Bar, Volume, HistoricalData
 
 include("Instruments.jl")
 using .Instruments
 export Instrument, InstrumentType
-export Cash, Stock
+export Cash, Stock, Option
 
 include("Quotes.jl")
 using .Quotes

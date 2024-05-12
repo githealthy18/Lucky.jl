@@ -46,6 +46,12 @@ function Lucky.service(::Val{:interactivebrokers}; host=nothing, port::Int=7497,
 end
 
 defaultMapper = Dict{Symbol,Pair{Function,Type}}()
+defaultMapper[:tickPrice] = (x -> TickPriceMsg(x.tickerId, x.field, x.price, x.size, x.attrib), TickPriceMsg)
+defaultMapper[:tickSize] = (x -> TickSizeMsg(x.tickerId, x.field, x.size), TickSizeMsg)
+defaultMapper[:tickOptionComputation] = (x -> TickOptionMsg(x.tickerId, x.tickType, x.tickAttrib, x.impliedVol, x.delta, x.optPrice, x.pvDividend, x.gamma, x.vega, x.theta, x.undPrice), TickOptionMsg)
+defaultMapper[:historicalData] = (x -> HistoricalDataMsg(x.tickerId, x.dataframe), HistoricalDataMsg)
+defaultMapper[:securityDefinitionOptionParameter] = (x -> SecDefOptParamsMsg(x.reqId, x.exchange, x.underlyingConId, x.tradingClass, x.multiplier, x.expirations, x.strikes), SecDefOptParamsMsg)
+defaultMapper[:error] = (x -> ErrorMsg(x.id, x.errorCode, x.errorString, x.advancedOrderRejectJson), ErrorMsg)
 refCounts = Dict{InteractiveBrokersObservable, Rocket.Subscribable}()
 
 function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, applyFunction::Function, outputType::Type)

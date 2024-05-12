@@ -128,36 +128,36 @@ struct OrderIdMsg <: IBBaseMsg
 end
 
 
-defaultMapper = Dict{Symbol,Type}()
+defaultMapper = Dict{Symbol,Pair{Function,Type}}()
 defaultMapper[:tickPrice] = Pair(x -> TickPriceMsg(x...), TickPriceMsg)
 defaultMapper[:tickSize] = Pair(x -> TickSizeMsg(x...), TickSizeMsg)
 defaultMapper[:tickOptionComputation] = Pair(x -> TickOptionMsg(x...), TickOptionMsg)
 defaultMapper[:historicalData] = Pair(x -> HistoricalDataMsg(x...), HistoricalDataMsg)
 defaultMapper[:securityDefinitionOptionalParameter,] = Pair(x -> SecDefOptParamsMsg(x...), SecDefOptParamsMsg)
 defaultMapper[:error] = Pair((x...) -> ErrorMsg(x...), ErrorMsg)
-defaultMapper[:nextValidId] = OrderIdMsg
-defaultMapper[:accountSummary] = AccountSummaryMsg
+defaultMapper[:nextValidId] = Pair(x -> OrderIdMsg(x...), OrderIdMsg)
+defaultMapper[:accountSummary] = Pair(x -> AccountSummaryMsg(x...), AccountSummaryMsg)
 refCounts = Dict{InteractiveBrokersObservable, Rocket.Subscribable}()
 
-function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, outputType::Type)
+function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, applyFunction::Function, outputType::Type)
     subject = Subject(outputType)
 
     push!(client.events, event)
     push!(client.targets, subject)
-    push!(client.applys, outputType)
+    push!(client.applys, applyFunction)
 
     return subject
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol)
-    haskey(defaultMapper, event) && return Lucky.feed(client, event, defaultMapper[event])
+    haskey(defaultMapper, event) && return Lucky.feed(client, event, defaultMapper[event][1], defaultMapper[event][2])
     return faulted("No default mapping function for $(event). Provide one or contribute a default implementation.")
 end
 
 function wrapper(client::InteractiveBrokersObservable)
     wrap = InteractiveBrokers.Wrapper()
     for (idx, _) in enumerate(client.events)
-        setproperty!(wrap, client.events[idx], (x...) -> next!(client.targets[idx], client.applys[idx](x...)))
+        setproperty!(wrap, client.events[idx], x -> next!(client.targets[idx], client.applys[idx](x)))
     end
     return wrap
 end

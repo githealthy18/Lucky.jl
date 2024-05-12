@@ -10,6 +10,7 @@ import Lucky.Units as Units
 
 using Rocket
 using Dates
+using DataFrames
 
 struct Ohlc{T<:Dates.AbstractTime}
     open::Float64

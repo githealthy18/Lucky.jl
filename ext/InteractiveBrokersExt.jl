@@ -28,7 +28,7 @@ struct InteractiveBrokersObservableSubscription <: Teardown
 end
 
 function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
-    ib = InteractiveBrokers.connect(obs.host, obs.port, obs.clientId, obs.connectOptions, obs.optionalCapabilities)
+    ib = InteractiveBrokers.connect(;host=obs.host, port=obs.port, clientId=obs.clientId, obs.connectOptions, obs.optionalCapabilities)
     InteractiveBrokers.start_reader(ib, wrapper(obs))
     return InteractiveBrokersObservableSubscription(ib)
 end

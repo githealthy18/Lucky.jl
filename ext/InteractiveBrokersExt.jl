@@ -18,7 +18,7 @@ struct InteractiveBrokersObservable <: Subscribable{Nothing}
     connectOptions::String
     optionalCapabilities::String
 
-    function InteractiveBrokersObservable(host=nothing, port::Int=4002, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
+    function InteractiveBrokersObservable(host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
         return new(Vector{Symbol}(), Vector{Rocket.Subject}(), Vector{Function}(), host, port, clientId, connectOptions, optionalCapabilities)
     end
 end
@@ -46,7 +46,7 @@ function Lucky.service(::Val{:interactivebrokers}, host=nothing, port::Int=4002,
 end
 
 defaultMapper = Dict{Symbol,Pair{Function,Type}}()
-refCounts = Dict{InteractiveBrokersObservable, Rocket.Observable}()
+refCounts = Dict{InteractiveBrokersObservable, Rocket.Subscribable}()
 
 function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, applyFunction::Function, outputType::Type)
     subject = Subject(outputType)

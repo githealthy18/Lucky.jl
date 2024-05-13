@@ -207,11 +207,6 @@ openQuotes = Subject(OpenQuote)
 highQuotes = Subject(HighQuote)
 lowQuotes = Subject(LowQuote)
 
-function Rocket.on_subscribe!(subject::Subject, actor::IBQuoteAggregator)
-    actor.subscriptions[eltype(subject)] = subscribe!(subject, actor)
-end
-
-
 mutable struct IBPriceActor <: Actor{TickPriceMsg} end
 
 Rocket.on_next!(actor::IBPriceActor, msg::TickPriceMsg) = begin
@@ -289,6 +284,11 @@ IBQuoteAggregator(tickerId::Int, instrument::I, requestManager::R, next::A) wher
     requestManager,
     next
 )
+
+function Rocket.on_subscribe!(subject::Subject, actor::IBQuoteAggregator)
+    actor.subscriptions[eltype(subject)] = subscribe!(subject, actor)
+end
+
 
 struct CompleteMsg{B} <: AbstractMsg 
     body::B

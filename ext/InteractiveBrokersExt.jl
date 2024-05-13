@@ -6,6 +6,8 @@ using InteractiveBrokers
 using Rocket
 using DataFrames
 
+import Lucky: QuoteType, AbstractQuote, Quote
+
 orderId = 1
 
 nextValidId = nothing
@@ -162,7 +164,6 @@ function wrapper(client::InteractiveBrokersObservable)
     return wrap
 end
 
-import Lucky: QuoteType, AbstractQuote, Quote
 # # import Lucky: IB, IBAccount
 
 

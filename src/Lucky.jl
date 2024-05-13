@@ -46,11 +46,6 @@ using .Indicators
 export AbstractIndicator, IterableIndicator, ValueIndicator, IndicatorType
 export DrawdownIndicator, EMAIndicator, HighWaterMarkIndicator, PeriodicValueIndicator, RollingIndicator, SMAIndicator
 
-include("Managers.jl")
-using .Managers
-export AbstractManager, ManagerType
-export BaseManager
-
 # ==== Rocket Dependant
 
 include("Exchanges.jl")
@@ -77,5 +72,10 @@ using .Feeders
 include("Services.jl")
 using .Services
 # Do not export service (too generic name)
+
+include("Managers.jl")
+using .Managers
+export AbstractManager, ManagerType
+export BaseManager
 
 end # module Lucky

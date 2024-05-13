@@ -3,7 +3,7 @@ module Managers
 export AbstractManager, ManagerType
 export BaseManager
 
-abstract type AbstractManager end
+abstract type AbstractManager <: Actor{Any} end
 
 ManagerType(::M) where {M<:AbstractManager} = M
 

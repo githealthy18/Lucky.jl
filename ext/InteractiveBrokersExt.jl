@@ -129,14 +129,14 @@ end
 
 
 defaultMapper = Dict{Symbol,Pair{Function,Type}}()
-defaultMapper[:tickPrice] = Pair(x -> TickPriceMsg(x...), TickPriceMsg)
-defaultMapper[:tickSize] = Pair(x -> TickSizeMsg(x...), TickSizeMsg)
-defaultMapper[:tickOptionComputation] = Pair(x -> TickOptionMsg(x...), TickOptionMsg)
-defaultMapper[:historicalData] = Pair(x -> HistoricalDataMsg(x...), HistoricalDataMsg)
-defaultMapper[:securityDefinitionOptionalParameter,] = Pair(x -> SecDefOptParamsMsg(x...), SecDefOptParamsMsg)
+defaultMapper[:tickPrice] = Pair((x...) -> TickPriceMsg(x...), TickPriceMsg)
+defaultMapper[:tickSize] = Pair((x...) -> TickSizeMsg(x...), TickSizeMsg)
+defaultMapper[:tickOptionComputation] = Pair((x...) -> TickOptionMsg(x...), TickOptionMsg)
+defaultMapper[:historicalData] = Pair((x...) -> HistoricalDataMsg(x...), HistoricalDataMsg)
+defaultMapper[:securityDefinitionOptionalParameter,] = Pair((x...) -> SecDefOptParamsMsg(x...), SecDefOptParamsMsg)
 defaultMapper[:error] = Pair((x...) -> ErrorMsg(x...), ErrorMsg)
-defaultMapper[:nextValidId] = Pair(x -> OrderIdMsg(x...), OrderIdMsg)
-defaultMapper[:accountSummary] = Pair(x -> AccountSummaryMsg(x...), AccountSummaryMsg)
+defaultMapper[:nextValidId] = Pair((x...) -> OrderIdMsg(x...), OrderIdMsg)
+defaultMapper[:accountSummary] = Pair((x...) -> AccountSummaryMsg(x...), AccountSummaryMsg)
 refCounts = Dict{InteractiveBrokersObservable, Rocket.Subscribable}()
 
 function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, applyFunction::Function, outputType::Type)
@@ -157,7 +157,7 @@ end
 function wrapper(client::InteractiveBrokersObservable)
     wrap = InteractiveBrokers.Wrapper()
     for (idx, _) in enumerate(client.events)
-        setproperty!(wrap, client.events[idx], x -> next!(client.targets[idx], client.applys[idx](x)))
+        setproperty!(wrap, client.events[idx], (x...) -> next!(client.targets[idx], client.applys[idx](x...)))
     end
     return wrap
 end
@@ -166,237 +166,235 @@ import Lucky: QuoteType, AbstractQuote, Quote
 # # import Lucky: IB, IBAccount
 
 
-# struct BidQuote <: AbstractQuote
-#     tickerId::Int
-#     price::Float64
-# end
+struct BidQuote <: AbstractQuote
+    tickerId::Int
+    price::Float64
+end
 
-# struct AskQuote <: AbstractQuote
-#     tickerId::Int
-#     price::Float64
-# end
+struct AskQuote <: AbstractQuote
+    tickerId::Int
+    price::Float64
+end
 
-# struct LastQuote <: AbstractQuote
-#     tickerId::Int
-#     price::Float64
-# end
+struct LastQuote <: AbstractQuote
+    tickerId::Int
+    price::Float64
+end
 
-# struct OpenQuote <: AbstractQuote
-#     tickerId::Int
-#     price::Float64
-# end
+struct OpenQuote <: AbstractQuote
+    tickerId::Int
+    price::Float64
+end
 
-# struct HighQuote <: AbstractQuote
-#     tickerId::Int
-#     price::Float64
-# end
+struct HighQuote <: AbstractQuote
+    tickerId::Int
+    price::Float64
+end
 
-# struct LowQuote <: AbstractQuote
-#     tickerId::Int
-#     price::Float64
-# end
+struct LowQuote <: AbstractQuote
+    tickerId::Int
+    price::Float64
+end
 
-# # Rocket Subjects
+# Rocket Subjects
 
-# ibPriceQuotes = Subject(TickPriceMsg)
+ibPriceQuotes = Subject(TickPriceMsg)
 
-# bidQuotes = Subject(BidQuote)
-# askQuotes = Subject(AskQuote)
-# lastQuotes = Subject(LastQuote)
-# openQuotes = Subject(OpenQuote)
-# highQuotes = Subject(HighQuote)
-# lowQuotes = Subject(LowQuote)
+bidQuotes = Subject(BidQuote)
+askQuotes = Subject(AskQuote)
+lastQuotes = Subject(LastQuote)
+openQuotes = Subject(OpenQuote)
+highQuotes = Subject(HighQuote)
+lowQuotes = Subject(LowQuote)
 
-# function Rocket.on_subscribe!(subject::Subject, actor::IBQuoteAggregator)
-#     actor.subscriptions[eltype(subject)] = subscribe!(subject, actor)
-# end
-
-
-# mutable struct IBPriceActor <: Actor{TickPriceMsg} end
-
-# Rocket.on_next!(actor::IBPriceActor, msg::TickPriceMsg) = begin
-#     if msg.field == "BID"
-#         next!(bidQuotes, BidQuote(msg.tickerId, msg.price))
-#     elseif msg.field == "ASK"
-#         next!(askQuotes, AskQuote(msg.tickerId, msg.price))
-#     elseif msg.field == "LAST"
-#         next!(lastQuotes, LastQuote(msg.tickerId, msg.price))
-#     elseif msg.field == "OPEN"
-#         next!(openQuotes, OpenQuote(msg.tickerId, msg.price))
-#     elseif msg.field == "HIGH"
-#         next!(highQuotes, HighQuote(msg.tickerId, msg.price))
-#     elseif msg.field == "LOW"
-#         next!(lowQuotes, LowQuote(msg.tickerId, msg.price))
-#     end
-# end
-
-# subscribe!(ibPriceQuotes, IBPriceActor())
+function Rocket.on_subscribe!(subject::Subject, actor::IBQuoteAggregator)
+    actor.subscriptions[eltype(subject)] = subscribe!(subject, actor)
+end
 
 
-# struct BidSize <: AbstractQuote
-#     tickerId::Int
-#     size::Float64
-# end
+mutable struct IBPriceActor <: Actor{TickPriceMsg} end
 
-# struct AskSize <: AbstractQuote
-#     tickerId::Int
-#     size::Float64
-# end
+Rocket.on_next!(actor::IBPriceActor, msg::TickPriceMsg) = begin
+    if msg.field == "BID"
+        next!(bidQuotes, BidQuote(msg.tickerId, msg.price))
+    elseif msg.field == "ASK"
+        next!(askQuotes, AskQuote(msg.tickerId, msg.price))
+    elseif msg.field == "LAST"
+        next!(lastQuotes, LastQuote(msg.tickerId, msg.price))
+    elseif msg.field == "OPEN"
+        next!(openQuotes, OpenQuote(msg.tickerId, msg.price))
+    elseif msg.field == "HIGH"
+        next!(highQuotes, HighQuote(msg.tickerId, msg.price))
+    elseif msg.field == "LOW"
+        next!(lowQuotes, LowQuote(msg.tickerId, msg.price))
+    end
+end
 
-# struct LastSize <: AbstractQuote
-#     tickerId::Int
-#     size::Float64
-# end
-
-# struct VolumeQuote <: AbstractQuote
-#     tickerId::Int
-#     volume::Float64
-# end
-
-# # Rocket Subjects
-
-# bidSizes = Subject(BidSize)
-# askSizes = Subject(AskSize)
-# lastSizes = Subject(LastSize)
-# volumeQuotes = Subject(VolumeQuote)
-
-# mutable struct IBSizeActor <: Actor{TickSizeMsg} end
-
-# Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
-#     if msg.field == "BID_SIZE"
-#         next!(bidSizes, BidSize(msg.tickerId, msg.size))
-#     elseif msg.field == "ASK_SIZE"
-#         next!(askSizes, AskSize(msg.tickerId, msg.size))
-#     elseif msg.field == "LAST_SIZE"
-#         next!(lastSizes, LastSize(msg.tickerId, msg.size))
-#     elseif msg.field == "VOLUME"
-#         next!(volumeQuotes, VolumeQuote(msg.tickerId, msg.size))
-#     end
-# end
-
-# ibSizeQuotes = Subject(TickSizeMsg)
-
-# subscribe!(ibSizeQuotes, IBSizeActor())
-
-# mutable struct IBQuoteAggregator{I, R, A} <: Actor{AbstractQuote}
-#     tickerId::Int
-#     instrument::I
-#     subscriptions::Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}
-#     bundle::Dict{Type{<:AbstractQuote}, AbstractQuote}
-#     requestManager::R
-#     next::A
-# end
-
-# IBQuoteAggregator(tickerId::Int, instrument::I, requestManager::R, next::A) where {I, R, A} = IBQuoteAggregator(
-#     tickerId, 
-#     instrument,
-#     Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}(),
-#     Dict{Type{<:AbstractQuote}, AbstractQuote}(),
-#     requestManager,
-#     next
-# )
-
-# struct CompleteMsg{B} <: AbstractMsg 
-#     body::B
-# end
-
-# completedRequests = Subject(CompleteMsg)
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::BidQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.bid = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::AskQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.ask = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::LastQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.last = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::OpenQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.open = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::HighQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.high = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::LowQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.low = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::VolumeQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.volume = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteMsg) = begin
-#     if haskey(actor.subscriptions, typeof(msg.body)) 
-#         unsubscribe!(actor.subscriptions[typeof(msg.body)])
-#         delete!(actor.subscriptions, typeof(msg.body))
-#         if isempty(actor.subscriptions)
-#             complete!(actor)
-#         end
-#     end
-# end
-
-# Rocket.on_complete!(actor::IBQuoteAggregator) = begin
-#     next!(actor.next, Bar{Dates.now()}(
-#         Ohlc(actor.open.price, actor.high.price, actor.low.price, actor.last.price, Dates.now()), 
-#         Volume(Dates.now(), actor.volume.volume))
-#     )
-#     next!(actor.requestManager, CompleteMsg{actor}())
-# end
-
-# struct RequestManagerChildActorFactory{I, A} <: Rocket.AbstractActorFactory
-#     main :: A
-# end
-
-# __make_request_manager_child_actor_factory(index::Int, main::A) where A = RequestManagerChildActorFactory{index, A}(main)
-
-# Rocket.create_actor(::Type{L}, factory::RequestManagerChildActorFactory{I, A}) where { L, I, A } = IBRequestActor{L, I, A}(factory.main)
+subscribe!(ibPriceQuotes, IBPriceActor())
 
 
-# struct IBRequestManager{R, C} <: Actor{Any}
-#     conn::Jib.Connection
-#     reqId::Int
-#     completion_status::BitArray{1}
-#     timeout::Int
-#     requests::Vector{R}
-#     cancels::Vector{C}
-# end
+struct BidSize <: AbstractQuote
+    tickerId::Int
+    size::Float64
+end
 
-# IBRequestManager
+struct AskSize <: AbstractQuote
+    tickerId::Int
+    size::Float64
+end
 
-# struct IBRequestActor{L, I, A} <: Actor{I}
-#     main::A
-# end
+struct LastSize <: AbstractQuote
+    tickerId::Int
+    size::Float64
+end
 
-# struct RegisteredSymbols{A} <: Actor{Any}
-#     symbols::Set{Symbol}
-#     date::Date
-#     next::A
-# end
+struct VolumeQuote <: AbstractQuote
+    tickerId::Int
+    volume::Float64
+end
+
+# Rocket Subjects
+
+bidSizes = Subject(BidSize)
+askSizes = Subject(AskSize)
+lastSizes = Subject(LastSize)
+volumeQuotes = Subject(VolumeQuote)
+
+mutable struct IBSizeActor <: Actor{TickSizeMsg} end
+
+Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
+    if msg.field == "BID_SIZE"
+        next!(bidSizes, BidSize(msg.tickerId, msg.size))
+    elseif msg.field == "ASK_SIZE"
+        next!(askSizes, AskSize(msg.tickerId, msg.size))
+    elseif msg.field == "LAST_SIZE"
+        next!(lastSizes, LastSize(msg.tickerId, msg.size))
+    elseif msg.field == "VOLUME"
+        next!(volumeQuotes, VolumeQuote(msg.tickerId, msg.size))
+    end
+end
+
+ibSizeQuotes = Subject(TickSizeMsg)
+
+subscribe!(ibSizeQuotes, IBSizeActor())
+
+mutable struct IBQuoteAggregator{I, R, A} <: Actor{AbstractQuote}
+    tickerId::Int
+    instrument::I
+    subscriptions::Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}
+    bundle::Dict{Type{<:AbstractQuote}, AbstractQuote}
+    requestManager::R
+    next::A
+end
+
+IBQuoteAggregator(tickerId::Int, instrument::I, requestManager::R, next::A) where {I, R, A} = IBQuoteAggregator(
+    tickerId, 
+    instrument,
+    Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}(),
+    Dict{Type{<:AbstractQuote}, AbstractQuote}(),
+    requestManager,
+    next
+)
+
+struct CompleteMsg{B} <: AbstractMsg 
+    body::B
+end
+
+completedRequests = Subject(CompleteMsg)
+
+Rocket.on_next!(actor::IBQuoteAggregator, quotes::BidQuote) = begin
+    if quotes.tickerId == actor.tickerId
+        actor.bid = quotes
+        next!(actor, CompleteMsg{quotes}())
+    end
+end
+
+Rocket.on_next!(actor::IBQuoteAggregator, quotes::AskQuote) = begin
+    if quotes.tickerId == actor.tickerId
+        actor.ask = quotes
+        next!(actor, CompleteMsg{quotes}())
+    end
+end
+
+Rocket.on_next!(actor::IBQuoteAggregator, quotes::LastQuote) = begin
+    if quotes.tickerId == actor.tickerId
+        actor.last = quotes
+        next!(actor, CompleteMsg{quotes}())
+    end
+end
+
+Rocket.on_next!(actor::IBQuoteAggregator, quotes::OpenQuote) = begin
+    if quotes.tickerId == actor.tickerId
+        actor.open = quotes
+        next!(actor, CompleteMsg{quotes}())
+    end
+end
+
+Rocket.on_next!(actor::IBQuoteAggregator, quotes::HighQuote) = begin
+    if quotes.tickerId == actor.tickerId
+        actor.high = quotes
+        next!(actor, CompleteMsg{quotes}())
+    end
+end
+
+Rocket.on_next!(actor::IBQuoteAggregator, quotes::LowQuote) = begin
+    if quotes.tickerId == actor.tickerId
+        actor.low = quotes
+        next!(actor, CompleteMsg{quotes}())
+    end
+end
+
+Rocket.on_next!(actor::IBQuoteAggregator, quotes::VolumeQuote) = begin
+    if quotes.tickerId == actor.tickerId
+        actor.volume = quotes
+        next!(actor, CompleteMsg{quotes}())
+    end
+end
+
+Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteMsg) = begin
+    if haskey(actor.subscriptions, typeof(msg.body)) 
+        unsubscribe!(actor.subscriptions[typeof(msg.body)])
+        delete!(actor.subscriptions, typeof(msg.body))
+        if isempty(actor.subscriptions)
+            complete!(actor)
+        end
+    end
+end
+
+Rocket.on_complete!(actor::IBQuoteAggregator) = begin
+    next!(actor.next, Bar{Dates.now()}(
+        Ohlc(actor.open.price, actor.high.price, actor.low.price, actor.last.price, Dates.now()), 
+        Volume(Dates.now(), actor.volume.volume))
+    )
+    next!(actor.requestManager, CompleteMsg{actor}())
+end
+
+struct RequestManagerChildActorFactory{I, A} <: Rocket.AbstractActorFactory
+    main :: A
+end
+
+__make_request_manager_child_actor_factory(index::Int, main::A) where A = RequestManagerChildActorFactory{index, A}(main)
+
+Rocket.create_actor(::Type{L}, factory::RequestManagerChildActorFactory{I, A}) where { L, I, A } = IBRequestActor{L, I, A}(factory.main)
+
+
+struct IBRequestManager{R, C} <: Actor{Any}
+    conn::Jib.Connection
+    reqId::Int
+    completion_status::BitArray{1}
+    timeout::Int
+    requests::Vector{R}
+    cancels::Vector{C}
+end
+
+struct IBRequestActor{L, I, A} <: Actor{I}
+    main::A
+end
+
+struct RegisteredSymbols{A} <: Actor{Any}
+    symbols::Set{Symbol}
+    date::Date
+    next::A
+end
 
 end

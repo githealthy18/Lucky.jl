@@ -46,6 +46,11 @@ using .Indicators
 export AbstractIndicator, IterableIndicator, ValueIndicator, IndicatorType
 export DrawdownIndicator, EMAIndicator, HighWaterMarkIndicator, PeriodicValueIndicator, RollingIndicator, SMAIndicator
 
+include("Managers.jl")
+using .Managers
+export AbstractManager, ManagerType
+export BaseManager
+
 # ==== Rocket Dependant
 
 include("Exchanges.jl")

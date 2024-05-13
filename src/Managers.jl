@@ -1,5 +1,7 @@
 module Managers
 
+using Rocket
+
 export AbstractManager, ManagerType
 export BaseManager
 

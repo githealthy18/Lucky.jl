@@ -5,8 +5,9 @@ using Lucky
 using InteractiveBrokers
 using Rocket
 using DataFrames
+using Dates
 
-import Lucky: QuoteType, AbstractQuote, Quote
+import Lucky: QuoteType, AbstractQuote, Quote, AbstractManager
 
 orderId = 1
 
@@ -45,7 +46,7 @@ struct InteractiveBrokersObservableSubscription <: Teardown
     connection::InteractiveBrokers.Connection
 end
 
-function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
+function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor::AbstractManager)
     ib = InteractiveBrokers.connect(;host=obs.host, port=obs.port, clientId=obs.clientId, obs.connectOptions, obs.optionalCapabilities)
     InteractiveBrokers.start_reader(ib, wrapper(obs))
     return InteractiveBrokersObservableSubscription(ib)
@@ -199,8 +200,6 @@ end
 
 # Rocket Subjects
 
-ibPriceQuotes = Subject(TickPriceMsg)
-
 bidQuotes = Subject(BidQuote)
 askQuotes = Subject(AskQuote)
 lastQuotes = Subject(LastQuote)
@@ -230,8 +229,6 @@ Rocket.on_next!(actor::IBPriceActor, msg::TickPriceMsg) = begin
         next!(lowQuotes, LowQuote(msg.tickerId, msg.price))
     end
 end
-
-subscribe!(ibPriceQuotes, IBPriceActor())
 
 
 struct BidSize <: AbstractQuote
@@ -275,10 +272,6 @@ Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
     end
 end
 
-ibSizeQuotes = Subject(TickSizeMsg)
-
-subscribe!(ibSizeQuotes, IBSizeActor())
-
 mutable struct IBQuoteAggregator{I, R, A} <: Actor{AbstractQuote}
     tickerId::Int
     instrument::I
@@ -303,54 +296,54 @@ end
 
 completedRequests = Subject(CompleteMsg)
 
-Rocket.on_next!(actor::IBQuoteAggregator, quotes::BidQuote) = begin
+Rocket.on_next!(actor::IBQuoteAggregator, quotes::AbstractQuote) = begin
     if quotes.tickerId == actor.tickerId
-        actor.bid = quotes
+        actor.bundle[typeof(quotes)] = quotes
         next!(actor, CompleteMsg{quotes}())
     end
 end
 
-Rocket.on_next!(actor::IBQuoteAggregator, quotes::AskQuote) = begin
-    if quotes.tickerId == actor.tickerId
-        actor.ask = quotes
-        next!(actor, CompleteMsg{quotes}())
-    end
-end
+# Rocket.on_next!(actor::IBQuoteAggregator, quotes::AskQuote) = begin
+#     if quotes.tickerId == actor.tickerId
+#         actor.ask = quotes
+#         next!(actor, CompleteMsg{quotes}())
+#     end
+# end
 
-Rocket.on_next!(actor::IBQuoteAggregator, quotes::LastQuote) = begin
-    if quotes.tickerId == actor.tickerId
-        actor.last = quotes
-        next!(actor, CompleteMsg{quotes}())
-    end
-end
+# Rocket.on_next!(actor::IBQuoteAggregator, quotes::LastQuote) = begin
+#     if quotes.tickerId == actor.tickerId
+#         actor.last = quotes
+#         next!(actor, CompleteMsg{quotes}())
+#     end
+# end
 
-Rocket.on_next!(actor::IBQuoteAggregator, quotes::OpenQuote) = begin
-    if quotes.tickerId == actor.tickerId
-        actor.open = quotes
-        next!(actor, CompleteMsg{quotes}())
-    end
-end
+# Rocket.on_next!(actor::IBQuoteAggregator, quotes::OpenQuote) = begin
+#     if quotes.tickerId == actor.tickerId
+#         actor.open = quotes
+#         next!(actor, CompleteMsg{quotes}())
+#     end
+# end
 
-Rocket.on_next!(actor::IBQuoteAggregator, quotes::HighQuote) = begin
-    if quotes.tickerId == actor.tickerId
-        actor.high = quotes
-        next!(actor, CompleteMsg{quotes}())
-    end
-end
+# Rocket.on_next!(actor::IBQuoteAggregator, quotes::HighQuote) = begin
+#     if quotes.tickerId == actor.tickerId
+#         actor.high = quotes
+#         next!(actor, CompleteMsg{quotes}())
+#     end
+# end
 
-Rocket.on_next!(actor::IBQuoteAggregator, quotes::LowQuote) = begin
-    if quotes.tickerId == actor.tickerId
-        actor.low = quotes
-        next!(actor, CompleteMsg{quotes}())
-    end
-end
+# Rocket.on_next!(actor::IBQuoteAggregator, quotes::LowQuote) = begin
+#     if quotes.tickerId == actor.tickerId
+#         actor.low = quotes
+#         next!(actor, CompleteMsg{quotes}())
+#     end
+# end
 
-Rocket.on_next!(actor::IBQuoteAggregator, quotes::VolumeQuote) = begin
-    if quotes.tickerId == actor.tickerId
-        actor.volume = quotes
-        next!(actor, CompleteMsg{quotes}())
-    end
-end
+# Rocket.on_next!(actor::IBQuoteAggregator, quotes::VolumeQuote) = begin
+#     if quotes.tickerId == actor.tickerId
+#         actor.volume = quotes
+#         next!(actor, CompleteMsg{quotes}())
+#     end
+# end
 
 Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteMsg) = begin
     if haskey(actor.subscriptions, typeof(msg.body)) 

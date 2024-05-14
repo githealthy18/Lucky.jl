@@ -271,7 +271,7 @@ mutable struct IBQuoteAggregator{I, R, A} <: Actor{AbstractQuote}
     tickerId::Int
     instrument::I
     subscriptions::Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}
-    bundle::Dict{Type{<:AbstractQuote}, AbstractQuote}
+    bundle::Dict{Type{<:AbstractQuote}, Union{Nothing, AbstractQuote}}
     requestManager::R
     next::A
 end
@@ -373,7 +373,7 @@ Rocket.create_actor(::Type{L}, factory::RequestManagerChildActorFactory{I, A}) w
 
 
 struct IBRequestManager{R, C} <: Actor{Any}
-    conn::Jib.Connection
+    conn::InteractiveBrokers.Connection
     reqId::Int
     completion_status::BitArray{1}
     timeout::Int

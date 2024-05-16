@@ -46,7 +46,7 @@ struct InteractiveBrokersObservableSubscription <: Teardown
     connection::InteractiveBrokers.Connection
 end
 
-function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor::AbstractManager)
+function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
     ib = InteractiveBrokers.connect(;host=obs.host, port=obs.port, clientId=obs.clientId, obs.connectOptions, obs.optionalCapabilities)
     InteractiveBrokers.start_reader(ib, wrapper(obs))
     return InteractiveBrokersObservableSubscription(ib)
@@ -76,11 +76,15 @@ struct TickPriceMsg <: IBBaseMsg
     attrib::InteractiveBrokers.TickAttrib
 end
 
+mutable struct IBPriceActor <: Actor{TickPriceMsg} end
+
 struct TickSizeMsg <: IBBaseMsg
     tickerId::Int
     field::String
     size::Union{Float64,Nothing}
 end
+
+mutable struct IBSizeActor <: Actor{TickSizeMsg} end
 
 struct TickOptionMsg <: IBBaseMsg
     tickerId::Int
@@ -140,10 +144,37 @@ defaultMapper[:securityDefinitionOptionalParameter,] = Pair((x...) -> SecDefOptP
 defaultMapper[:error] = Pair((x...) -> ErrorMsg(x...), ErrorMsg)
 defaultMapper[:nextValidId] = Pair((x...) -> OrderIdMsg(x...), OrderIdMsg)
 defaultMapper[:accountSummary] = Pair((x...) -> AccountSummaryMsg(x...), AccountSummaryMsg)
+
 refCounts = Dict{InteractiveBrokersObservable, Rocket.Subscribable}()
 
 function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, applyFunction::Function, outputType::Type)
     subject = Subject(outputType)
+
+    push!(client.events, event)
+    push!(client.targets, subject)
+    push!(client.applys, applyFunction)
+
+    return subject
+end
+
+function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, applyFunction::Function, outputType::Type{<:TickPriceMsg})
+    subject = Subject(outputType)
+
+    price_actor = IBPriceActor()
+    subscribe!(subject, price_actor)
+
+    push!(client.events, event)
+    push!(client.targets, subject)
+    push!(client.applys, applyFunction)
+
+    return subject
+end
+
+function Lucky.feed(client::InteractiveBrokersObservable, event::Symbol, applyFunction::Function, outputType::Type{<:TickSizeMsg})
+    subject = Subject(outputType)
+
+    size_actor = IBSizeActor()
+    subscribe!(subject, size_actor)
 
     push!(client.events, event)
     push!(client.targets, subject)
@@ -207,8 +238,6 @@ openQuotes = Subject(OpenQuote)
 highQuotes = Subject(HighQuote)
 lowQuotes = Subject(LowQuote)
 
-mutable struct IBPriceActor <: Actor{TickPriceMsg} end
-
 Rocket.on_next!(actor::IBPriceActor, msg::TickPriceMsg) = begin
     if msg.field == "BID"
         next!(bidQuotes, BidQuote(msg.tickerId, msg.price))
@@ -253,8 +282,6 @@ askSizes = Subject(AskSize)
 lastSizes = Subject(LastSize)
 volumeQuotes = Subject(VolumeQuote)
 
-mutable struct IBSizeActor <: Actor{TickSizeMsg} end
-
 Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
     if msg.field == "BID_SIZE"
         next!(bidSizes, BidSize(msg.tickerId, msg.size))
@@ -267,18 +294,16 @@ Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
     end
 end
 
-mutable struct IBQuoteAggregator{I, R, A} <: Actor{AbstractQuote}
+mutable struct IBQuoteAggregator{R, A} <: Actor{AbstractQuote}
     tickerId::Int
-    instrument::I
     subscriptions::Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}
     bundle::Dict{Type{<:AbstractQuote}, Union{Nothing, AbstractQuote}}
     requestManager::R
     next::A
 end
 
-IBQuoteAggregator(tickerId::Int, instrument::I, requestManager::R, next::A) where {I, R, A} = IBQuoteAggregator(
+IBQuoteAggregator(tickerId::Int, requestManager::R, next::A) where {R, A} = IBQuoteAggregator(
     tickerId, 
-    instrument,
     Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}(),
     Dict{Type{<:AbstractQuote}, AbstractQuote}(),
     requestManager,
@@ -372,9 +397,9 @@ __make_request_manager_child_actor_factory(index::Int, main::A) where A = Reques
 Rocket.create_actor(::Type{L}, factory::RequestManagerChildActorFactory{I, A}) where { L, I, A } = IBRequestActor{L, I, A}(factory.main)
 
 
-struct IBRequestManager{R, C} <: Actor{Any}
+mutable struct IBRequestManager{R, C} <: Actor{Any}
     conn::InteractiveBrokers.Connection
-    reqId::Int
+    reqIdMaster::Int
     completion_status::BitArray{1}
     timeout::Int
     requests::Vector{R}

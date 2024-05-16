@@ -294,18 +294,22 @@ Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
     end
 end
 
-mutable struct IBQuoteAggregator{R, A} <: Actor{AbstractQuote}
+mutable struct IBQuoteAggregator{S, R, A} <: Actor{AbstractQuote}
     tickerId::Int
+    queueId::Int
     subscriptions::Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}
     bundle::Dict{Type{<:AbstractQuote}, Union{Nothing, AbstractQuote}}
+    strategy::S
     requestManager::R
     next::A
 end
 
-IBQuoteAggregator(tickerId::Int, requestManager::R, next::A) where {R, A} = IBQuoteAggregator(
+IBQuoteAggregator(tickerId::Int, strategy::S, requestManager::R, next::A) where {S, R, A} = IBQuoteAggregator(
     tickerId, 
+    0,
     Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}(),
     Dict{Type{<:AbstractQuote}, AbstractQuote}(),
+    strategy,
     requestManager,
     next
 )
@@ -315,8 +319,13 @@ function Rocket.on_subscribe!(subject::Subject, actor::IBQuoteAggregator)
 end
 
 
-struct CompleteMsg{B} <: AbstractMsg 
+struct CompleteQuoteMsg{B} <: IBBaseMsg
     body::B
+end
+
+struct CompleteRequestMsg <: IBBaseMsg
+    reqId::Int
+    queueId::Int
 end
 
 completedRequests = Subject(CompleteMsg)
@@ -324,8 +333,13 @@ completedRequests = Subject(CompleteMsg)
 Rocket.on_next!(actor::IBQuoteAggregator, quotes::AbstractQuote) = begin
     if quotes.tickerId == actor.tickerId
         actor.bundle[typeof(quotes)] = quotes
-        next!(actor, CompleteMsg{quotes}())
+        next!(actor, CompleteQuoteMsg{quotes}())
     end
+end
+
+function Rocket.on_next!(actor::IBQuoteAggregator, msg::RegisterResponse) 
+    actor.tickerId = msg.reqId
+    actor.queueId = msg.queueId
 end
 
 # Rocket.on_next!(actor::IBQuoteAggregator, quotes::AskQuote) = begin
@@ -380,12 +394,17 @@ Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteMsg) = begin
     end
 end
 
+function Rocket.on_next!(actor::IBQuoteAggregator, msg::IncompleteDataRequest)
+    unsubscribe!(actor.subscriptions)
+    next!(actor.strategy, false)
+end
+
 Rocket.on_complete!(actor::IBQuoteAggregator) = begin
     next!(actor.next, Bar{Dates.now()}(
         Ohlc(actor.open.price, actor.high.price, actor.low.price, actor.last.price, Dates.now()), 
         Volume(Dates.now(), actor.volume.volume))
     )
-    next!(actor.requestManager, CompleteMsg{actor}())
+    next!(actor.requestManager, CompleteMsg(actor.tickerId, actor.queueId))
 end
 
 struct RequestManagerChildActorFactory{I, A} <: Rocket.AbstractActorFactory
@@ -397,13 +416,57 @@ __make_request_manager_child_actor_factory(index::Int, main::A) where A = Reques
 Rocket.create_actor(::Type{L}, factory::RequestManagerChildActorFactory{I, A}) where { L, I, A } = IBRequestActor{L, I, A}(factory.main)
 
 
-mutable struct IBRequestManager{R, C} <: Actor{Any}
-    conn::InteractiveBrokers.Connection
+mutable struct IBRequestManager <: AbstractManager
+    conn::Union{Nothing, InteractiveBrokers.Connection}
     reqIdMaster::Int
     completion_status::BitArray{1}
+    requests::Vector{Pair{Function, Tuple}}
+    cancels::Vector{Pair{Function, Tuple}}
+end
+
+struct RegisterRequest{A} <: IBBaseMsg
+    request::Pair{Function, Tuple}
+    cancel::Pair{Function, Tuple}
     timeout::Int
-    requests::Vector{R}
-    cancels::Vector{C}
+    actor::A
+end
+
+struct RegisterResponse <: IBBaseMsg
+    reqId::Int
+    queueId::Int
+end
+
+struct IncompleteDataRequest <: IBBaseMsg end
+
+function Rocket.on_next!(manager::IBRequestManager, msg::RegisterRequest)
+    push!(manager.requests, msg.request)
+    push!(manager.cancels, msg.cancel)
+    push!(manager.completion_status, false)
+
+    reqId = manager.reqIdMaster
+    queueId = length(completion_status)
+
+    next!(msg.actor, RegisterResponse(reqId, queueId))
+
+    # Call Request
+    msg.request[1](manager.conn, reqId, msg.request[2]...)
+    manager.reqIdMaster += 1
+    setTimeout(msg.timeout) do 
+        if !manager.completion_status[queueId]
+            msg.cancel[1](manager.conn, reqId)
+            manager.completion_status[queueId] = true
+            next!(msg.actor, IncompleteDataRequest())
+
+            deleteat!(manager.requests, queueId) #TODO: This isn't correct
+            deleteat!(manager.cancels, queueId)
+            deleteat!(manager.completion_status, queueId)
+        end
+    end
+end
+
+function Rocket.on_next!(manager::IBRequestManager, msg::CompletedMsg)
+    manager.completion_status[msg.queueId] = true
+    maanger.cancels[msg.queueId][1](manager.conn, msg.reqId)
 end
 
 struct IBRequestActor{L, I, A} <: Actor{I}

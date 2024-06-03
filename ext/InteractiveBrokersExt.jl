@@ -275,6 +275,32 @@ struct VolumeQuote <: AbstractQuote
     volume::Float64
 end
 
+struct RegisterRequest{A} <: IBBaseMsg
+    request::Pair{Function, Tuple}
+    cancel::Pair{Function, Tuple}
+    timeout::Int
+    actor::A
+end
+
+struct RegisterResponse <: IBBaseMsg
+    reqId::Int
+    queueId::Int
+end
+
+struct BootStrapSystem <: IBBaseMsg end
+
+struct IncompleteDataRequest <: IBBaseMsg end
+
+struct CompleteQuoteMsg{B} <: IBBaseMsg
+    body::B
+end
+
+struct CompleteRequestMsg <: IBBaseMsg
+    reqId::Int
+    queueId::Int
+end
+
+
 # Rocket Subjects
 
 bidSizes = Subject(BidSize)
@@ -319,16 +345,7 @@ function Rocket.on_subscribe!(subject::Subject, actor::IBQuoteAggregator)
 end
 
 
-struct CompleteQuoteMsg{B} <: IBBaseMsg
-    body::B
-end
-
-struct CompleteRequestMsg <: IBBaseMsg
-    reqId::Int
-    queueId::Int
-end
-
-completedRequests = Subject(CompleteMsg)
+completedRequests = Subject(CompleteRequestMsg)
 
 Rocket.on_next!(actor::IBQuoteAggregator, quotes::AbstractQuote) = begin
     if quotes.tickerId == actor.tickerId
@@ -384,7 +401,7 @@ end
 #     end
 # end
 
-Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteMsg) = begin
+Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteQuoteMsg) = begin
     if haskey(actor.subscriptions, typeof(msg.body)) 
         unsubscribe!(actor.subscriptions[typeof(msg.body)])
         delete!(actor.subscriptions, typeof(msg.body))
@@ -400,11 +417,8 @@ function Rocket.on_next!(actor::IBQuoteAggregator, msg::IncompleteDataRequest)
 end
 
 Rocket.on_complete!(actor::IBQuoteAggregator) = begin
-    next!(actor.next, Bar{Dates.now()}(
-        Ohlc(actor.open.price, actor.high.price, actor.low.price, actor.last.price, Dates.now()), 
-        Volume(Dates.now(), actor.volume.volume))
-    )
-    next!(actor.requestManager, CompleteMsg(actor.tickerId, actor.queueId))
+    next!(actor.next, actor.bundle)
+    next!(actor.requestManager, CompleteRequestMsg(actor.tickerId, actor.queueId))
 end
 
 struct RequestManagerChildActorFactory{I, A} <: Rocket.AbstractActorFactory
@@ -423,22 +437,6 @@ mutable struct IBRequestManager <: AbstractManager
     requests::Vector{Pair{Function, Tuple}}
     cancels::Vector{Pair{Function, Tuple}}
 end
-
-struct RegisterRequest{A} <: IBBaseMsg
-    request::Pair{Function, Tuple}
-    cancel::Pair{Function, Tuple}
-    timeout::Int
-    actor::A
-end
-
-struct RegisterResponse <: IBBaseMsg
-    reqId::Int
-    queueId::Int
-end
-
-struct BootStrapSystem <: IBBaseMsg end
-
-struct IncompleteDataRequest <: IBBaseMsg end
 
 function Rocket.on_next!(manager::IBRequestManager, msg::RegisterRequest)
     push!(manager.requests, msg.request)
@@ -462,7 +460,7 @@ function Rocket.on_next!(manager::IBRequestManager, msg::RegisterRequest)
     end
 end
 
-function Rocket.on_next!(manager::IBRequestManager, msg::CompletedMsg)
+function Rocket.on_next!(manager::IBRequestManager, msg::CompleteRequestMsg)
     manager.completion_status[msg.queueId] = true
     maanger.cancels[msg.queueId][1](manager.conn, msg.reqId)
 end

@@ -47,7 +47,7 @@ struct InteractiveBrokersObservableSubscription <: Teardown
 end
 
 function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
-    ib = InteractiveBrokers.connect(;host=obs.host, port=obs.port, clientId=obs.clientId, obs.connectOptions, obs.optionalCapabilities)
+    ib = InteractiveBrokers.connect(;port=obs.port, clientId=obs.clientId, obs.connectOptions, obs.optionalCapabilities)
     InteractiveBrokers.start_reader(ib, wrapper(obs))
     return InteractiveBrokersObservableSubscription(ib)
 end
@@ -276,11 +276,13 @@ struct VolumeQuote <: AbstractQuote
 end
 
 struct RegisterRequest{A} <: IBBaseMsg
-    request::Pair{Function, Tuple}
-    cancel::Pair{Function, Tuple}
+    request::Pair{<:Function, <:Tuple}
+    cancel::Pair{<:Function, <:Tuple}
     timeout::Int
     actor::A
 end
+
+registerRequestSubject = Subject(RegisterRequest)
 
 struct RegisterResponse <: IBBaseMsg
     reqId::Int

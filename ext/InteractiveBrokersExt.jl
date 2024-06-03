@@ -436,6 +436,8 @@ struct RegisterResponse <: IBBaseMsg
     queueId::Int
 end
 
+struct BootStrapSystem <: IBBaseMsg end
+
 struct IncompleteDataRequest <: IBBaseMsg end
 
 function Rocket.on_next!(manager::IBRequestManager, msg::RegisterRequest)
@@ -456,10 +458,6 @@ function Rocket.on_next!(manager::IBRequestManager, msg::RegisterRequest)
             msg.cancel[1](manager.conn, reqId)
             manager.completion_status[queueId] = true
             next!(msg.actor, IncompleteDataRequest())
-
-            deleteat!(manager.requests, queueId) #TODO: This isn't correct
-            deleteat!(manager.cancels, queueId)
-            deleteat!(manager.completion_status, queueId)
         end
     end
 end
@@ -467,6 +465,13 @@ end
 function Rocket.on_next!(manager::IBRequestManager, msg::CompletedMsg)
     manager.completion_status[msg.queueId] = true
     maanger.cancels[msg.queueId][1](manager.conn, msg.reqId)
+end
+
+function Rocket.on_next!(manager::IBRequestManager, msg::BootStrapSystem)
+    empty!(manager.requests)
+    empty!(manager.cancels)
+    empty!(manager.completion_status)
+    manager.reqIdMaster = 1
 end
 
 struct IBRequestActor{L, I, A} <: Actor{I}

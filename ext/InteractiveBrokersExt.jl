@@ -134,6 +134,38 @@ struct OrderIdMsg <: IBBaseMsg
     id::Int
 end
 
+struct RegisterRequest{A} <: IBBaseMsg
+    request::Pair{<:Function, <:Tuple}
+    cancel::Pair{<:Function, <:Tuple}
+    timeout::Int
+    actor::A
+end
+
+registerRequestSubject = Subject(RegisterRequest)
+
+struct RegisterResponse <: IBBaseMsg
+    reqId::Int
+    queueId::Int
+end
+
+struct BootStrapSystem <: IBBaseMsg end
+
+bootStrapSubject = Subject(BootStrapSystem)
+
+struct IncompleteDataRequest <: IBBaseMsg end
+
+struct CompleteQuoteMsg{B} <: IBBaseMsg
+    body::B
+end
+
+struct CompleteRequestMsg <: IBBaseMsg
+    reqId::Int
+    queueId::Int
+end
+
+completedRequests = Subject(CompleteRequestMsg)
+
+
 
 defaultMapper = Dict{Symbol,Pair{Function,Type}}()
 defaultMapper[:tickPrice] = Pair((x...) -> TickPriceMsg(x...), TickPriceMsg)
@@ -195,6 +227,36 @@ function wrapper(client::InteractiveBrokersObservable)
     end
     return wrap
 end
+
+DefaultIBService = Lucky.service(Val{:interactivebrokers})
+
+mutable struct ServiceManager{A} <: AbstractManager
+    service::A
+end
+
+struct ConnectionMsg <: IBBaseMsg
+    conn::InteractiveBrokers.Connection
+end
+
+ConnectionSub = Subject(ConnectionMsg)
+
+function Rocket.on_next!(manager::ServiceManager, msg::BootStrapSystem)
+    subscription = subscribe!(manager.service, logger("ServiceManager"))
+    next!(ConnectionSubject, ConnectionMsg(subscription.connection))
+end
+
+AccountSub = Lucky.feed(DefaultIBService, :accountSummary)
+ErrorSub = Lucky.feed(DefaultIBService, :error)
+NextValidIdSub = Lucky.feed(DefaultIBService, :nextValidId)
+TickPriceSub = Lucky.feed(DefaultIBService, :tickPrice)
+TickSizeSub = Lucky.feed(DefaultIBService, :tickSize)
+TickOptionComputationSub = Lucky.feed(DefaultIBService, :tickOptionComputation)
+HistoricalDataSub = Lucky.feed(DefaultIBService, :historicalData)
+SecurityDefinitionOptionalParameterSub = Lucky.feed(DefaultIBService, :securityDefinitionOptionalParameter)
+
+DefaultIBServiceManager = ServiceManager(DefaultIBService)
+
+subscribe!(bootStrapSubject, DefaultIBServiceManager)
 
 # # import Lucky: IB, IBAccount
 
@@ -275,34 +337,6 @@ struct VolumeQuote <: AbstractQuote
     volume::Float64
 end
 
-struct RegisterRequest{A} <: IBBaseMsg
-    request::Pair{<:Function, <:Tuple}
-    cancel::Pair{<:Function, <:Tuple}
-    timeout::Int
-    actor::A
-end
-
-registerRequestSubject = Subject(RegisterRequest)
-
-struct RegisterResponse <: IBBaseMsg
-    reqId::Int
-    queueId::Int
-end
-
-struct BootStrapSystem <: IBBaseMsg end
-
-struct IncompleteDataRequest <: IBBaseMsg end
-
-struct CompleteQuoteMsg{B} <: IBBaseMsg
-    body::B
-end
-
-struct CompleteRequestMsg <: IBBaseMsg
-    reqId::Int
-    queueId::Int
-end
-
-
 # Rocket Subjects
 
 bidSizes = Subject(BidSize)
@@ -325,8 +359,8 @@ end
 mutable struct IBQuoteAggregator{S, R, A} <: Actor{AbstractQuote}
     tickerId::Int
     queueId::Int
-    subscriptions::Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}
-    bundle::Dict{Type{<:AbstractQuote}, Union{Nothing, AbstractQuote}}
+    subscriptions::Dict{Type{<:AbstractQuote}, <:Rocket.SubjectSubscription}
+    bundle::Dict{Type{<:AbstractQuote}, Union{Nothing, <:AbstractQuote}}
     strategy::S
     requestManager::R
     next::A
@@ -335,8 +369,8 @@ end
 IBQuoteAggregator(tickerId::Int, strategy::S, requestManager::R, next::A) where {S, R, A} = IBQuoteAggregator(
     tickerId, 
     0,
-    Dict{Type{<:AbstractQuote}, Rocket.SubjectSubscription}(),
-    Dict{Type{<:AbstractQuote}, AbstractQuote}(),
+    Dict{Type{<:AbstractQuote}, <:Rocket.SubjectSubscription}(),
+    Dict{Type{<:AbstractQuote}, <:AbstractQuote}(),
     strategy,
     requestManager,
     next
@@ -346,8 +380,6 @@ function Rocket.on_subscribe!(subject::Subject, actor::IBQuoteAggregator)
     actor.subscriptions[eltype(subject)] = subscribe!(subject, actor)
 end
 
-
-completedRequests = Subject(CompleteRequestMsg)
 
 Rocket.on_next!(actor::IBQuoteAggregator, quotes::AbstractQuote) = begin
     if quotes.tickerId == actor.tickerId
@@ -436,8 +468,8 @@ mutable struct IBRequestManager <: AbstractManager
     conn::Union{Nothing, InteractiveBrokers.Connection}
     reqIdMaster::Int
     completion_status::BitArray{1}
-    requests::Vector{Pair{Function, Tuple}}
-    cancels::Vector{Pair{Function, Tuple}}
+    requests::Vector{Pair{<:Function, <:Tuple}}
+    cancels::Vector{Pair{<:Function, <:Tuple}}
 end
 
 function Rocket.on_next!(manager::IBRequestManager, msg::RegisterRequest)
@@ -446,16 +478,15 @@ function Rocket.on_next!(manager::IBRequestManager, msg::RegisterRequest)
     push!(manager.completion_status, false)
 
     reqId = manager.reqIdMaster
-    queueId = length(completion_status)
-
+    queueId = length(manager.completion_status)
     next!(msg.actor, RegisterResponse(reqId, queueId))
 
     # Call Request
-    msg.request[1](manager.conn, reqId, msg.request[2]...)
+    msg.request.first(manager.conn, reqId, msg.request.second...)
     manager.reqIdMaster += 1
     setTimeout(msg.timeout) do 
         if !manager.completion_status[queueId]
-            msg.cancel[1](manager.conn, reqId)
+            msg.cancel.first(manager.conn, reqId)
             manager.completion_status[queueId] = true
             next!(msg.actor, IncompleteDataRequest())
         end
@@ -464,7 +495,7 @@ end
 
 function Rocket.on_next!(manager::IBRequestManager, msg::CompleteRequestMsg)
     manager.completion_status[msg.queueId] = true
-    maanger.cancels[msg.queueId][1](manager.conn, msg.reqId)
+    manager.cancels[msg.queueId].first(manager.conn, msg.reqId)
 end
 
 function Rocket.on_next!(manager::IBRequestManager, msg::BootStrapSystem)
@@ -473,6 +504,16 @@ function Rocket.on_next!(manager::IBRequestManager, msg::BootStrapSystem)
     empty!(manager.completion_status)
     manager.reqIdMaster = 1
 end
+
+function Rocket.on_next!(manager::IBRequestManager, msg::ConnectionMsg)
+    manager.conn = msg.conn
+end
+
+DefaultIBRequestManager = IBRequestManager(nothing, 1, BitArray{1}(), Vector{Pair{<:Function, <:Tuple}}(), Vector{Pair{<:Function, <:Tuple}}())
+subscribe!(registerRequestSubject, DefaultIBRequestManager)
+subscribe!(bootStrapSubject, DefaultIBRequestManager)
+subscribe!(ConnectionSub, DefaultIBRequestManager)
+subscribe!(completedRequests, DefaultIBRequestManager)
 
 struct IBRequestActor{L, I, A} <: Actor{I}
     main::A

@@ -228,10 +228,11 @@ function wrapper(client::InteractiveBrokersObservable)
     return wrap
 end
 
-DefaultIBService = Lucky.service(Val{:interactivebrokers})
+DefaultIBService = Lucky.service(Val(:interactivebrokers))
 
 mutable struct ServiceManager{A} <: AbstractManager
     service::A
+    subscription::Union{Nothing, Rocket.SubjectSubscription}
 end
 
 struct ConnectionMsg <: IBBaseMsg
@@ -242,7 +243,7 @@ ConnectionSub = Subject(ConnectionMsg)
 
 function Rocket.on_next!(manager::ServiceManager, msg::BootStrapSystem)
     subscription = subscribe!(manager.service, logger("ServiceManager"))
-    next!(ConnectionSubject, ConnectionMsg(subscription.connection))
+    next!(ConnectionSub, ConnectionMsg(subscription.connection))
 end
 
 AccountSub = Lucky.feed(DefaultIBService, :accountSummary)
@@ -254,7 +255,7 @@ TickOptionComputationSub = Lucky.feed(DefaultIBService, :tickOptionComputation)
 HistoricalDataSub = Lucky.feed(DefaultIBService, :historicalData)
 SecurityDefinitionOptionalParameterSub = Lucky.feed(DefaultIBService, :securityDefinitionOptionalParameter)
 
-DefaultIBServiceManager = ServiceManager(DefaultIBService)
+DefaultIBServiceManager = ServiceManager(DefaultIBService, nothing)
 
 subscribe!(bootStrapSubject, DefaultIBServiceManager)
 

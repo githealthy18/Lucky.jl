@@ -357,41 +357,41 @@ Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
     end
 end
 
-mutable struct IBQuoteAggregator{S, R, A} <: Actor{AbstractQuote}
-    tickerId::Int
-    queueId::Int
-    subscriptions::Dict{Type{<:AbstractQuote}, <:Rocket.SubjectSubscription}
-    bundle::Dict{Type{<:AbstractQuote}, Union{Nothing, <:AbstractQuote}}
+mutable struct IBQuoteAggregator{S, R, A} <: Actor{Union{RegisterResponse, AbstractQuote, <:CompleteQuoteMsg, IncompleteDataRequest}}
+    tickerId::Union{Nothing, Int}
+    queueId::Union{Nothing, Int}
+    subjects::Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}
+    bundle::Dict{DataType, Union{Nothing, AbstractQuote}}
     strategy::S
     requestManager::R
     next::A
 end
 
-IBQuoteAggregator(tickerId::Int, strategy::S, requestManager::R, next::A) where {S, R, A} = IBQuoteAggregator(
-    tickerId, 
-    0,
-    Dict{Type{<:AbstractQuote}, <:Rocket.SubjectSubscription}(),
-    Dict{Type{<:AbstractQuote}, <:AbstractQuote}(),
+IBQuoteAggregator(subjects::Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}, strategy::S, requestManager::R, next::A) where {S, R, A} = IBQuoteAggregator(
+    nothing, 
+    nothing,
+    subjects,
+    Dict{DataType, Union{Nothing,AbstractQuote}}(),
     strategy,
     requestManager,
     next
 )
 
-function Rocket.on_subscribe!(subject::Subject, actor::IBQuoteAggregator)
-    actor.subscriptions[eltype(subject)] = subscribe!(subject, actor)
-end
-
-
 Rocket.on_next!(actor::IBQuoteAggregator, quotes::AbstractQuote) = begin
     if quotes.tickerId == actor.tickerId
         actor.bundle[typeof(quotes)] = quotes
-        next!(actor, CompleteQuoteMsg{quotes}())
+        next!(actor, CompleteQuoteMsg(quotes))
     end
 end
 
 function Rocket.on_next!(actor::IBQuoteAggregator, msg::RegisterResponse) 
     actor.tickerId = msg.reqId
     actor.queueId = msg.queueId
+
+    for (subject, _) in actor.subjects
+        actor.subjects[subject] = subscribe!(subject, actor)
+        actor.bundle[eltype(subject)] = nothing
+    end
 end
 
 # Rocket.on_next!(actor::IBQuoteAggregator, quotes::AskQuote) = begin
@@ -437,17 +437,17 @@ end
 # end
 
 Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteQuoteMsg) = begin
-    if haskey(actor.subscriptions, typeof(msg.body)) 
-        unsubscribe!(actor.subscriptions[typeof(msg.body)])
-        delete!(actor.subscriptions, typeof(msg.body))
-        if isempty(actor.subscriptions)
+    if haskey(actor.subjects, msg.body) 
+        unsubscribe!(actor.subjects[typeof(msg.body)])
+        delete!(actor.subjects, typeof(msg.body))
+        if isempty(actor.subjects)
             complete!(actor)
         end
     end
 end
 
 function Rocket.on_next!(actor::IBQuoteAggregator, msg::IncompleteDataRequest)
-    unsubscribe!(actor.subscriptions)
+    unsubscribe!(actor.subjects)
     next!(actor.strategy, false)
 end
 
@@ -526,4 +526,32 @@ struct RegisteredSymbols{A} <: Actor{Any}
     next::A
 end
 
+import Base: haskey
+function haskey(h::Dict, k::AbstractQuote)
+    for key in keys(h)
+        if eltype(key) <: typeof(k)
+            return true
+        else
+            return false
+        end
+    end
 end
+
+end
+
+defaultAgg = IBQuoteAggregator(Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}(bidQuotes => nothing, askQuotes => nothing), logger("strategy"), DefaultIBRequestManager, logger("next"))
+
+next!(bootStrapSubject, BootStrapSystem())
+next!(registerRequestSubject, RegisterRequest(
+    Pair(
+        InteractiveBrokers.reqMktData, 
+        (InteractiveBrokers.Contract(symbol="AAPL",secType="STK",exchange="SMART",currency="USD"),"",false,false)
+    ), 
+    Pair(
+        InteractiveBrokers.cancelMktData, 
+        ()
+    ), 
+    20000, 
+    defaultAgg
+    )
+)

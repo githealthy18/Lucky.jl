@@ -232,7 +232,7 @@ DefaultIBService = Lucky.service(Val(:interactivebrokers))
 
 mutable struct ServiceManager{A} <: AbstractManager
     service::A
-    subscription::Union{Nothing, Rocket.SubjectSubscription}
+    subscription::Union{Nothing, InteractiveBrokersObservableSubscription}
 end
 
 struct ConnectionMsg <: IBBaseMsg
@@ -243,6 +243,7 @@ ConnectionSub = Subject(ConnectionMsg)
 
 function Rocket.on_next!(manager::ServiceManager, msg::BootStrapSystem)
     subscription = subscribe!(manager.service, logger("ServiceManager"))
+    manager.subscription = subscription
     next!(ConnectionSub, ConnectionMsg(subscription.connection))
 end
 
@@ -353,7 +354,7 @@ Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
     elseif msg.field == "LAST_SIZE"
         next!(lastSizes, LastSize(msg.tickerId, msg.size))
     elseif msg.field == "VOLUME"
-        next!(volumeQuotes, VolumeQuote(msg.tickerId, msg.size))
+        next!(volumeQuotes, VolumeQuote(msg.tickerId, 100*msg.size))
     end
 end
 
@@ -438,8 +439,8 @@ end
 
 Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteQuoteMsg) = begin
     if haskey(actor.subjects, msg.body) 
-        unsubscribe!(actor.subjects[typeof(msg.body)])
-        delete!(actor.subjects, typeof(msg.body))
+        unsubscribe!(get(actor.subjects, msg.body))
+        delete!(actor.subjects, msg.body)
         if isempty(actor.subjects)
             complete!(actor)
         end
@@ -447,7 +448,9 @@ Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteQuoteMsg) = begin
 end
 
 function Rocket.on_next!(actor::IBQuoteAggregator, msg::IncompleteDataRequest)
-    unsubscribe!(actor.subjects)
+    for (_, subscription) in actor.subjects
+        unsubscribe!(subscription)
+    end
     next!(actor.strategy, false)
 end
 
@@ -526,26 +529,41 @@ struct RegisteredSymbols{A} <: Actor{Any}
     next::A
 end
 
-import Base: haskey
+import Base: haskey, get, delete!
 function haskey(h::Dict, k::AbstractQuote)
     for key in keys(h)
         if eltype(key) <: typeof(k)
             return true
-        else
-            return false
+        end
+    end
+    false
+end
+
+function get(h::Dict, k::AbstractQuote)
+    for key in keys(h)
+        if eltype(key) <: typeof(k)
+            return h[key]
+        end
+    end
+end
+
+function delete!(h::Dict, k::AbstractQuote)
+    for key in keys(h)
+        if eltype(key) <: typeof(k)
+            delete!(h, key)
         end
     end
 end
 
 end
 
-defaultAgg = IBQuoteAggregator(Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}(bidQuotes => nothing, askQuotes => nothing), logger("strategy"), DefaultIBRequestManager, logger("next"))
+defaultAgg = IBQuoteAggregator(Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}(openQuotes => nothing, highQuotes => nothing, lowQuotes => nothing, lastQuotes => nothing, volumeQuotes => nothing), lambda(Bool; on_next = (d) -> println("IncompleteDataRequest")), DefaultIBRequestManager, lambda(Dict{DataType, Union{Nothing,AbstractQuote}}; on_next = (x) -> println(x)))
 
 next!(bootStrapSubject, BootStrapSystem())
 next!(registerRequestSubject, RegisterRequest(
     Pair(
         InteractiveBrokers.reqMktData, 
-        (InteractiveBrokers.Contract(symbol="AAPL",secType="STK",exchange="SMART",currency="USD"),"",false,false)
+        (InteractiveBrokers.Contract(symbol="AAPL",secType="STK",exchange="SMART",currency="USD"),"",true,false)
     ), 
     Pair(
         InteractiveBrokers.cancelMktData, 
@@ -555,3 +573,6 @@ next!(registerRequestSubject, RegisterRequest(
     defaultAgg
     )
 )
+
+defaultAgg.bundle
+DefaultIBRequestManager

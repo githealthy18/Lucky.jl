@@ -395,48 +395,6 @@ function Rocket.on_next!(actor::IBQuoteAggregator, msg::RegisterResponse)
     end
 end
 
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::AskQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.ask = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::LastQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.last = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::OpenQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.open = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::HighQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.high = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::LowQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.low = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
-# Rocket.on_next!(actor::IBQuoteAggregator, quotes::VolumeQuote) = begin
-#     if quotes.tickerId == actor.tickerId
-#         actor.volume = quotes
-#         next!(actor, CompleteMsg{quotes}())
-#     end
-# end
-
 Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteQuoteMsg) = begin
     if haskey(actor.subjects, msg.body) 
         unsubscribe!(get(actor.subjects, msg.body))
@@ -557,22 +515,29 @@ end
 
 end
 
-defaultAgg = IBQuoteAggregator(Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}(openQuotes => nothing, highQuotes => nothing, lowQuotes => nothing, lastQuotes => nothing, volumeQuotes => nothing), lambda(Bool; on_next = (d) -> println("IncompleteDataRequest")), DefaultIBRequestManager, lambda(Dict{DataType, Union{Nothing,AbstractQuote}}; on_next = (x) -> println(x)))
+subscribe!(lastQuotes, logger("last"))
+
+subscribe!(volumeQuotes, logger("vol"))
+
+subscribe!(highQuotes, logger("high"))
+
+defaultAgg = IBQuoteAggregator(Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}(openQuotes => nothing, highQuotes => nothing, lowQuotes => nothing, lastQuotes => nothing, volumeQuotes => nothing), Rocket.lambda(Bool; on_next = (d) -> println("IncompleteDataRequest")), DefaultIBRequestManager, Rocket.lambda(Dict{DataType, Union{Nothing, AbstractQuote}};on_next = (x) -> println(x)))
 
 next!(bootStrapSubject, BootStrapSystem())
 next!(registerRequestSubject, RegisterRequest(
     Pair(
         InteractiveBrokers.reqMktData, 
-        (InteractiveBrokers.Contract(symbol="AAPL",secType="STK",exchange="SMART",currency="USD"),"",true,false)
+        (InteractiveBrokers.Contract(symbol="AAPL",secType="STK",exchange="SMART",currency="USD"),"",false,false)
     ), 
     Pair(
         InteractiveBrokers.cancelMktData, 
         ()
     ), 
-    20000, 
+    60000, 
     defaultAgg
     )
 )
 
+InteractiveBrokers.reqMarketDataType(DefaultIBServiceManager.subscription.connection, InteractiveBrokers.MarketDataType(2))
 defaultAgg.bundle
 DefaultIBRequestManager

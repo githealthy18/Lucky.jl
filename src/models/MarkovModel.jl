@@ -13,7 +13,7 @@ mutable struct MarkovModel{S} <: AbstractModel
     model::Union{Nothing, <:MSM}
 end
 
-ModelSymbol(::Type{MarkovModel{S}}) where S = S
+ModelSymbol(::MarkovModel{S}) where S = S
 
 function Rocket.on_next!(model::MarkovModel, msg::ReadModelMsg)
     stream = s3_get(msg.server, msg.bucket, String(ModelSymbol(model)) * "/markov_switching.jld2")

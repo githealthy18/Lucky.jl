@@ -82,4 +82,9 @@ using .Managers
 export AbstractManager, ManagerType
 export BaseManager
 
+include("Models.jl")
+using .Models
+export AbstractModel, ModelType
+export ArchModel, MarkovModel
+
 end # module Lucky

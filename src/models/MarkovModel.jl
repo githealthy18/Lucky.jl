@@ -3,12 +3,12 @@ export ArchModel, ReadModelMsg
 using Lucky.Models
 using Rocket
 using Minio
-using ARCHModels
+using MarSwitching
 using Serialization
 
 
-mutable struct ArchModel{S} <: AbstractModel
-    model::Union{Nothing, <:UnivariateARCHModel}
+mutable struct MarkovModel{S} <: AbstractModel
+    model::Union{Nothing, <:MSM}
 end
 
 Base.eltype(::Type{ArchModel{S}}) where {S} = S

@@ -7,6 +7,10 @@ export ORDER_SIDE
 
 include("Utils.jl")
 
+include("Config.jl")
+using .Config
+export FILESTORE
+
 # ==== Financial types
 include("Units.jl")
 using .Units

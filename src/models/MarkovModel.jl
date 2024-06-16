@@ -14,6 +14,6 @@ end
 Base.eltype(::Type{ArchModel{S}}) where {S} = S
 
 function Rocket.on_next!(model::ArchModel, msg::ReadModelMsg)
-    stream = s3_get(msg.server, msg.bucket, String(eltype(model)) * "/archmodel.jld2")
+    stream = s3_get(msg.server, msg.bucket, String(eltype(model)) * "/markov_switching.jld2")
     model.model = deserialize(IOBuffer(stream))
 end

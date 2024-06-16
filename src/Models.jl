@@ -14,4 +14,6 @@ struct ReadModelMsg{S, B}
     bucket::B
 end
 
+include("models/ArchModel.jl")
+include("models/MarkovModel.jl")
 end

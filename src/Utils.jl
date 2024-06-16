@@ -13,6 +13,15 @@ struct TradingHours
     after_hours::Bool
 end
 
+function assign_businessday(data)
+	output = Vector{Float32}(undef, length(data))
+	for i in eachindex(data)
+		output[i] = isbday(BusinessDays.USNYSE(), Date(data[i]))
+	end
+	return output
+end
+
+
 
 function percentage(num::Number; rounded::Union{Nothing,Int}=nothing, humanreadable::Bool=false)
     if (humanreadable)

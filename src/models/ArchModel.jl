@@ -13,7 +13,7 @@ mutable struct ArchModel{S} <: AbstractModel
     model::Union{Nothing, <:UnivariateARCHModel}
 end
 
-Base.eltype(::Type{ArchModel{S}}) where {S} = S
+Base.eltype(::Type{<:ArchModel{S}}) where {S} = S
 
 function Rocket.on_next!(model::ArchModel, msg::ReadModelMsg)
     stream = s3_get(msg.server, msg.bucket, String(eltype(model)) * "/archmodel.jld2")

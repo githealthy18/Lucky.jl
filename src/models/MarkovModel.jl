@@ -11,12 +11,9 @@ mutable struct MarkovModel{S} <: AbstractModel
     model::Union{Nothing, <:MSM}
 end
 
-#Base.eltype(::Type{MarkovModel{S}}) where {S} = S
+Base.eltype(::Type{MarkovModel{S}}) where {S} = S
 
 function Rocket.on_next!(model::MarkovModel, msg::ReadModelMsg)
     stream = s3_get(msg.server, msg.bucket, String(eltype(model)) * "/markov_switching.jld2")
     model.model = deserialize(IOBuffer(stream))
 end
-
-import Base: eltype
-eltype(::Type{MarkovModel{S}}) where {S} = S

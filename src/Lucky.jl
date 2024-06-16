@@ -87,4 +87,9 @@ using .Models
 export AbstractModel, ModelType
 export ArchModel, MarkovModel
 
+include("Pipelines.jl")
+using .Pipelines
+export AbstractPipeline, PipelineType
+export PreModelPipeline
+
 end # module Lucky

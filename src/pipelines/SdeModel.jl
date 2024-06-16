@@ -1,13 +1,11 @@
-
+export PreModelPipeline
 
 using Lucky.Pipelines
 using Lucky.Models
 
 mutable struct PreModelPipeline <: AbstractPipeline
-    name::String
-    description::String
-    archmodel::Union{Nothing, <:ArchModel}
-    markovmodel::Union{Nothing, <:MarkovModel}
+    archmodel::ArchModel
+    markovmodel::MarkovModel
 
     data::Union{Nothing, <:DataFrame}
 end

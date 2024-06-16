@@ -13,9 +13,9 @@ mutable struct MarkovModel{S} <: AbstractModel
     model::Union{Nothing, <:MSM}
 end
 
-ModelType(::Type{<:MarkovModel{S}}) where {S} = S
+ModelSymbol(::Type{<:MarkovModel{S}}) where {S} = S
 
 function Rocket.on_next!(model::MarkovModel, msg::ReadModelMsg)
-    stream = s3_get(msg.server, msg.bucket, String(ModelType(model)) * "/markov_switching.jld2")
+    stream = s3_get(msg.server, msg.bucket, String(ModelSymbol(model)) * "/markov_switching.jld2")
     model.model = deserialize(IOBuffer(stream))
 end

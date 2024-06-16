@@ -13,9 +13,9 @@ mutable struct ArchModel{S} <: AbstractModel
     model::Union{Nothing, <:UnivariateARCHModel}
 end
 
-ModelType(::Type{<:ArchModel{S}}) where {S} = S
+ModelSymbol(::Type{<:ArchModel{S}}) where {S} = S
 
 function Rocket.on_next!(model::ArchModel, msg::ReadModelMsg)
-    stream = s3_get(msg.server, msg.bucket, String(ModelType(model)) * "/archmodel.jld2")
+    stream = s3_get(msg.server, msg.bucket, String(ModelSymbol(model)) * "/archmodel.jld2")
     model.model = deserialize(IOBuffer(stream))
 end

@@ -1,5 +1,7 @@
 export MarkovModel
 
+import Base: eltype
+
 using Lucky.Models
 using Rocket
 using Minio

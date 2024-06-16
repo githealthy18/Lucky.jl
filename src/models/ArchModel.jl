@@ -1,5 +1,7 @@
 export ArchModel
 
+import Base: eltype
+
 using Lucky.Models
 using Rocket
 using Minio

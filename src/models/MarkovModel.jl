@@ -1,4 +1,4 @@
-export ArchModel, ReadModelMsg
+export MarkovModel
 
 using Lucky.Models
 using Rocket

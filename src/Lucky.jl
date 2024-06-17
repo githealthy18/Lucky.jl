@@ -3,7 +3,7 @@ module Lucky
 # ==== Constants & Utils
 include("Constants.jl")
 using .Constants
-export ORDER_SIDE
+export ORDER_SIDE, ENVIRONMENT
 
 include("Utils.jl")
 

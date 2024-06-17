@@ -1,5 +1,8 @@
 module InteractiveBrokersExt
 
+export InteractiveBrokersObservable, TickPriceMsg, TickSize, HistoricalDataMsg, SecDefOptParamsMsg, ErrorMsg, AccountSummaryMsg, OrderIdMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, BidQuote, AskQuote, LastQuote, OpenQuote, HighQuote, LowQuote, BidSize, AskSize, LastSize, VolumeQuote, IBQuoteAggregator, IBRequestManager, IBRequestActor, RegisteredSymbols
+export DefaultIBRequestManager, DefaultIBServiceManager, DefaultIBService, ConnectionSub, AccountSub, ErrorSub, NextValidIdSub, TickPriceSub, TickSizeSub, TickOptionComputationSub, HistoricalDataSub, SecurityDefinitionOptionalParameterSub, bidQuotes, askQuotes, lastQuotes, openQuotes, highQuotes, lowQuotes, bidSizes, askSizes, lastSizes, volumeQuotes
+
 using Lucky
 
 using InteractiveBrokers
@@ -477,8 +480,25 @@ subscribe!(bootStrapSubject, DefaultIBRequestManager)
 subscribe!(ConnectionSub, DefaultIBRequestManager)
 subscribe!(completedRequests, DefaultIBRequestManager)
 
-struct IBRequestActor{L, I, A} <: Actor{I}
+mutable struct IBRequestActor{M, R, A} <: Actor{M}
+    tickerId::Int
+    queueId::Int
+    subscription::Union{Nothing, Rocket.SubjectSubscription}
+    requestManager::R
     main::A
+end
+
+function Rocket.on_next!(actor::IBRequestActor, msg::RegisterResponse)
+    actor.tickerId = msg.reqId
+    actor.queueId = msg.queueId
+end
+
+function Rocket.on_next!(actor::IBRequestActor, msg::IBBaseMsg)
+    if actor.tickerId == msg.tickerId
+        next!(actor.main, msg)
+        unsubscribe!(actor.subscription)
+        next!(actor.requestManager, CompleteRequestMsg(actor.tickerId, actor.queueId))
+    end
 end
 
 struct RegisteredSymbols{A} <: Actor{Any}

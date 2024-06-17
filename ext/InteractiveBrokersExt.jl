@@ -1,11 +1,11 @@
 module InteractiveBrokersExt
 
+import InteractiveBrokers
+
 export InteractiveBrokersObservable, TickPriceMsg, TickSize, HistoricalDataMsg, SecDefOptParamsMsg, ErrorMsg, AccountSummaryMsg, OrderIdMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, BidQuote, AskQuote, LastQuote, OpenQuote, HighQuote, LowQuote, BidSize, AskSize, LastSize, VolumeQuote, IBQuoteAggregator, IBRequestManager, IBRequestActor, RegisteredSymbols
 export DefaultIBRequestManager, DefaultIBServiceManager, DefaultIBService, ConnectionSub, AccountSub, ErrorSub, NextValidIdSub, TickPriceSub, TickSizeSub, TickOptionComputationSub, HistoricalDataSub, SecurityDefinitionOptionalParameterSub, bidQuotes, askQuotes, lastQuotes, openQuotes, highQuotes, lowQuotes, bidSizes, askSizes, lastSizes, volumeQuotes
 
 using Lucky
-
-import InteractiveBrokers
 using Rocket
 using DataFrames
 using Dates

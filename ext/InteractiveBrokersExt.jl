@@ -5,7 +5,7 @@ export DefaultIBRequestManager, DefaultIBServiceManager, DefaultIBService, Conne
 
 using Lucky
 
-using InteractiveBrokers
+import InteractiveBrokers
 using Rocket
 using DataFrames
 using Dates

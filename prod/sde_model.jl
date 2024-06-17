@@ -28,6 +28,38 @@ using ForwardDiff
 import AQFED.Black
 using HTTP
 using StatsBase
+using Lucky
+
+function Rocket.on_next!(pipeline::PreModelPipeline, msg::HistoricalDataMsg)
+    pipeline.data = msg.dataframe
+end
+
+function Rocket.on_next!(pipeline::PreModelPipeline, msg::RunPipelineMsg)
+    historicalDataActor = IBRequestActor{HistoricalDataMsg}(0, 0, nothing, pipeline)
+    historicalDataActor.subscription = subscribe!(HistoricalDataSub, historicalDataActor)
+    next!(registerRequestSubject, RegisterRequest(
+        Pair(
+            InteractiveBrokers.reqHistoricalData, 
+            (
+                InteractiveBrokers.Contract(symbol=String(PipelineSymbol(pipeline)),secType="STK",exchange="SMART",currency="USD"),
+                "",
+                "3 Y",
+                "1 day",
+                "TRADES",
+                false,
+                1, 
+                false
+            )
+        ), 
+        Pair(
+            InteractiveBrokers.cancelHistoricalData, 
+            ()
+        ), 
+        30000, 
+        historicalDataActor
+        )
+    )
+end
 
 
 mutable struct SDEModel{A} <: AbstractStrategy

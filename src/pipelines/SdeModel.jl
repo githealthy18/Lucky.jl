@@ -4,7 +4,7 @@ using Lucky.Pipelines
 using Lucky.Models
 using Lucky.Config
 using Lucky.Constants
-using InteractiveBrokers
+using InteractiveBrokersExt
 
 mutable struct PreModelPipeline{S} <: AbstractPipeline
     archmodel::ArchModel{S}

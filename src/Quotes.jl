@@ -3,7 +3,9 @@ module Quotes
 export AbstractQuote
 export Quote, QuoteType
 export timestamp
-export PriceQuote, OhlcQuote
+export PriceQuote, OhlcQuote, PriceQuotes
+export AbstractTick
+export BidTick, AskTick, LastTick, OpenTick, HighTick, LowTick, CloseTick
 
 using Lucky.Instruments
 using Lucky.Ohlcs
@@ -17,10 +19,28 @@ QuoteType(I::Type{<:Instrument}, params...) = error("You probably forgot to impl
 QuoteType(Q::Type{<:AbstractQuote}) = Q
 Units.TimestampType(Q::Type{<:AbstractQuote}) = error("You probably forgot to implement TimestampType(::$(Q))")
 
-struct PriceQuote{I,Q,D} <: AbstractQuote
+abstract type AbstractTick end
+
+struct BidTick <: AbstractTick end
+struct AskTick <: AbstractTick end
+struct LastTick <: AbstractTick end
+struct OpenTick <: AbstractTick end
+struct HighTick <: AbstractTick end
+struct LowTick <: AbstractTick end
+struct CloseTick <: AbstractTick end
+struct VolumeTick <: AbstractTick end
+struct BidSizeTick <: AbstractTick end
+struct AskSizeTick <: AbstractTick end
+struct LastSizeTick <: AbstractTick end
+
+TickType(T::Type{<:AbstractTick}, params...) = error("You probably forgot to implement TickType(::$(T), $(params...))")
+TickType(::T) where {T<:AbstractTick} = T
+
+struct PriceQuote{I,Q,D,T} <: AbstractQuote
     instrument::I
     price::Q
     timestamp::D
+    tick::T
 end
 
 struct OhlcQuote{I,Q} <: AbstractQuote
@@ -28,12 +48,52 @@ struct OhlcQuote{I,Q} <: AbstractQuote
     ohlc::Q
 end
 
+# struct BidQuote{Q, D} <: PriceQuote
+#     tickerId::Int
+#     price::Q
+#     timestamp::D
+# end
+
+# struct AskQuote{Q, D} <: PriceQuote
+#     tickerId::Int
+#     price::Q
+#     timestamp::D
+# end
+
+# struct LastQuote{Q, D} <: PriceQuote
+#     tickerId::Int
+#     price::Q
+#     timestamp::D
+# end
+
+# struct OpenQuote{Q, D} <: PriceQuote
+#     tickerId::Int
+#     price::Q
+#     timestamp::D
+# end
+
+# struct HighQuote{Q, D} <: PriceQuote
+#     tickerId::Int
+#     price::Q
+#     timestamp::D
+# end
+
+# struct LowQuote{Q, D} <: PriceQuote
+#     tickerId::Int
+#     price::Q
+#     timestamp::D
+# end
+
+# Rocket Subjects
+
+PriceQuotes = Subject(PriceQuote)
+
 # Interfaces
-Quote(instrument::Instrument, price::Q, stamp::D) where {Q<:Number,D<:Dates.AbstractTime} = PriceQuote(instrument, price, stamp)
+Quote(instrument::Instrument, price::Q, stamp::D, tick::T) where {Q<:Number,D<:Dates.AbstractTime,T<:AbstractTick} = PriceQuote(instrument, price, stamp, tick)
 Quote(instrument::Instrument, ohlc::Q) where {Q<:Ohlc} = OhlcQuote(instrument, ohlc)
 
 QuoteType(I::Type{<:Instrument}, Q::Type{<:Ohlc}) = OhlcQuote{I,Q}
-QuoteType(I::Type{<:Instrument}, P::Type{<:Number}=Float64, D::Type{<:Dates.AbstractTime}=Dates.DateTime) = PriceQuote{I,P,D}
+QuoteType(I::Type{<:Instrument}, T::Type{<:AbstractTick}, P::Type{<:Number}=Float64, D::Type{<:Dates.AbstractTime}=Dates.DateTime) = PriceQuote{I,P,D,T}
 QuoteType(i::Instrument, Q::Type{<:Ohlc}) = QuoteType(InstrumentType(i), Q)
 QuoteType(i::Instrument, P::Type{<:Number}=Float64, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), P, D)
 

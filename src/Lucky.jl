@@ -24,12 +24,13 @@ export Ohlc, Bar, Volume, HistoricalData
 include("Instruments.jl")
 using .Instruments
 export Instrument, InstrumentType
-export Cash, Stock, Option
+export Cash, Stock, Option, DataRequest
 
 include("Quotes.jl")
 using .Quotes
 export AbstractQuote, Quote, QuoteType
 export timestamp
+export PriceQuote, OhlcQuote, PriceQuotes
 
 include("Positions.jl")
 using .Positions

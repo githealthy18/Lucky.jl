@@ -13,5 +13,7 @@ Units.currency(i::I) where {I<:Instrument} = error("You probably forgot to imple
 
 include("instruments/Cash.jl")
 include("instruments/Stocks.jl")
+include("instruments/Options.jl")
+include("instruments/DataRequests.jl")
 
 end

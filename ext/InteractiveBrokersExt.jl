@@ -1,14 +1,10 @@
 module InteractiveBrokersExt
 
-import InteractiveBrokers
-
-export InteractiveBrokersObservable, TickPriceMsg, TickSize, HistoricalDataMsg, SecDefOptParamsMsg, ErrorMsg, AccountSummaryMsg, OrderIdMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, BidQuote, AskQuote, LastQuote, OpenQuote, HighQuote, LowQuote, BidSize, AskSize, LastSize, VolumeQuote, IBQuoteAggregator, IBRequestManager, IBRequestActor, RegisteredSymbols
-export DefaultIBRequestManager, DefaultIBServiceManager, DefaultIBService, ConnectionSub, AccountSub, ErrorSub, NextValidIdSub, TickPriceSub, TickSizeSub, TickOptionComputationSub, HistoricalDataSub, SecurityDefinitionOptionalParameterSub, bidQuotes, askQuotes, lastQuotes, openQuotes, highQuotes, lowQuotes, bidSizes, askSizes, lastSizes, volumeQuotes
-
 using Lucky
 using Rocket
 using DataFrames
 using Dates
+using InteractiveBrokers
 
 import Lucky: QuoteType, AbstractQuote, Quote, AbstractManager
 
@@ -137,37 +133,6 @@ struct OrderIdMsg <: IBBaseMsg
     id::Int
 end
 
-struct RegisterRequest{A} <: IBBaseMsg
-    request::Pair{<:Function, <:Tuple}
-    cancel::Pair{<:Function, <:Tuple}
-    timeout::Int
-    actor::A
-end
-
-registerRequestSubject = Subject(RegisterRequest)
-
-struct RegisterResponse <: IBBaseMsg
-    reqId::Int
-    queueId::Int
-end
-
-struct BootStrapSystem <: IBBaseMsg end
-
-bootStrapSubject = Subject(BootStrapSystem)
-
-struct IncompleteDataRequest <: IBBaseMsg end
-
-struct CompleteQuoteMsg{B} <: IBBaseMsg
-    body::B
-end
-
-struct CompleteRequestMsg <: IBBaseMsg
-    reqId::Int
-    queueId::Int
-end
-
-completedRequests = Subject(CompleteRequestMsg)
-
 
 
 defaultMapper = Dict{Symbol,Pair{Function,Type}}()
@@ -266,98 +231,31 @@ subscribe!(bootStrapSubject, DefaultIBServiceManager)
 # # import Lucky: IB, IBAccount
 
 
-struct BidQuote <: AbstractQuote
-    tickerId::Int
-    price::Float64
-end
-
-struct AskQuote <: AbstractQuote
-    tickerId::Int
-    price::Float64
-end
-
-struct LastQuote <: AbstractQuote
-    tickerId::Int
-    price::Float64
-end
-
-struct OpenQuote <: AbstractQuote
-    tickerId::Int
-    price::Float64
-end
-
-struct HighQuote <: AbstractQuote
-    tickerId::Int
-    price::Float64
-end
-
-struct LowQuote <: AbstractQuote
-    tickerId::Int
-    price::Float64
-end
-
-# Rocket Subjects
-
-bidQuotes = Subject(BidQuote)
-askQuotes = Subject(AskQuote)
-lastQuotes = Subject(LastQuote)
-openQuotes = Subject(OpenQuote)
-highQuotes = Subject(HighQuote)
-lowQuotes = Subject(LowQuote)
-
 Rocket.on_next!(actor::IBPriceActor, msg::TickPriceMsg) = begin
     if msg.field == "BID"
-        next!(bidQuotes, BidQuote(msg.tickerId, msg.price))
+        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), BidTick()))
     elseif msg.field == "ASK"
-        next!(askQuotes, AskQuote(msg.tickerId, msg.price))
+        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), AskTick()))
     elseif msg.field == "LAST"
-        next!(lastQuotes, LastQuote(msg.tickerId, msg.price))
+        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), LastTick()))
     elseif msg.field == "OPEN"
-        next!(openQuotes, OpenQuote(msg.tickerId, msg.price))
+        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), OpenTick()))
     elseif msg.field == "HIGH"
-        next!(highQuotes, HighQuote(msg.tickerId, msg.price))
+        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), HighTick()))
     elseif msg.field == "LOW"
-        next!(lowQuotes, LowQuote(msg.tickerId, msg.price))
+        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), LowTick()))
     end
 end
 
-
-struct BidSize <: AbstractQuote
-    tickerId::Int
-    size::Float64
-end
-
-struct AskSize <: AbstractQuote
-    tickerId::Int
-    size::Float64
-end
-
-struct LastSize <: AbstractQuote
-    tickerId::Int
-    size::Float64
-end
-
-struct VolumeQuote <: AbstractQuote
-    tickerId::Int
-    volume::Float64
-end
-
-# Rocket Subjects
-
-bidSizes = Subject(BidSize)
-askSizes = Subject(AskSize)
-lastSizes = Subject(LastSize)
-volumeQuotes = Subject(VolumeQuote)
-
 Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
     if msg.field == "BID_SIZE"
-        next!(bidSizes, BidSize(msg.tickerId, msg.size))
+        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.size, Dates.today(), BidSizeTick()))
     elseif msg.field == "ASK_SIZE"
-        next!(askSizes, AskSize(msg.tickerId, msg.size))
+        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.size, Dates.today(), AskSizeTick()))
     elseif msg.field == "LAST_SIZE"
-        next!(lastSizes, LastSize(msg.tickerId, msg.size))
+        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.size, Dates.today(), LastSizeTick()))
     elseif msg.field == "VOLUME"
-        next!(volumeQuotes, VolumeQuote(msg.tickerId, 100*msg.size))
+        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), 100*msg.size, Dates.today(), VolumeTick()))
     end
 end
 
@@ -375,15 +273,15 @@ IBQuoteAggregator(subjects::Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSu
     nothing, 
     nothing,
     subjects,
-    Dict{DataType, Union{Nothing,AbstractQuote}}(),
+    Dict{DataType, Union{Nothing,PriceQuote}}(),
     strategy,
     requestManager,
     next
 )
 
-Rocket.on_next!(actor::IBQuoteAggregator, quotes::AbstractQuote) = begin
-    if quotes.tickerId == actor.tickerId
-        actor.bundle[typeof(quotes)] = quotes
+Rocket.on_next!(actor::IBQuoteAggregator, quotes::PriceQuote) = begin
+    if eltype(quotes.instrument) == actor.tickerId
+        actor.bundle[typeof(quotes.tick)] = quotes
         next!(actor, CompleteQuoteMsg(quotes))
     end
 end

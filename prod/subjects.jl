@@ -1,5 +1,4 @@
 module Subjects
 
-using 
 
 end

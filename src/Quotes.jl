@@ -86,7 +86,7 @@ end
 
 # Rocket Subjects
 
-PriceQuotes = Subject(PriceQuote)
+const PriceQuotes = Subject(PriceQuote)
 
 # Interfaces
 Quote(instrument::Instrument, price::Q, stamp::D, tick::T) where {Q<:Number,D<:Dates.AbstractTime,T<:AbstractTick} = PriceQuote(instrument, price, stamp, tick)

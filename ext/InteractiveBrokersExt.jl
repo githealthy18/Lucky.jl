@@ -22,6 +22,8 @@ function validId()
   return increment
 end
 
+struct IBConnection{C} <: Connection end
+@inline IBConnection(C::InteractiveBrokers.Connection) = IBConnection{C}()
 
 struct InteractiveBrokersObservable <: Subscribable{Nothing}
     events::Vector{Symbol}
@@ -42,13 +44,13 @@ struct InteractiveBrokersObservable <: Subscribable{Nothing}
 end
 
 struct InteractiveBrokersObservableSubscription <: Teardown
-    connection::InteractiveBrokers.Connection
+    connection::IBConnection
 end
 
 function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
     ib = InteractiveBrokers.connect(;port=obs.port, clientId=obs.clientId, obs.connectOptions, obs.optionalCapabilities)
     InteractiveBrokers.start_reader(ib, wrapper(obs))
-    return InteractiveBrokersObservableSubscription(ib)
+    return InteractiveBrokersObservableSubscription(IBConnection(ib))
 end
 
 Rocket.as_teardown(::Type{<:InteractiveBrokersObservableSubscription}) = UnsubscribableTeardownLogic()
@@ -133,8 +135,6 @@ struct OrderIdMsg <: IBBaseMsg
     id::Int
 end
 
-
-
 defaultMapper = Dict{Symbol,Pair{Function,Type}}()
 defaultMapper[:tickPrice] = Pair((x...) -> TickPriceMsg(x...), TickPriceMsg)
 defaultMapper[:tickSize] = Pair((x...) -> TickSizeMsg(x...), TickSizeMsg)
@@ -195,41 +195,7 @@ function wrapper(client::InteractiveBrokersObservable)
     end
     return wrap
 end
-
-DefaultIBService = Lucky.service(Val(:interactivebrokers))
-
-mutable struct ServiceManager{A} <: AbstractManager
-    service::A
-    subscription::Union{Nothing, InteractiveBrokersObservableSubscription}
-end
-
-struct ConnectionMsg <: IBBaseMsg
-    conn::InteractiveBrokers.Connection
-end
-
-ConnectionSub = Subject(ConnectionMsg)
-
-function Rocket.on_next!(manager::ServiceManager, msg::BootStrapSystem)
-    subscription = subscribe!(manager.service, logger("ServiceManager"))
-    manager.subscription = subscription
-    next!(ConnectionSub, ConnectionMsg(subscription.connection))
-end
-
-AccountSub = Lucky.feed(DefaultIBService, :accountSummary)
-ErrorSub = Lucky.feed(DefaultIBService, :error)
-NextValidIdSub = Lucky.feed(DefaultIBService, :nextValidId)
-TickPriceSub = Lucky.feed(DefaultIBService, :tickPrice)
-TickSizeSub = Lucky.feed(DefaultIBService, :tickSize)
-TickOptionComputationSub = Lucky.feed(DefaultIBService, :tickOptionComputation)
-HistoricalDataSub = Lucky.feed(DefaultIBService, :historicalData)
-SecurityDefinitionOptionalParameterSub = Lucky.feed(DefaultIBService, :securityDefinitionOptionalParameter)
-
-DefaultIBServiceManager = ServiceManager(DefaultIBService, nothing)
-
-subscribe!(bootStrapSubject, DefaultIBServiceManager)
-
 # # import Lucky: IB, IBAccount
-
 
 Rocket.on_next!(actor::IBPriceActor, msg::TickPriceMsg) = begin
     if msg.field == "BID"
@@ -259,46 +225,43 @@ Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
     end
 end
 
-mutable struct IBQuoteAggregator{S, R, A} <: Actor{Union{RegisterResponse, AbstractQuote, <:CompleteQuoteMsg, IncompleteDataRequest}}
+mutable struct QuoteAggregator{S, R, A} <: Actor{Union{RegisterResponse, AbstractQuote, <:CompleteQuoteMsg, IncompleteDataRequest}}
     tickerId::Union{Nothing, Int}
     queueId::Union{Nothing, Int}
-    subjects::Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}
     bundle::Dict{DataType, Union{Nothing, AbstractQuote}}
+    subscription::Union{Nothing, Rocket.SubjectSubscription}
     strategy::S
     requestManager::R
     next::A
 end
 
-IBQuoteAggregator(subjects::Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}, strategy::S, requestManager::R, next::A) where {S, R, A} = IBQuoteAggregator(
+QuoteAggregator(bundle::Dict{DataType, Union{Nothing,PriceQuote}}, strategy::S, requestManager::R, next::A) where {S, R, A} = QuoteAggregator(
     nothing, 
     nothing,
-    subjects,
-    Dict{DataType, Union{Nothing,PriceQuote}}(),
+    bundle,
+    nothing,
     strategy,
     requestManager,
     next
 )
 
-Rocket.on_next!(actor::IBQuoteAggregator, quotes::PriceQuote) = begin
+Rocket.on_next!(actor::QuoteAggregator, quotes::PriceQuote) = begin
     if eltype(quotes.instrument) == actor.tickerId
         actor.bundle[typeof(quotes.tick)] = quotes
         next!(actor, CompleteQuoteMsg(quotes))
     end
 end
 
-function Rocket.on_next!(actor::IBQuoteAggregator, msg::RegisterResponse) 
+function Rocket.on_next!(actor::QuoteAggregator, msg::RegisterResponse) 
     actor.tickerId = msg.reqId
     actor.queueId = msg.queueId
 
-    for (subject, _) in actor.subjects
-        actor.subjects[subject] = subscribe!(subject, actor)
-        actor.bundle[eltype(subject)] = nothing
-    end
+    actor.subscription = subscribe!(PriceQuotes, actor)
 end
 
-Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteQuoteMsg) = begin
+Rocket.on_next!(actor::QuoteAggregator, msg::CompleteQuoteMsg) = begin
     if haskey(actor.subjects, msg.body) 
-        unsubscribe!(get(actor.subjects, msg.body))
+        unsubscribe!(actor.subscription)
         delete!(actor.subjects, msg.body)
         if isempty(actor.subjects)
             complete!(actor)
@@ -306,29 +269,18 @@ Rocket.on_next!(actor::IBQuoteAggregator, msg::CompleteQuoteMsg) = begin
     end
 end
 
-function Rocket.on_next!(actor::IBQuoteAggregator, msg::IncompleteDataRequest)
-    for (_, subscription) in actor.subjects
-        unsubscribe!(subscription)
-    end
+function Rocket.on_next!(actor::QuoteAggregator, msg::IncompleteDataRequest)
+    unsubscribe!(subscription)
     next!(actor.strategy, false)
 end
 
-Rocket.on_complete!(actor::IBQuoteAggregator) = begin
+Rocket.on_complete!(actor::QuoteAggregator) = begin
     next!(actor.next, actor.bundle)
     next!(actor.requestManager, CompleteRequestMsg(actor.tickerId, actor.queueId))
 end
 
-struct RequestManagerChildActorFactory{I, A} <: Rocket.AbstractActorFactory
-    main :: A
-end
-
-__make_request_manager_child_actor_factory(index::Int, main::A) where A = RequestManagerChildActorFactory{index, A}(main)
-
-Rocket.create_actor(::Type{L}, factory::RequestManagerChildActorFactory{I, A}) where { L, I, A } = IBRequestActor{L, I, A}(factory.main)
-
-
 mutable struct IBRequestManager <: AbstractManager
-    conn::Union{Nothing, InteractiveBrokers.Connection}
+    conn::Union{Nothing, <:Connection}
     reqIdMaster::Int
     completion_status::BitArray{1}
     requests::Vector{Pair{<:Function, <:Tuple}}
@@ -372,7 +324,7 @@ function Rocket.on_next!(manager::IBRequestManager, msg::ConnectionMsg)
     manager.conn = msg.conn
 end
 
-DefaultIBRequestManager = IBRequestManager(nothing, 1, BitArray{1}(), Vector{Pair{<:Function, <:Tuple}}(), Vector{Pair{<:Function, <:Tuple}}())
+const DefaultIBRequestManager = IBRequestManager(nothing, 1, BitArray{1}(), Vector{Pair{<:Function, <:Tuple}}(), Vector{Pair{<:Function, <:Tuple}}())
 subscribe!(registerRequestSubject, DefaultIBRequestManager)
 subscribe!(bootStrapSubject, DefaultIBRequestManager)
 subscribe!(ConnectionSub, DefaultIBRequestManager)
@@ -403,32 +355,6 @@ struct RegisteredSymbols{A} <: Actor{Any}
     symbols::Set{Symbol}
     date::Date
     next::A
-end
-
-import Base: haskey, get, delete!
-function haskey(h::Dict, k::AbstractQuote)
-    for key in keys(h)
-        if eltype(key) <: typeof(k)
-            return true
-        end
-    end
-    false
-end
-
-function get(h::Dict, k::AbstractQuote)
-    for key in keys(h)
-        if eltype(key) <: typeof(k)
-            return h[key]
-        end
-    end
-end
-
-function delete!(h::Dict, k::AbstractQuote)
-    for key in keys(h)
-        if eltype(key) <: typeof(k)
-            delete!(h, key)
-        end
-    end
 end
 
 end

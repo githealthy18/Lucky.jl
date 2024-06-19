@@ -1,6 +1,8 @@
-module Msg
+module ProcessMsgs
 
-abstract type ProcessMsg <: AbstractMsg end
+export ProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, ConnectionMsg
+
+abstract type ProcessMsg end
 
 struct RegisterRequest{A} <: ProcessMsg
     request::Pair{<:Function, <:Tuple}
@@ -9,16 +11,12 @@ struct RegisterRequest{A} <: ProcessMsg
     actor::A
 end
 
-registerRequestSubject = Subject(RegisterRequest)
-
 struct RegisterResponse <: ProcessMsg
     reqId::Int
     queueId::Int
 end
 
 struct BootStrapSystem <: ProcessMsg end
-
-bootStrapSubject = Subject(BootStrapSystem)
 
 struct IncompleteDataRequest <: ProcessMsg end
 
@@ -31,6 +29,9 @@ struct CompleteRequestMsg <: ProcessMsg
     queueId::Int
 end
 
-completedRequests = Subject(CompleteRequestMsg)
+struct ConnectionMsg <: IBBaseMsg
+    conn::Connection
+end
+
 
 end

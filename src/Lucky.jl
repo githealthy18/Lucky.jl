@@ -4,6 +4,7 @@ module Lucky
 include("Constants.jl")
 using .Constants
 export ORDER_SIDE, ENVIRONMENT
+export REGISTER_REQUEST_SUBJECT, BOOT_STRAP_SUBJECT, COMPLETED_REQUESTS
 
 include("Utils.jl")
 
@@ -25,6 +26,10 @@ include("Instruments.jl")
 using .Instruments
 export Instrument, InstrumentType
 export Cash, Stock, Option, DataRequest
+
+include("Connections.jl")
+using .Connections
+export Connection, ConnectionType
 
 include("Quotes.jl")
 using .Quotes
@@ -50,6 +55,10 @@ include("Indicators.jl")
 using .Indicators
 export AbstractIndicator, IterableIndicator, ValueIndicator, IndicatorType
 export DrawdownIndicator, EMAIndicator, HighWaterMarkIndicator, PeriodicValueIndicator, RollingIndicator, SMAIndicator
+
+include("ProcessMsgs.jl")
+using .ProcessMsgs
+export AbstractProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg
 
 # ==== Rocket Dependant
 
@@ -81,7 +90,6 @@ using .Services
 include("Managers.jl")
 using .Managers
 export AbstractManager, ManagerType
-export BaseManager
 
 include("Models.jl")
 using .Models

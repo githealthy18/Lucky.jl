@@ -81,6 +81,7 @@ using .Services
 include("Exchanges.jl")
 using .Exchanges
 export AbstractExchange, FakeExchange
+export QuoteAggregator
 
 include("Blotters.jl")
 using .Blotters

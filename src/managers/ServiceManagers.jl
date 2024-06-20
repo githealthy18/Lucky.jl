@@ -12,6 +12,6 @@ end
 function Rocket.on_next!(manager::ServiceManager, msg::BootStrapSystem)
     subscription = subscribe!(manager.service, logger("ServiceManager"))
     manager.subscription = subscription
-    next!(manager.connection_sub, ConnectionMsg(subscription.connection))
+    next!(manager.connection_sub, ConnectionMsg(subscription.wrapper.connection))
 end
 

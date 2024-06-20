@@ -22,8 +22,9 @@ function validId()
   return increment
 end
 
-struct IBConnection{C} <: Connection end
-@inline IBConnection(C::Type{<:InteractiveBrokers.Connection}) = IBConnection{C}()
+struct IBConnection{C<:InteractiveBrokers.Connection} <: Connection 
+    connection::C
+end
 
 struct InteractiveBrokersObservable <: Subscribable{Nothing}
     events::Vector{Symbol}
@@ -44,7 +45,7 @@ struct InteractiveBrokersObservable <: Subscribable{Nothing}
 end
 
 struct InteractiveBrokersObservableSubscription <: Teardown
-    connection::IBConnection
+    wrapper::IBConnection
 end
 
 function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
@@ -56,7 +57,7 @@ end
 Rocket.as_teardown(::Type{<:InteractiveBrokersObservableSubscription}) = UnsubscribableTeardownLogic()
 
 function Rocket.on_unsubscribe!(subscription::InteractiveBrokersObservableSubscription)
-    InteractiveBrokers.disconnect(subscription.connection)
+    InteractiveBrokers.disconnect(subscription.wrapper.connection)
 end
 
 function Lucky.service(::Val{:interactivebrokers}, host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")

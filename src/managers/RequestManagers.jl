@@ -1,6 +1,7 @@
 export RequestManager
 
 using Lucky.ProcessMsgs
+using Lucky.Connections
 using Rocket
 
 mutable struct RequestManager <: AbstractManager

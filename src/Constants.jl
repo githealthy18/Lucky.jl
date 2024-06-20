@@ -2,7 +2,7 @@ module Constants
 
 export ORDER_SIDE, ENVIRONMENT, REGISTER_REQUEST_SUBJECT, BOOT_STRAP_SUBJECT, COMPLETED_REQUESTS
 
-using Lucky.Feeders
+using Lucky
 using Lucky.ProcessMsgs
 using Lucky.Managers
 

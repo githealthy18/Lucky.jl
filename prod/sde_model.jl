@@ -51,7 +51,7 @@ const TICK_OPTION_COMPUTATION_SUB = Lucky.feed(DEFAULT_IB_SERVICE, :tickOptionCo
 const HISTORICAL_DATA_SUB = Lucky.feed(DEFAULT_IB_SERVICE, :historicalData)
 const SEC_DEF_OPTIONAL_PARAM_SUB = Lucky.feed(DEFAULT_IB_SERVICE, :securityDefinitionOptionalParameter)
 
-const DEFAULT_IB_SERVICE_MANAGER = ServiceManager(DEFAULT_IB_SERVICE, nothing)
+const DEFAULT_IB_SERVICE_MANAGER = ServiceManager(DEFAULT_IB_SERVICE, nothing, nothing)
 
 subscribe!(BOOTSTRAP_SUBJECT, DEFAULT_IB_SERVICE_MANAGER)
 

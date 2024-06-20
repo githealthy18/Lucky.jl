@@ -27,6 +27,7 @@ export RequestActor
 include("Managers.jl")
 using .Managers
 export AbstractManager, ManagerType
+export ServiceManager, RequestManager
 
 # ==== Financial types
 include("Units.jl")

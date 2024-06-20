@@ -5,7 +5,7 @@ using Lucky.ProcessMsgs: BootStrapSystem
 
 mutable struct ServiceManager{A} <: AbstractManager
     service::A
-    subscription::Union{Nothing, <:Rocket.SubjectSubscription}
+    subscription::Union{Nothing, <:Rocket.Teardown}
     connection_sub::Union{Nothing, <:Rocket.Subject}
 end
 

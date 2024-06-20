@@ -4,9 +4,6 @@ module Lucky
 include("Constants.jl")
 using .Constants
 export ORDER_SIDE, ENVIRONMENT
-export REGISTER_REQUEST_SUBJECT, BOOT_STRAP_SUBJECT, COMPLETED_REQUESTS, CONNECTION_SUB
-export DEFAULT_IB_SERVICE, ACCOUNT_SUB, ERROR_SUB, NEXT_VALID_ID_SUB, TICK_PRICE_SUB, TICK_SIZE_SUB, TICK_OPTION_COMPUTATION_SUB, HISTORICAL_DATA_SUB, SEC_DEF_OPTIONAL_PARAM_SUB
-export DEFAULT_IB_SERVICE_MANAGER, DEFAULT_REQUEST_MANAGER
 
 include("Utils.jl")
 
@@ -15,6 +12,10 @@ using .Config
 export FILESTORE
 
 # ==== Process types
+include("Connections.jl")
+using .Connections
+export Connection, ConnectionType
+
 include("ProcessMsgs.jl")
 using .ProcessMsgs
 export AbstractProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, ConnectionMsg
@@ -66,10 +67,6 @@ include("Indicators.jl")
 using .Indicators
 export AbstractIndicator, IterableIndicator, ValueIndicator, IndicatorType
 export DrawdownIndicator, EMAIndicator, HighWaterMarkIndicator, PeriodicValueIndicator, RollingIndicator, SMAIndicator
-
-include("Connections.jl")
-using .Connections
-export Connection, ConnectionType
 
 include("observables/Feeders.jl")
 # Do not export feed (too generic name)

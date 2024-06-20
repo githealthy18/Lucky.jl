@@ -11,6 +11,8 @@ export AbstractProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, I
 include("observables/Feeders.jl")
 # Do not export feed (too generic name)
 using .Feeders
+
+include("observables/Requesters.jl")
 using .Requesters
 export RequestActor
 

@@ -225,131 +225,14 @@ Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
     end
 end
 
-mutable struct QuoteAggregator{S, R, A} <: Actor{Union{RegisterResponse, AbstractQuote, <:CompleteQuoteMsg, IncompleteDataRequest}}
-    tickerId::Union{Nothing, Int}
-    queueId::Union{Nothing, Int}
-    bundle::Dict{DataType, Union{Nothing, AbstractQuote}}
-    subscription::Union{Nothing, Rocket.SubjectSubscription}
-    strategy::S
-    requestManager::R
-    next::A
-end
-
-QuoteAggregator(bundle::Dict{DataType, Union{Nothing,PriceQuote}}, strategy::S, requestManager::R, next::A) where {S, R, A} = QuoteAggregator(
-    nothing, 
-    nothing,
-    bundle,
-    nothing,
-    strategy,
-    requestManager,
-    next
-)
-
-Rocket.on_next!(actor::QuoteAggregator, quotes::PriceQuote) = begin
-    if eltype(quotes.instrument) == actor.tickerId
-        actor.bundle[typeof(quotes.tick)] = quotes
-        next!(actor, CompleteQuoteMsg(quotes))
-    end
-end
-
-function Rocket.on_next!(actor::QuoteAggregator, msg::RegisterResponse) 
-    actor.tickerId = msg.reqId
-    actor.queueId = msg.queueId
-
-    actor.subscription = subscribe!(PriceQuotes, actor)
-end
-
-Rocket.on_next!(actor::QuoteAggregator, msg::CompleteQuoteMsg) = begin
-    if haskey(actor.subjects, msg.body) 
-        unsubscribe!(actor.subscription)
-        delete!(actor.subjects, msg.body)
-        if isempty(actor.subjects)
-            complete!(actor)
-        end
-    end
-end
-
-function Rocket.on_next!(actor::QuoteAggregator, msg::IncompleteDataRequest)
-    unsubscribe!(subscription)
-    next!(actor.strategy, false)
-end
-
-Rocket.on_complete!(actor::QuoteAggregator) = begin
-    next!(actor.next, actor.bundle)
-    next!(actor.requestManager, CompleteRequestMsg(actor.tickerId, actor.queueId))
-end
-
-mutable struct IBRequestManager <: AbstractManager
-    conn::Union{Nothing, <:Connection}
-    reqIdMaster::Int
-    completion_status::BitArray{1}
-    requests::Vector{Pair{<:Function, <:Tuple}}
-    cancels::Vector{Pair{<:Function, <:Tuple}}
-end
-
-function Rocket.on_next!(manager::IBRequestManager, msg::RegisterRequest)
-    push!(manager.requests, msg.request)
-    push!(manager.cancels, msg.cancel)
-    push!(manager.completion_status, false)
-
-    reqId = manager.reqIdMaster
-    queueId = length(manager.completion_status)
-    next!(msg.actor, RegisterResponse(reqId, queueId))
-
-    # Call Request
-    msg.request.first(manager.conn, reqId, msg.request.second...)
-    manager.reqIdMaster += 1
-    setTimeout(msg.timeout) do 
-        if !manager.completion_status[queueId]
-            msg.cancel.first(manager.conn, reqId)
-            manager.completion_status[queueId] = true
-            next!(msg.actor, IncompleteDataRequest())
-        end
-    end
-end
-
-function Rocket.on_next!(manager::IBRequestManager, msg::CompleteRequestMsg)
-    manager.completion_status[msg.queueId] = true
-    manager.cancels[msg.queueId].first(manager.conn, msg.reqId)
-end
-
-function Rocket.on_next!(manager::IBRequestManager, msg::BootStrapSystem)
-    empty!(manager.requests)
-    empty!(manager.cancels)
-    empty!(manager.completion_status)
-    manager.reqIdMaster = 1
-end
-
-function Rocket.on_next!(manager::IBRequestManager, msg::ConnectionMsg)
-    manager.conn = msg.conn
-end
-
-const DefaultIBRequestManager = IBRequestManager(nothing, 1, BitArray{1}(), Vector{Pair{<:Function, <:Tuple}}(), Vector{Pair{<:Function, <:Tuple}}())
-subscribe!(registerRequestSubject, DefaultIBRequestManager)
-subscribe!(bootStrapSubject, DefaultIBRequestManager)
-subscribe!(ConnectionSub, DefaultIBRequestManager)
-subscribe!(completedRequests, DefaultIBRequestManager)
-
-mutable struct IBRequestActor{M, R, A} <: Actor{M}
-    tickerId::Int
-    queueId::Int
-    subscription::Union{Nothing, Rocket.SubjectSubscription}
-    requestManager::R
-    main::A
-end
-
-function Rocket.on_next!(actor::IBRequestActor, msg::RegisterResponse)
-    actor.tickerId = msg.reqId
-    actor.queueId = msg.queueId
-end
-
-function Rocket.on_next!(actor::IBRequestActor, msg::IBBaseMsg)
+function Rocket.on_next!(actor::RequestActor, msg::IBBaseMsg)
     if actor.tickerId == msg.tickerId
         next!(actor.main, msg)
         unsubscribe!(actor.subscription)
         next!(actor.requestManager, CompleteRequestMsg(actor.tickerId, actor.queueId))
     end
 end
+
 
 struct RegisteredSymbols{A} <: Actor{Any}
     symbols::Set{Symbol}

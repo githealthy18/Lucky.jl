@@ -3,7 +3,7 @@ module Quotes
 export AbstractQuote
 export Quote, QuoteType
 export timestamp
-export PriceQuote, OhlcQuote, PriceQuotes
+export PriceQuote, OhlcQuote, PRICE_QUOTES
 export AbstractTick
 export BidTick, AskTick, LastTick, OpenTick, HighTick, LowTick, CloseTick
 
@@ -86,7 +86,7 @@ end
 
 # Rocket Subjects
 
-const PriceQuotes = Subject(PriceQuote)
+const PRICE_QUOTES = Subject(PriceQuote)
 
 # Interfaces
 Quote(instrument::Instrument, price::Q, stamp::D, tick::T) where {Q<:Number,D<:Dates.AbstractTime,T<:AbstractTick} = PriceQuote(instrument, price, stamp, tick)
@@ -103,6 +103,61 @@ timestamp(q::PriceQuote) = q.timestamp
 
 Units.TimestampType(::Type{<:OhlcQuote{I,O}}) where {I,O} = Units.TimestampType(O)
 Units.TimestampType(::Type{<:PriceQuote{I,P,D}}) where {I,P,D} = D
+
+mutable struct QuoteAggregator{S, R, A} <: Actor{Union{RegisterResponse, PriceQuote, <:CompleteQuoteMsg, IncompleteDataRequest}}
+    tickerId::Union{Nothing, Int}
+    queueId::Union{Nothing, Int}
+    bundle::Dict{DataType, Union{Nothing, PriceQuote}}
+    subscription::Union{Nothing, Rocket.SubjectSubscription}
+    strategy::S
+    requestManager::R
+    next::A
+end
+
+QuoteAggregator(bundle::Dict{DataType, Union{Nothing,PriceQuote}}, strategy::S, requestManager::R, next::A) where {S, R, A} = QuoteAggregator(
+    nothing, 
+    nothing,
+    bundle,
+    nothing,
+    strategy,
+    requestManager,
+    next
+)
+
+Rocket.on_next!(actor::QuoteAggregator, quotes::PriceQuote) = begin
+    if eltype(quotes.instrument) == actor.tickerId
+        actor.bundle[typeof(quotes.tick)] = quotes
+        next!(actor, CompleteQuoteMsg(quotes))
+    end
+end
+
+function Rocket.on_next!(actor::QuoteAggregator, msg::RegisterResponse) 
+    actor.tickerId = msg.reqId
+    actor.queueId = msg.queueId
+
+    actor.subscription = subscribe!(PRICE_QUOTES, actor)
+end
+
+Rocket.on_next!(actor::QuoteAggregator, msg::CompleteQuoteMsg) = begin
+    if haskey(actor.subjects, msg.body) 
+        unsubscribe!(actor.subscription)
+        delete!(actor.subjects, msg.body)
+        if isempty(actor.subjects)
+            complete!(actor)
+        end
+    end
+end
+
+function Rocket.on_next!(actor::QuoteAggregator, msg::IncompleteDataRequest)
+    unsubscribe!(subscription)
+    next!(actor.strategy, false)
+end
+
+Rocket.on_complete!(actor::QuoteAggregator) = begin
+    next!(actor.next, actor.bundle)
+    next!(actor.requestManager, CompleteRequestMsg(actor.tickerId, actor.queueId))
+end
+
 
 import Base: +, -, *, /, convert, isless
 # https://github.com/JuliaLang/julia/blob/0a8916446b782eae1a09681b2b47c1be26fab7f3/base/missing.jl#L119

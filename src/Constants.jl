@@ -4,6 +4,7 @@ export ORDER_SIDE, ENVIRONMENT, REGISTER_REQUEST_SUBJECT, BOOT_STRAP_SUBJECT, CO
 
 using Lucky.Feeders
 using Lucky.ProcessMsgs
+using Lucky.Managers
 
 @enum ORDER_SIDE BUY_SIDE=1 SELL_SIDE=-1
 
@@ -34,5 +35,10 @@ const DEFAULT_IB_SERVICE_MANAGER = ServiceManager(DEFAULT_IB_SERVICE, nothing)
 
 subscribe!(BOOTSTRAP_SUBJECT, DEFAULT_IB_SERVICE_MANAGER)
 
+const DEFAULT_REQUEST_MANAGER = RequestManager(nothing, 1, BitArray{1}(), Vector{Pair{<:Function, <:Tuple}}(), Vector{Pair{<:Function, <:Tuple}}())
+subscribe!(REGISTER_REQUEST_SUB, DEFAULT_REQUEST_MANAGER)
+subscribe!(BOOTSTRAP_SUB, DEFAULT_REQUEST_MANAGER)
+subscribe!(CONNECTION_SUB, DEFAULT_REQUEST_MANAGER)
+subscribe!(COMPLETED_REQUESTS_SUB, DEFAULT_REQUEST_MANAGER)
 
 end

@@ -1,5 +1,9 @@
 module Lucky
 
+include("Connections.jl")
+using .Connections
+export Connection, ConnectionType
+
 include("ProcessMsgs.jl")
 using .ProcessMsgs
 export AbstractProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, ConnectionMsg
@@ -43,10 +47,6 @@ include("Instruments.jl")
 using .Instruments
 export Instrument, InstrumentType
 export Cash, Stock, Option, DataRequest
-
-include("Connections.jl")
-using .Connections
-export Connection, ConnectionType
 
 include("Quotes.jl")
 using .Quotes

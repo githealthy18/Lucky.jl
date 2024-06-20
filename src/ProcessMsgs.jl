@@ -2,6 +2,8 @@ module ProcessMsgs
 
 export ProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, ConnectionMsg
 
+using Lucky.Connection
+
 abstract type ProcessMsg end
 
 struct RegisterRequest{A} <: ProcessMsg
@@ -29,8 +31,8 @@ struct CompleteRequestMsg <: ProcessMsg
     queueId::Int
 end
 
-struct ConnectionMsg <: ProcessMsg
-    conn::Connection
+struct ConnectionMsg{C<:Connection} <: ProcessMsg
+    conn::C
 end
 
 

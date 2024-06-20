@@ -9,6 +9,7 @@ export BidTick, AskTick, LastTick, OpenTick, HighTick, LowTick, CloseTick
 
 using Lucky.Instruments
 using Lucky.Ohlcs
+using Lucky.ProcessMsgs
 import Lucky.Units as Units
 
 using Dates
@@ -47,42 +48,6 @@ struct OhlcQuote{I,Q} <: AbstractQuote
     instrument::I
     ohlc::Q
 end
-
-# struct BidQuote{Q, D} <: PriceQuote
-#     tickerId::Int
-#     price::Q
-#     timestamp::D
-# end
-
-# struct AskQuote{Q, D} <: PriceQuote
-#     tickerId::Int
-#     price::Q
-#     timestamp::D
-# end
-
-# struct LastQuote{Q, D} <: PriceQuote
-#     tickerId::Int
-#     price::Q
-#     timestamp::D
-# end
-
-# struct OpenQuote{Q, D} <: PriceQuote
-#     tickerId::Int
-#     price::Q
-#     timestamp::D
-# end
-
-# struct HighQuote{Q, D} <: PriceQuote
-#     tickerId::Int
-#     price::Q
-#     timestamp::D
-# end
-
-# struct LowQuote{Q, D} <: PriceQuote
-#     tickerId::Int
-#     price::Q
-#     timestamp::D
-# end
 
 # Rocket Subjects
 
@@ -139,12 +104,9 @@ function Rocket.on_next!(actor::QuoteAggregator, msg::RegisterResponse)
 end
 
 Rocket.on_next!(actor::QuoteAggregator, msg::CompleteQuoteMsg) = begin
-    if haskey(actor.subjects, msg.body) 
+    if all(!isnothing(v) for v in values(actor.bundle))
         unsubscribe!(actor.subscription)
-        delete!(actor.subjects, msg.body)
-        if isempty(actor.subjects)
-            complete!(actor)
-        end
+        complete!(actor)
     end
 end
 

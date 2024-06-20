@@ -14,6 +14,19 @@ include("Config.jl")
 using .Config
 export FILESTORE
 
+# ==== Process types
+include("ProcessMsgs.jl")
+using .ProcessMsgs
+export AbstractProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, ConnectionMsg
+
+include("observables/Requesters.jl")
+using .Requesters
+export RequestActor
+
+include("Managers.jl")
+using .Managers
+export AbstractManager, ManagerType
+
 # ==== Financial types
 include("Units.jl")
 using .Units
@@ -58,18 +71,9 @@ include("Connections.jl")
 using .Connections
 export Connection, ConnectionType
 
-include("ProcessMsgs.jl")
-using .ProcessMsgs
-export AbstractProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, ConnectionMsg
-
 include("observables/Feeders.jl")
 # Do not export feed (too generic name)
 using .Feeders
-
-include("observables/Requesters.jl")
-using .Requesters
-export RequestActor
-
 
 include("Services.jl")
 using .Services
@@ -93,10 +97,6 @@ export drawdown, ema, highwatermark, ohlc, rolling, sma
 include("Strategies.jl")
 using .Strategies
 export AbstractStrategy
-
-include("Managers.jl")
-using .Managers
-export AbstractManager, ManagerType
 
 include("Models.jl")
 using .Models

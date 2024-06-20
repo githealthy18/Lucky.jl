@@ -1,5 +1,20 @@
 module Lucky
 
+include("ProcessMsgs.jl")
+using .ProcessMsgs
+export AbstractProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, ConnectionMsg
+
+include("observables/Feeders.jl")
+# Do not export feed (too generic name)
+using .Feeders
+using .Requesters
+export RequestActor
+
+
+include("Services.jl")
+using .Services
+# Do not export service (too generic name)
+
 # ==== Constants & Utils
 include("Constants.jl")
 using .Constants
@@ -58,10 +73,6 @@ using .Indicators
 export AbstractIndicator, IterableIndicator, ValueIndicator, IndicatorType
 export DrawdownIndicator, EMAIndicator, HighWaterMarkIndicator, PeriodicValueIndicator, RollingIndicator, SMAIndicator
 
-include("ProcessMsgs.jl")
-using .ProcessMsgs
-export AbstractProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg
-
 # ==== Rocket Dependant
 
 include("Exchanges.jl")
@@ -80,16 +91,6 @@ export drawdown, ema, highwatermark, ohlc, rolling, sma
 include("Strategies.jl")
 using .Strategies
 export AbstractStrategy
-
-include("observables/Feeders.jl")
-using .Feeders
-using .Requesters
-export RequestActor
-# Do not export feed (too generic name)
-
-include("Services.jl")
-using .Services
-# Do not export service (too generic name)
 
 include("Managers.jl")
 using .Managers

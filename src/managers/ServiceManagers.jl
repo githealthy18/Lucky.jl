@@ -3,9 +3,9 @@ export ServiceManager
 using Rocket
 using Lucky.ProcessMsgs: BootStrapSystem
 
-mutable struct ServiceManager{A, S} <: AbstractManager
+mutable struct ServiceManager{A} <: AbstractManager
     service::A
-    subscription::S
+    subscription::Union{Nothing, Rocket.SubjectSubscription}
     connection_sub::Union{Nothing, <:Rocket.Subject}
 end
 

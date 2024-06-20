@@ -2,6 +2,8 @@ module Requesters
 
 export RequestActor
 
+using Rocket
+
 mutable struct RequestActor{R, A} <: Actor{Any}
     tickerId::Int
     queueId::Int

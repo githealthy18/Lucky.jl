@@ -1,6 +1,7 @@
 export RequestManager
 
-using Lucky.ProcessMsgs
+using Lucky
+using Rocket
 
 mutable struct RequestManager <: AbstractManager
     conn::Union{Nothing, <:Connection}

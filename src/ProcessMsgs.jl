@@ -29,7 +29,7 @@ struct CompleteRequestMsg <: ProcessMsg
     queueId::Int
 end
 
-struct ConnectionMsg <: IBBaseMsg
+struct ConnectionMsg <: ProcessMsg
     conn::Connection
 end
 

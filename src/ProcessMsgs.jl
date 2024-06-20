@@ -2,7 +2,7 @@ module ProcessMsgs
 
 export ProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, ConnectionMsg
 
-using Lucky.Connection
+using Lucky.Connections
 
 abstract type ProcessMsg end
 

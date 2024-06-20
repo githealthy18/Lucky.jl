@@ -5,7 +5,7 @@ using Lucky.Connections
 using Rocket
 
 mutable struct RequestManager <: AbstractManager
-    wrapped_connnection::Union{Nothing, <:Connection}
+    wrapped_connection::Union{Nothing, <:Connection}
     reqIdMaster::Int
     completion_status::BitArray{1}
     requests::Vector{Pair{<:Function, <:Tuple}}

@@ -3,6 +3,7 @@ module Requesters
 export RequestActor
 
 using Rocket
+using Lucky.ProcessMsgs
 
 mutable struct RequestActor{R, A} <: Actor{Any}
     tickerId::Int

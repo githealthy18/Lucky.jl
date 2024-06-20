@@ -3,7 +3,6 @@ module Utils
 using Dates
 using BusinessDays
 using TimeZones
-using Lucky.Quotes
 
 NYTZ = tz"America/New_York"
 # BusinessDays.initcache(:USNYSE)
@@ -31,32 +30,5 @@ function percentage(num::Number; rounded::Union{Nothing,Int}=nothing, humanreada
     isnothing(rounded) && return num    
     return round(num; digits=rounded)
 end
-
-import Base: haskey, get, delete!
-function haskey(h::Dict, k::AbstractQuote)
-    for key in keys(h)
-        if eltype(key) <: typeof(k)
-            return true
-        end
-    end
-    false
-end
-
-function get(h::Dict, k::AbstractQuote)
-    for key in keys(h)
-        if eltype(key) <: typeof(k)
-            return h[key]
-        end
-    end
-end
-
-function delete!(h::Dict, k::AbstractQuote)
-    for key in keys(h)
-        if eltype(key) <: typeof(k)
-            delete!(h, key)
-        end
-    end
-end
-
 
 end

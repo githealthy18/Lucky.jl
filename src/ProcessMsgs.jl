@@ -32,7 +32,7 @@ struct CompleteRequestMsg <: ProcessMsg
 end
 
 struct ConnectionMsg{C<:Connection} <: ProcessMsg
-    conn::C
+    wrapper::C
 end
 
 

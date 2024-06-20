@@ -5,7 +5,7 @@ using Lucky.Connections
 using Rocket
 
 mutable struct RequestManager <: AbstractManager
-    conn::Union{Nothing, <:Connection}
+    wrapped_connnection::Union{Nothing, <:Connection}
     reqIdMaster::Int
     completion_status::BitArray{1}
     requests::Vector{Pair{<:Function, <:Tuple}}
@@ -22,11 +22,11 @@ function Rocket.on_next!(manager::RequestManager, msg::RegisterRequest)
     next!(msg.actor, RegisterResponse(reqId, queueId))
 
     # Call Request
-    msg.request.first(manager.conn, reqId, msg.request.second...)
+    msg.request.first(manager.wrapped_connection.connection, reqId, msg.request.second...)
     manager.reqIdMaster += 1
     setTimeout(msg.timeout) do 
         if !manager.completion_status[queueId]
-            msg.cancel.first(manager.conn, reqId)
+            msg.cancel.first(manager.wrapped_connection.connection, reqId)
             manager.completion_status[queueId] = true
             next!(msg.actor, IncompleteDataRequest())
         end
@@ -35,7 +35,7 @@ end
 
 function Rocket.on_next!(manager::RequestManager, msg::CompleteRequestMsg)
     manager.completion_status[msg.queueId] = true
-    manager.cancels[msg.queueId].first(manager.conn, msg.reqId)
+    manager.cancels[msg.queueId].first(manager.wrapped_connection.connection, msg.reqId)
 end
 
 function Rocket.on_next!(manager::RequestManager, msg::BootStrapSystem)
@@ -46,5 +46,5 @@ function Rocket.on_next!(manager::RequestManager, msg::BootStrapSystem)
 end
 
 function Rocket.on_next!(manager::RequestManager, msg::ConnectionMsg)
-    manager.conn = msg.conn
+    manager.wrapped_connection = msg.wrapper
 end

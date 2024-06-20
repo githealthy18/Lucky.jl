@@ -23,7 +23,7 @@ function validId()
 end
 
 struct IBConnection{C} <: Connection end
-@inline IBConnection(C::InteractiveBrokers.Connection) = IBConnection{C}()
+@inline IBConnection(C::Type{<:InteractiveBrokers.Connection}) = IBConnection{C}()
 
 struct InteractiveBrokersObservable <: Subscribable{Nothing}
     events::Vector{Symbol}

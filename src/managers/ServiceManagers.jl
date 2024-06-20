@@ -2,7 +2,6 @@ export ServiceManager
 
 using Rocket
 using Lucky.ProcessMsgs: BootStrapSystem
-using Lucky.Constants: CONNECTION_SUB
 
 mutable struct ServiceManager{A, S} <: AbstractManager
     service::A

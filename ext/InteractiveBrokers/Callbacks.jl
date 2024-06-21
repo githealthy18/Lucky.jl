@@ -35,5 +35,7 @@ end
 function tickString(ib::InteractiveBrokersObservable, tickerId::Int, tickType::String, value::String)
     # ex data: 1 DELAYED_LAST_TIMESTAMP 1718409598
     mapping = ib.requestMappings[Pair(tickerId, :tickString)]
-    next!(mapping[2], unix2datetime(parse(Int64,value))) # TODO Handle timezones
+    if (tickType == "LAST_TIMESTAMP")
+        next!(mapping[2], unix2datetime(parse(Int64,value))) # TODO Handle timezones
+    end
 end

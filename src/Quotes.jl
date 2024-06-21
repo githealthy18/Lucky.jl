@@ -6,6 +6,7 @@ export timestamp
 export PriceQuote, OhlcQuote, PRICE_QUOTES
 export AbstractTick
 export BidTick, AskTick, LastTick, OpenTick, HighTick, LowTick, CloseTick
+export VolumeTick, BidSizeTick, AskSizeTick, LastSizeTick
 
 using Lucky.Instruments
 using Lucky.Ohlcs

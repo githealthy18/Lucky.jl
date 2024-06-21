@@ -60,6 +60,23 @@ subscribe!(BOOTSTRAP_SUB, DEFAULT_REQUEST_MANAGER)
 subscribe!(CONNECTION_SUB, DEFAULT_REQUEST_MANAGER)
 subscribe!(COMPLETED_REQUESTS_SUB, DEFAULT_REQUEST_MANAGER)
 
+defaultAgg = IBQuoteAggregator(Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}(openQuotes => nothing, highQuotes => nothing, lowQuotes => nothing, lastQuotes => nothing, volumeQuotes => nothing), Rocket.lambda(Bool; on_next = (d) -> println("IncompleteDataRequest")), DefaultIBRequestManager, Rocket.lambda(Dict{DataType, Union{Nothing, AbstractQuote}};on_next = (x) -> println(x)))
+
+next!(bootStrapSubject, BootStrapSystem())
+next!(registerRequestSubject, RegisterRequest(
+    Pair(
+        InteractiveBrokers.reqMktData, 
+        (InteractiveBrokers.Contract(symbol="AAPL",secType="STK",exchange="SMART",currency="USD"),"",false,false)
+    ), 
+    Pair(
+        InteractiveBrokers.cancelMktData, 
+        ()
+    ), 
+    60000, 
+    defaultAgg
+    )
+)
+
 
 function Rocket.on_next!(pipeline::PreModelPipeline, msg::HistoricalDataMsg)
     pipeline.data = msg.dataframe

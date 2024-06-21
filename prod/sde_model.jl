@@ -60,6 +60,8 @@ subscribe!(BOOTSTRAP_SUB, DEFAULT_REQUEST_MANAGER)
 subscribe!(CONNECTION_SUB, DEFAULT_REQUEST_MANAGER)
 subscribe!(COMPLETED_REQUESTS_SUB, DEFAULT_REQUEST_MANAGER)
 
+next!(BOOTSTRAP_SUB, BootStrapSystem())
+
 defaultAgg = IBQuoteAggregator(Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}(openQuotes => nothing, highQuotes => nothing, lowQuotes => nothing, lastQuotes => nothing, volumeQuotes => nothing), Rocket.lambda(Bool; on_next = (d) -> println("IncompleteDataRequest")), DefaultIBRequestManager, Rocket.lambda(Dict{DataType, Union{Nothing, AbstractQuote}};on_next = (x) -> println(x)))
 
 next!(bootStrapSubject, BootStrapSystem())

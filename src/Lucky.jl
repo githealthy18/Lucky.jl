@@ -48,7 +48,7 @@ include("Quotes.jl")
 using .Quotes
 export AbstractQuote, Quote, QuoteType
 export timestamp
-export PriceQuote, OhlcQuote, PriceQuotes
+export PriceQuote, OhlcQuote
 export AskTick, BidTick, LastTick, OpenTick, HighTick, LowTick, VolumeTick, BidSizeTick, AskSizeTick, LastSizeTick, TickType
 
 include("Positions.jl")
@@ -83,7 +83,7 @@ using .Services
 include("Exchanges.jl")
 using .Exchanges
 export AbstractExchange, FakeExchange
-export QuoteAggregator
+export QuoteAggregator, PRICE_QUOTES
 
 include("Blotters.jl")
 using .Blotters

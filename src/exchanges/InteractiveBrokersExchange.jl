@@ -1,6 +1,6 @@
 module InteractiveBrokersExchange
 
-export QuoteAggregator
+export QuoteAggregator, PRICE_QUOTES
 
 using Lucky.Constants
 using Lucky.ProcessMsgs: RegisterResponse, CompleteQuoteMsg, IncompleteDataRequest, CompleteRequestMsg
@@ -40,7 +40,7 @@ QuoteAggregator(bundle::Dict{DataType, Union{Nothing,PriceQuote}}, strategy::S, 
 
 Rocket.on_next!(actor::QuoteAggregator, quotes::PriceQuote) = begin
     if eltype(quotes.instrument) == actor.tickerId
-        actor.bundle[typeof(quotes.tick)] = quotes
+        actor.bundle[TickType(quotes.tick)] = quotes
         next!(actor, CompleteQuoteMsg(quotes))
     end
 end

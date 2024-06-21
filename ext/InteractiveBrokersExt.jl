@@ -6,7 +6,7 @@ using DataFrames
 using Dates
 using InteractiveBrokers
 
-import Lucky: QuoteType, AbstractQuote, Quote, AbstractManager, PriceQuote
+import Lucky: QuoteType, AbstractQuote, Quote, AbstractManager, PriceQuote, PRICE_QUOTES
 
 orderId = 1
 
@@ -197,8 +197,6 @@ function wrapper(client::InteractiveBrokersObservable)
     return wrap
 end
 # # import Lucky: IB, IBAccount
-
-const PRICE_QUOTES = Subject(PriceQuote)
 
 Rocket.on_next!(actor::IBPriceActor, msg::TickPriceMsg) = begin
     if msg.field == "BID"

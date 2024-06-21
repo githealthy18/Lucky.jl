@@ -62,10 +62,9 @@ subscribe!(COMPLETED_REQUESTS_SUB, DEFAULT_REQUEST_MANAGER)
 
 next!(BOOTSTRAP_SUB, BootStrapSystem())
 
-defaultAgg = IBQuoteAggregator(Dict{Rocket.Subject, Union{Nothing, Rocket.SubjectSubscription}}(openQuotes => nothing, highQuotes => nothing, lowQuotes => nothing, lastQuotes => nothing, volumeQuotes => nothing), Rocket.lambda(Bool; on_next = (d) -> println("IncompleteDataRequest")), DefaultIBRequestManager, Rocket.lambda(Dict{DataType, Union{Nothing, AbstractQuote}};on_next = (x) -> println(x)))
+defaultAgg = QuoteAggregator(Dict{DataType, Union{Nothing, PriceQuote}}(AskTick=>nothing, BidTick=>nothing), logger("strategy"), DEFAULT_REQUEST_MANAGER, lambda(Dict; on_next=(d)->println(d)))
 
-next!(bootStrapSubject, BootStrapSystem())
-next!(registerRequestSubject, RegisterRequest(
+next!(REGISTER_REQUEST_SUB, RegisterRequest(
     Pair(
         InteractiveBrokers.reqMktData, 
         (InteractiveBrokers.Contract(symbol="AAPL",secType="STK",exchange="SMART",currency="USD"),"",false,false)

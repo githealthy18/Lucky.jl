@@ -3,7 +3,7 @@ module Quotes
 export AbstractQuote
 export Quote, QuoteType
 export timestamp
-export PriceQuote, OhlcQuote, PRICE_QUOTES
+export PriceQuote, OhlcQuote
 export AbstractTick
 export BidTick, AskTick, LastTick, OpenTick, HighTick, LowTick, CloseTick
 export VolumeTick, BidSizeTick, AskSizeTick, LastSizeTick

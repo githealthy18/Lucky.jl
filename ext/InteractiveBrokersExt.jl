@@ -6,7 +6,7 @@ using DataFrames
 using Dates
 using InteractiveBrokers
 
-import Lucky: QuoteType, AbstractQuote, Quote, AbstractManager
+import Lucky: QuoteType, AbstractQuote, Quote, AbstractManager, PriceQuote
 
 orderId = 1
 
@@ -198,31 +198,33 @@ function wrapper(client::InteractiveBrokersObservable)
 end
 # # import Lucky: IB, IBAccount
 
+const PRICE_QUOTES = Subject(PriceQuote)
+
 Rocket.on_next!(actor::IBPriceActor, msg::TickPriceMsg) = begin
     if msg.field == "BID"
-        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), BidTick()))
+        next!(PRICE_QUOTES, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), BidTick()))
     elseif msg.field == "ASK"
-        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), AskTick()))
+        next!(PRICE_QUOTES, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), AskTick()))
     elseif msg.field == "LAST"
-        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), LastTick()))
+        next!(PRICE_QUOTES, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), LastTick()))
     elseif msg.field == "OPEN"
-        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), OpenTick()))
+        next!(PRICE_QUOTES, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), OpenTick()))
     elseif msg.field == "HIGH"
-        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), HighTick()))
+        next!(PRICE_QUOTES, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), HighTick()))
     elseif msg.field == "LOW"
-        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), LowTick()))
+        next!(PRICE_QUOTES, Quote(DataRequest(msg.tickerId), msg.price, Dates.today(), LowTick()))
     end
 end
 
 Rocket.on_next!(actor::IBSizeActor, msg::TickSizeMsg) = begin
     if msg.field == "BID_SIZE"
-        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.size, Dates.today(), BidSizeTick()))
+        next!(PRICE_QUOTES, Quote(DataRequest(msg.tickerId), msg.size, Dates.today(), BidSizeTick()))
     elseif msg.field == "ASK_SIZE"
-        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.size, Dates.today(), AskSizeTick()))
+        next!(PRICE_QUOTES, Quote(DataRequest(msg.tickerId), msg.size, Dates.today(), AskSizeTick()))
     elseif msg.field == "LAST_SIZE"
-        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), msg.size, Dates.today(), LastSizeTick()))
+        next!(PRICE_QUOTES, Quote(DataRequest(msg.tickerId), msg.size, Dates.today(), LastSizeTick()))
     elseif msg.field == "VOLUME"
-        next!(PriceQuotes, Quote(DataRequest(msg.tickerId), 100*msg.size, Dates.today(), VolumeTick()))
+        next!(PRICE_QUOTES, Quote(DataRequest(msg.tickerId), 100*msg.size, Dates.today(), VolumeTick()))
     end
 end
 

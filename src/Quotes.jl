@@ -4,7 +4,7 @@ export AbstractQuote
 export Quote, QuoteType
 export timestamp
 export PriceQuote, OhlcQuote
-export AbstractTick
+export AbstractTick, TickType
 export BidTick, AskTick, LastTick, OpenTick, HighTick, LowTick, CloseTick
 export VolumeTick, BidSizeTick, AskSizeTick, LastSizeTick
 

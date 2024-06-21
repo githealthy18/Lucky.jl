@@ -99,14 +99,14 @@ include("Strategies.jl")
 using .Strategies
 export AbstractStrategy
 
-include("Models.jl")
-using .Models
-export AbstractModel, ModelType
-export ArchModel, MarkovModel
+# === Others
 
-include("Pipelines.jl")
-using .Pipelines
-export AbstractPipeline, PipelineType
-export PreModelPipeline
+include("observables/Feeders.jl")
+using .Feeders
+# Do not export feed (too generic name)
+
+include("Services.jl")
+using .Services
+# Do not export service (too generic name)
 
 end # module Lucky

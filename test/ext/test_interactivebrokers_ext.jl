@@ -1,9 +1,31 @@
 @testset "InteractiveBrokersExt" begin
-    @testset "Interfaces" begin        
-        serv = Lucky.service(:interactivebrokers) # I want an observable + share(): TODO copy connectable & ref_count code to InteractiveBrokersObservable
-        # Or as a proxy that would be: 
-        # Create a proxy class with feed method.
-        btc = Lucky.feed(serv, :tickPrice) # That I can pass here so we can count the subscriptions
-        subscribe!(btc,logger("TADA"))
+    @testset "Interfaces" begin
+        @testset "service()" begin
+            client = Lucky.service(:interactivebrokers)
+            @test client isa Rocket.Subscribable
+                        
+            InteractiveBrokers.reqMarketDataType(client, InteractiveBrokers.DELAYED)
+
+            stock = Stock(:AAPL,:USD)
+
+            qt = Lucky.feed(client, stock) # reqMktData should return a Subscribable
+            @test Rocket.as_subscribable(qt) isa SimpleSubscribableTrait # or ScheduledSubscribableTrait
+            subscribe!(qt, logger())
+            # TODO Test quote params InteractiveBrokers.reqMktData(ib, 1, contract, "100,101,104,106,165,221,225,236", false)
+            # TODO Test if a subject            
+
+            # connect
+            # connect(client)
+            # disconnect(client.connection)
+        end
+        @testset "Contract" begin
+            stock = Stock(:AAPL, :USD)
+            @test_broken InteractiveBrokers.Contract(stock) == InteractiveBrokers.Contract(
+                symbol="AAPL",
+                secType="STK",
+                exchange="SMART",
+                currency="USD"
+                );
+        end
     end
 end

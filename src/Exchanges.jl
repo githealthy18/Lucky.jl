@@ -19,6 +19,6 @@ export FakeExchange, FakePosition
 
 include("exchanges/InteractiveBrokersExchange.jl")
 using .InteractiveBrokersExchange
-export QuoteAggregator
+export QuoteAggregator, PRICE_QUOTES
 
 end

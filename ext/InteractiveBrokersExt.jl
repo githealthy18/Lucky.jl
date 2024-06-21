@@ -78,7 +78,7 @@ end
 include("InteractiveBrokers/Requests.jl")
 include("InteractiveBrokers/Callbacks.jl")
 
-function Lucky.service(::Val{:interactivebrokers}; host=nothing, port::Int=4001, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
+function Lucky.service(::Val{:interactivebrokers}; host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
     return InteractiveBrokersObservable(host, port, clientId, connectOptions, optionalCapabilities)
 end
 

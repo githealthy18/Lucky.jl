@@ -1,8 +1,10 @@
 module ProcessMsgs
 
 export ProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, ConnectionMsg
+export BuildPipelineMsg
 
 using Lucky.Connections
+using Lucky.Constants
 
 abstract type ProcessMsg end
 
@@ -35,5 +37,8 @@ struct ConnectionMsg{C<:Connection} <: ProcessMsg
     wrapper::C
 end
 
+struct BuildPipelineMsg <: ProcessMsg
+    stage::ENVIRONMENT
+end
 
 end

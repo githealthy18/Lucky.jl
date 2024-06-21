@@ -62,7 +62,7 @@ subscribe!(COMPLETED_REQUESTS_SUB, DEFAULT_REQUEST_MANAGER)
 
 next!(BOOTSTRAP_SUB, BootStrapSystem())
 
-defaultAgg = QuoteAggregator(Dict{DataType, Union{Nothing, PriceQuote}}(LastTick=>nothing, BidTick=>nothing), logger("strategy"), DEFAULT_REQUEST_MANAGER, lambda(Dict{DataType, Union{Nothing, PriceQuote}}; on_next=(d)->println(d)))
+defaultAgg = QuoteAggregator(Dict{DataType, Union{Nothing, PriceQuote}}(LastTick=>nothing, BidTick=>nothing), logger("strategy"), DEFAULT_REQUEST_MANAGER, Rocket.lambda(Dict{DataType, Union{Nothing, PriceQuote}}; on_next=(d)->println(d)))
 
 next!(REGISTER_REQUEST_SUB, RegisterRequest(
     Pair(

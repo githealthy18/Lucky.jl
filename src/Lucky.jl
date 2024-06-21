@@ -19,6 +19,7 @@ export Connection, ConnectionType
 include("ProcessMsgs.jl")
 using .ProcessMsgs
 export AbstractProcessMsg, RegisterRequest, RegisterResponse, BootStrapSystem, IncompleteDataRequest, CompleteQuoteMsg, CompleteRequestMsg, ConnectionMsg
+export BuildPipelineMsg
 
 include("observables/Requesters.jl")
 using .Requesters

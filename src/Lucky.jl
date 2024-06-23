@@ -26,7 +26,6 @@ include("Quotes.jl")
 using .Quotes
 export AbstractQuote, Quote, QuoteType, AbstractTick, TickType
 export timestamp
-export @load_tick
 
 include("Positions.jl")
 using .Positions

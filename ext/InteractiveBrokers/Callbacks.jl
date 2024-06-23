@@ -1,3 +1,12 @@
+macro load_tick(struct_name::Symbol)
+    return :($(esc(Symbol(eval(struct_name))))())
+end
+
+macro load_tick(struct_name::String)
+    return :($(esc(Symbol(struct_name)))())
+end
+
+
 struct ASK <: AbstractTick end
 struct BID <: AbstractTick end
 struct LAST <: AbstractTick end

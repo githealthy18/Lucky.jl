@@ -125,12 +125,13 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})
+    println("ending...")
     ongoingRequests = Dictionaries.filterview(((k,v),) -> last(k) in [:tickSize, :tickPrice, :tickGeneric, :tickReqParams, :tickSize, :marketDataType] && last(v) == instr, pairs(client.requestMappings))
     requestId = first(first(keys(ongoingRequests)))
     InteractiveBrokers.cancelMktData(client, requestId)
 
     ongoingCallbacks = Dictionaries.filterview(((k,v),) -> first(k) == instr, pairs(client.mergedCallbacks))
-    setdiff!(keys(ongoingRequests), keys(client.requestMappings), )
+    setdiff!(keys(client.requestMappings), keys(ongoingRequests))
     setdiff!(keys(client.mergedCallbacks), keys(ongoingCallbacks))
 end
 

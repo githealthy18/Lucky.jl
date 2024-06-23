@@ -115,7 +115,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :volume), merged_vol)
 
     setTimeout(timeout) do 
-        Lucky.end_feed(client, instr, Val{:livedata})
+        Lucky.end_feed(client, instr, Val(:livedata))
     end
 
     # subscribe!(client.obs, tickPriceSubject)
@@ -125,10 +125,13 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})
-    ongoing_requests = filterview(p -> last(first(p)) in [:tickSize, :tickPrice, :tickGeneric, :tickReqParams, :tickSize, :marketDataType] && last(last((p))) == instr, client.requestMappings)
-    requestId = first(first(keys(ongoing_requests)))
+    ongoingRequests = Dictionaries.filterview(((k,v),) -> last(k) in [:tickSize, :tickPrice, :tickGeneric, :tickReqParams, :tickSize, :marketDataType] && last(v) == instr, pairs(client.requestMappings))
+    requestId = first(first(keys(ongoingRequests)))
     InteractiveBrokers.cancelMktData(client, requestId)
-    setdiff!(client.requestMappings, keys(ongoing_requests))
+
+    ongoingCallbacks = Dictionaries.filterview(((k,v),) -> first(k) == instr, pairs(client.mergedCallbacks))
+    setdiff!(keys(ongoingRequests), keys(client.requestMappings), )
+    setdiff!(keys(client.mergedCallbacks), keys(ongoingCallbacks))
 end
 
 function wrapper(client::InteractiveBrokersObservable)

@@ -41,7 +41,7 @@ function tickPrice(ib::InteractiveBrokersObservable, tickerId::Int, field::Strin
     # TODO use attrib
     # ex data: 1 DELAYED_BID -1.0
     mapping = ib.requestMappings[Pair(tickerId, :tickPrice)]
-    qte = Lucky.PriceQuote(mapping[3], @load_tick field, price, size, nothing)
+    qte = Lucky.PriceQuote(mapping[3], @load_tick(field), price, size, nothing)
     next!(mapping[2], qte)
 end
 

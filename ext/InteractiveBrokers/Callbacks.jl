@@ -36,18 +36,20 @@ function tickPrice(ib::InteractiveBrokersObservable, tickerId::Int, field::Strin
     # TODO use attrib
     # ex data: 1 DELAYED_BID -1.0
     mapping = ib.requestMappings[Pair(tickerId, :tickPrice)]
-    qte = Lucky.PriceQuote(mapping[3], price, nothing)
+    qte = Lucky.PriceQuote(mapping[3], @load_tick(field), price, size, nothing)
     next!(mapping[2], qte)
 end
 
 function tickSize(ib::InteractiveBrokersObservable, tickerId::Int, field::String, size::Float64)
     #TODO Use & dispatch
+    mapping = ib.requestMappings[Pair(tickerId, :tickSize)]
+    qte = 
 end
 
 function tickString(ib::InteractiveBrokersObservable, tickerId::Int, tickType::String, value::String)
     # ex data: 1 DELAYED_LAST_TIMESTAMP 1718409598
     mapping = ib.requestMappings[Pair(tickerId, :tickString)]
-    if (tickType == "LAST_TIMESTAMP")
+    if occursin("LAST_TIMESTAMP", tickType)
         next!(mapping[2], unix2datetime(parse(Int64,value))) # TODO Handle timezones
     end
 end

@@ -4,10 +4,11 @@ using InteractiveBrokers
 using Lucky
 using Rocket
 using Dates
+using Dictionaries
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
-    requestMappings::Dict{Pair{Int,Symbol},Tuple{Function,Rocket.Subject,Any}}
-    mergedCallbacks::Dict{Symbol,Rocket.Subscribable}
+    requestMappings::Dictionary{Pair{Int,Symbol},Tuple{Function,Rocket.Subject,Any}}
+    mergedCallbacks::Dictionary{Symbol,Rocket.Subscribable}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}
@@ -84,7 +85,7 @@ end
 
 const reqIdCounter = ReqIdMaster()
 
-function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
+function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
     #TODO Next Valid Id
     requestId = reqIdCounter()
     # TODO options
@@ -110,13 +111,24 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     merged_vol = tickSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_vol)
 
     # Output callback
-    client.mergedCallbacks[:tick] = merged
-    client.mergedCallbacks[:volume] = merged_vol
+    client.mergedCallbacks[Pair(instr, :tick)] = merged
+    client.mergedCallbacks[Pair(instr, :volume)] = merged_vol
+
+    setTimeout(timeout) do 
+        Lucky.end_feed(client, instr, Val{:livedata})
+    end
 
     # subscribe!(client.obs, tickPriceSubject)
     # subscribe!(client.obs, tickStringSubject)
 
     return merged, merged_vol
+end
+
+function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})
+    ongoing_requests = filterview(p -> last(first(p)) in [:tickSize, :tickPrice, :tickGeneric, :tickReqParams, :tickSize, :marketDataType] && last(last((p))) == instr, client.requestMappings)
+    setdiff!(client.requestMappings, keys(ongoing_requests))
+    requestId = first(first(keys(ongoing_requests)))
+    InteractiveBrokers.cancelMktData(client, requestId)
 end
 
 function wrapper(client::InteractiveBrokersObservable)

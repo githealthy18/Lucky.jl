@@ -41,7 +41,7 @@ end
 
 function marketDataType(ib::InteractiveBrokersObservable, reqId::Int, marketDataType::InteractiveBrokers.MarketDataType)
     # TODO ???
-    mapping = ib.requestMappings[Pair(tickerId, :marketDataType)]
+    mapping = ib.requestMappings[Pair(reqId, :marketDataType)]
     println("MarketDataType: $(mapping[3]) $marketDataType")
 end
 

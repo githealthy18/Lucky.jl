@@ -25,12 +25,30 @@ function managedAccounts(ib::InteractiveBrokersObservable, accountsList::String)
     accounts = split(accountsList, ",")
     filter!(x -> !isempty(x), accounts)
     # TODO Dispatch
-    #println("Accounts: $(accounts)")
+    println("Accounts: $(accounts)")
 end
 
 function nextValidId(ib::InteractiveBrokersObservable, orderId::Int)
     # TODO ???
     println("NextValidId: $orderId")
+end
+
+function tickGeneric(ib::InteractiveBrokersObservable, tickerId::Int, tickType::String, value::Float64)
+    # ex data: 1 DELAYED_LAST 1.0
+    mapping = ib.requestMappings[Pair(tickerId, :tickGeneric)]
+    println("tickGeneric: $(mapping[3]) $tickType $value")
+end
+
+function marketDataType(ib::InteractiveBrokersObservable, reqId::Int, marketDataType::InteractiveBrokers.MarketDataType)
+    # TODO ???
+    mapping = ib.requestMappings[Pair(tickerId, :marketDataType)]
+    println("MarketDataType: $(mapping[3]) $marketDataType")
+end
+
+function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick::Float64, bboExchange::String, snapshotPermissions::Int)
+    # TODO ???
+    mapping = ib.requestMappings[Pair(tickerId, :tickReqParams)]
+    println("tickReqParams: $(mapping[3]) $minTick $bboExchange $snapshotPermissions")
 end
 
 function tickPrice(ib::InteractiveBrokersObservable, tickerId::Int, field::String, price::Union{Float64,Nothing}, size::Union{Float64,Nothing}, attrib::InteractiveBrokers.TickAttrib)

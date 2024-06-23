@@ -98,6 +98,9 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     client.requestMappings[Pair(requestId, :tickPrice)] = (tickPrice, tickPriceSubject, instr)
     client.requestMappings[Pair(requestId, :tickSize)] = (tickSize, tickSizeSubject, instr)
     client.requestMappings[Pair(requestId, :tickString)] = (tickString, tickStringSubject, instr)
+    client.requestMappings[Pair(requestId, :tickGeneric)] = (tickGeneric, nothing, instr)
+    client.requestMappings[Pair(requestId, :marketDataType)] = (marketDataType, nothing, instr)
+    client.requestMappings[Pair(requestId, :tickReqParams)] = (tickReqParams, nothing, instr)
 
     # TODO default subject type depending on callback    
     merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].price, tup[1].size, tup[2])
@@ -124,9 +127,14 @@ function wrapper(client::InteractiveBrokersObservable)
     setproperty!(wrap, :managedAccounts, managedAccounts)
     setproperty!(wrap, :nextValidId, nextValidId)
 
-    for (pair, tuple) in client.requestMappings
-        setproperty!(wrap, pair.second, tuple[1])
-    end
+    # Optional callbacks
+    setproperty!(wrap, :tickPrice, tickPrice)
+    setproperty!(wrap, :tickSize, tickSize)
+    setproperty!(wrap, :tickString, tickString)
+    setproperty!(wrap, :tickGeneric, tickGeneric)
+    setproperty!(wrap, :marketDataType, marketDataType)
+    setproperty!(wrap, :tickReqParams, tickReqParams)
+
     return wrap
 end
 

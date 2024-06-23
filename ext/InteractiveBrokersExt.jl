@@ -98,9 +98,9 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     client.requestMappings[Pair(requestId, :tickPrice)] = (tickPrice, tickPriceSubject, instr)
     client.requestMappings[Pair(requestId, :tickSize)] = (tickSize, tickSizeSubject, instr)
     client.requestMappings[Pair(requestId, :tickString)] = (tickString, tickStringSubject, instr)
-    client.requestMappings[Pair(requestId, :tickGeneric)] = (tickGeneric, nothing, instr)
-    client.requestMappings[Pair(requestId, :marketDataType)] = (marketDataType, nothing, instr)
-    client.requestMappings[Pair(requestId, :tickReqParams)] = (tickReqParams, nothing, instr)
+    client.requestMappings[Pair(requestId, :tickGeneric)] = (tickGeneric, Subject(Pair), instr)
+    client.requestMappings[Pair(requestId, :marketDataType)] = (marketDataType, Subject(Pair), instr)
+    client.requestMappings[Pair(requestId, :tickReqParams)] = (tickReqParams, Subject(Pair), instr)
 
     # TODO default subject type depending on callback    
     merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].price, tup[1].size, tup[2])

@@ -42,8 +42,12 @@ end
 
 function tickSize(ib::InteractiveBrokersObservable, tickerId::Int, field::String, size::Float64)
     #TODO Use & dispatch
-    mapping = ib.requestMappings[Pair(tickerId, :tickSize)]
-    qte = 
+    if occursin("VOLUME", field)
+        mapping = ib.requestMappings[Pair(tickerId, :tickSize)]
+        qte = Lucky.VolumeQuote(mapping[3], size, nothing)
+        next!(mapping[2], qte)
+        return
+    end
 end
 
 function tickString(ib::InteractiveBrokersObservable, tickerId::Int, tickType::String, value::String)

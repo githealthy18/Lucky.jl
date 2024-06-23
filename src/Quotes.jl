@@ -3,7 +3,7 @@ module Quotes
 export AbstractQuote
 export Quote, QuoteType
 export timestamp
-export PriceQuote, OhlcQuote
+export PriceQuote, OhlcQuote, VolumeQuote
 export AbstractTick, TickType
 
 using Lucky.Instruments
@@ -36,14 +36,23 @@ struct OhlcQuote{I,Q} <: AbstractQuote
     ohlc::Q
 end
 
+struct VolumeQuote{I,Q,D} <: AbstractQuote
+    instrument::I
+    volume::Q
+    timestamp::D
+end
+
 # Interfaces
 Quote(instrument::Instrument, tick::T, price::Q, size::S, stamp::D) where {T<:AbstractTick,Q<:Number,S<:Number,D<:Dates.AbstractTime} = PriceQuote(instrument, tick, price, size, stamp)
 Quote(instrument::Instrument, ohlc::Q) where {Q<:Ohlc} = OhlcQuote(instrument, ohlc)
+Quote(instrument::Instrument, volume::Q, stamp::D) where {Q<:Number,D<:Dates.AbstractTime} = VolumeQuote(instrument, volume, stamp)
 
 QuoteType(I::Type{<:Instrument}, Q::Type{<:Ohlc}) = OhlcQuote{I,Q}
 QuoteType(I::Type{<:Instrument}, T::Type{<:AbstractTick}, P::Type{<:Number}=Float64, S::Type{<:Number}=Float64, D::Type{<:Dates.AbstractTime}=Dates.DateTime) = PriceQuote{I,T,P,S,D}
+QuoteType(I::Type{<:Instrument}, V::Type{<:Number}, D::Type{<:Dates.AbstractTime}=Dates.DateTime) = VolumeQuote{I,V,D}
 QuoteType(i::Instrument, Q::Type{<:Ohlc}) = QuoteType(InstrumentType(i), Q)
 QuoteType(i::Instrument, T::Type{<:AbstractTick}, P::Type{<:Number}=Float64, S::Type{<:Number}=Float64, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), T, P, S, D)
+QuoteType(i::Instrument, V::Type{<:Number}, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), V, D)
 
 Units.currency(q::AbstractQuote) = Units.currency(q.instrument)
 timestamp(q::OhlcQuote) = q.ohlc.timestamp
@@ -61,10 +70,10 @@ for f in (:(+), :(-)) #, :(*), :(/), :(^), :(mod), :(rem))
     end
 end
 
-+(x::I, y::I) where {I<:PriceQuote} = I(x.instrument, x.price + y.price, mean((x.size, y.size)), max(timestamp(x), timestamp(y)))
--(x::I, y::I) where {I<:PriceQuote} = I(x.instrument, x.price - y.price, mean((x.size, y.size)), max(timestamp(x), timestamp(y)))
-*(x::I, y::N) where {I<:PriceQuote,N<:Number} = I(x.instrument, x.price * y, x.size, timestamp(x))
-/(x::I, y::N) where {I<:PriceQuote,N<:Number} = I(x.instrument, x.price / y, x.size, timestamp(x))
++(x::I, y::I) where {I<:PriceQuote} = I(x.instrument, x.tick, x.price + y.price, mean((x.size, y.size)), max(timestamp(x), timestamp(y)))
+-(x::I, y::I) where {I<:PriceQuote} = I(x.instrument, x.tick, x.price - y.price, mean((x.size, y.size)), max(timestamp(x), timestamp(y)))
+*(x::I, y::N) where {I<:PriceQuote,N<:Number} = I(x.instrument, x.tick, x.price * y, x.size, timestamp(x))
+/(x::I, y::N) where {I<:PriceQuote,N<:Number} = I(x.instrument, x.tick, x.price / y, x.size, timestamp(x))
 convert(T::Type{<:Number}, x::PriceQuote) = convert(T, x.price)
 isless(x::I, y::I) where {I<:PriceQuote} = isless(x.price, y.price)
 
@@ -74,5 +83,12 @@ isless(x::I, y::I) where {I<:PriceQuote} = isless(x.price, y.price)
 /(x::I, y::N) where {I<:OhlcQuote,N<:Number} = I(x.instrument, x.ohlc / y)
 convert(T::Type{<:Number}, x::OhlcQuote) = convert(T, x.ohlc)
 isless(x::I, y::I) where {I<:OhlcQuote} = isless(x.ohlc, y.ohlc)
+
++(x::I, y::I) where {I<:VolumeQuote} = I(x.instrument, x.volume + y.volume, max(timestamp(x), timestamp(y)))
+-(x::I, y::I) where {I<:VolumeQuote} = I(x.instrument, x.volume - y.volume, max(timestamp(x), timestamp(y)))
+*(x::I, y::N) where {I<:VolumeQuote,N<:Number} = I(x.instrument, x.volume * y, timestamp(x))
+/(x::I, y::N) where {I<:VolumeQuote,N<:Number} = I(x.instrument, x.volume / y, timestamp(x))
+convert(T::Type{<:Number}, x::VolumeQuote) = convert(T, x.volume)
+isless(x::I, y::I) where {I<:VolumeQuote} = isless(x.volume, y.volume)
 
 end

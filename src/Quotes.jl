@@ -4,7 +4,7 @@ export AbstractQuote
 export Quote, QuoteType
 export timestamp
 export PriceQuote, OhlcQuote, VolumeQuote
-export AbstractTick, TickType
+export AbstractTick, TickType, @load_tick
 
 using Lucky.Instruments
 using Lucky.Ohlcs
@@ -90,5 +90,9 @@ isless(x::I, y::I) where {I<:OhlcQuote} = isless(x.ohlc, y.ohlc)
 /(x::I, y::N) where {I<:VolumeQuote,N<:Number} = I(x.instrument, x.volume / y, timestamp(x))
 convert(T::Type{<:Number}, x::VolumeQuote) = convert(T, x.volume)
 isless(x::I, y::I) where {I<:VolumeQuote} = isless(x.volume, y.volume)
+
+macro load_tick(struct_name::String)
+    return :($(esc(Symbol(struct_name)))())
+end
 
 end

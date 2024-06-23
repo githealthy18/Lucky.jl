@@ -1,12 +1,3 @@
-macro load_tick(struct_name::Symbol)
-    return :($(esc(Symbol(eval(struct_name))))())
-end
-
-macro load_tick(struct_name::String)
-    return :($(esc(Symbol(struct_name)))())
-end
-
-
 struct ASK <: AbstractTick end
 struct BID <: AbstractTick end
 struct LAST <: AbstractTick end
@@ -14,6 +5,10 @@ struct HIGH <: AbstractTick end
 struct LOW <: AbstractTick end
 struct CLOSE <: AbstractTick end
 struct VOLUME <: AbstractTick end
+
+function dispatch(tag)
+    return Dict("ASK" => ASK, "BID" => BID, "LAST" => LAST, "HIGH" => HIGH, "LOW" => LOW, "CLOSE" => CLOSE, "VOLUME" => VOLUME)[tag]()
+end
 
 function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErrorMessage)
     if (err.id == -1)
@@ -41,7 +36,7 @@ function tickPrice(ib::InteractiveBrokersObservable, tickerId::Int, field::Strin
     # TODO use attrib
     # ex data: 1 DELAYED_BID -1.0
     mapping = ib.requestMappings[Pair(tickerId, :tickPrice)]
-    qte = Lucky.PriceQuote(mapping[3], @load_tick(field), price, size, nothing)
+    qte = Lucky.PriceQuote(mapping[3], dispatch(field), price, size, nothing)
     next!(mapping[2], qte)
 end
 

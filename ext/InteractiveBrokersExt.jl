@@ -82,32 +82,38 @@ function Lucky.service(::Val{:interactivebrokers}; host=nothing, port::Int=7497,
     return InteractiveBrokersObservable(host, port, clientId, connectOptions, optionalCapabilities)
 end
 
-function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
+const reqIdCounter = ReqIdMaster()
+
+function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
     #TODO Next Valid Id
-    requestId = 1
+    requestId = reqIdCounter()
     # TODO options
     InteractiveBrokers.reqMktData(client, requestId, instr, "", false)
 
     # TODO callbacks depending on requested data
 
     tickPriceSubject = Subject(Lucky.PriceQuote)
-    tickSizeSubject = Subject(Pair)
+    tickSizeSubject = Subject(Lucky.VolumeQuote)
     tickStringSubject = Subject(DateTime)
     client.requestMappings[Pair(requestId, :tickPrice)] = (tickPrice, tickPriceSubject, instr)
     client.requestMappings[Pair(requestId, :tickSize)] = (tickSize, tickSizeSubject, instr)
     client.requestMappings[Pair(requestId, :tickString)] = (tickString, tickStringSubject, instr)
 
     # TODO default subject type depending on callback    
-    merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].price, tup[2])
+    merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].price, tup[1].size, tup[2])
     merged = Rocket.zipped(tickPriceSubject, tickStringSubject) |> Rocket.map(Lucky.PriceQuote, merge)
+
+    merge_vol = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].volume, tup[2])
+    merged_vol = Rocket.zipped(tickSizeSubject, tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_vol)
 
     # Output callback
     client.mergedCallbacks[:tick] = merged
+    client.mergedCallbacks[:volume] = merged_vol
 
     # subscribe!(client.obs, tickPriceSubject)
     # subscribe!(client.obs, tickStringSubject)
 
-    return merged
+    return merged, merged_vol
 end
 
 function wrapper(client::InteractiveBrokersObservable)

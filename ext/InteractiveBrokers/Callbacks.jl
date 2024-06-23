@@ -3,11 +3,12 @@ struct BID <: AbstractTick end
 struct LAST <: AbstractTick end
 struct HIGH <: AbstractTick end
 struct LOW <: AbstractTick end
+struct OPEN <: AbstractTick end
 struct CLOSE <: AbstractTick end
 struct VOLUME <: AbstractTick end
 
 function dispatch(tag)
-    return Dict("ASK" => ASK, "BID" => BID, "LAST" => LAST, "HIGH" => HIGH, "LOW" => LOW, "CLOSE" => CLOSE, "VOLUME" => VOLUME)[tag]()
+    return Dict("ASK" => ASK, "BID" => BID, "LAST" => LAST, "HIGH" => HIGH, "LOW" => LOW, "OPNE" => OPEN, "CLOSE" => CLOSE, "VOLUME" => VOLUME)[tag]()
 end
 
 function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErrorMessage)

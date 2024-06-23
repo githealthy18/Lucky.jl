@@ -101,10 +101,10 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     # TODO default subject type depending on callback    
     merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].price, tup[1].size, tup[2])
-    merged = Rocket.zipped(tickPriceSubject, tickStringSubject) |> Rocket.map(Lucky.PriceQuote, merge)
+    merged = tickPriceSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.PriceQuote, merge)
 
     merge_vol = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].volume, tup[2])
-    merged_vol = Rocket.zipped(tickSizeSubject, tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_vol)
+    merged_vol = tickSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_vol)
 
     # Output callback
     client.mergedCallbacks[:tick] = merged

@@ -7,11 +7,15 @@
             InteractiveBrokers.reqMarketDataType(client, InteractiveBrokers.FROZEN)
 
             stock = Stock(:AAPL,:USD)
+            stock2 = Stock(:JPM,:USD)
 
             qt, qt_vol = Lucky.feed(client, stock, Val(:livedata)) # reqMktData should return a Subscribable
+            qt2, qt_vol2 = Lucky.feed(client, stock2, Val(:livedata)) # reqMktData should return a Subscribable
             @test Rocket.as_subscribable(qt) isa SimpleSubscribableTrait # or ScheduledSubscribableTrait
             subscribe!(qt, logger("live"))
             subscribe!(qt_vol, logger("live_vol"))
+            subscribe!(qt2, logger("live2"))
+            subscribe!(qt_vol2, logger("live_vol2"))
             # TODO Test quote params InteractiveBrokers.reqMktData(ib, 1, contract, "100,101,104,106,165,221,225,236", false)
             # TODO Test if a subject            
 

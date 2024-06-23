@@ -19,6 +19,11 @@ function InteractiveBrokers.reqMktData(ib::InteractiveBrokersObservable, reqId::
     delayedReq(f, ib)
 end
 
+function InteractiveBrokers.cancelMktData(ib::InteractiveBrokersObservable, reqId::Int)
+    f = (connection) -> InteractiveBrokers.cancelMktData(connection, reqId)
+    delayedReq(f, ib)
+end
+
 function InteractiveBrokers.reqMarketDataType(ib::InteractiveBrokersObservable, t::InteractiveBrokers.MarketDataType)
     f = (connection) -> InteractiveBrokers.reqMarketDataType(connection, t)
     delayedReq(f, ib)

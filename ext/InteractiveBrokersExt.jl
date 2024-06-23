@@ -124,25 +124,21 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     return merged, merged_vol
 end
 
-# function test_fn(client, isntr::Instrument)
-#     ongoingRequests = Dictionaries.filterview(((k,v),) -> (last(k) in [:tickSize, :tickPrice, :tickGeneric, :tickReqParams, :tickString, :marketDataType]) && (last(v) == instr), pairs(client.requestMappings))
-#     lk = ReentrantLock()
-#     lock(lk) do 
-#         setdiff!(keys(client.requestMappings), keys(Dictionary(ongoingRequests)))
-#     end
-# end
+function deletefrom!(dict::Dictionary, inds::Indices)
+    for i in inds
+        delete!(dict, i)
+    end
+end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})
     println("ending...")
-    ongoingRequests = Dictionaries.filterview(((k,v),) -> (last(k) in [:tickSize, :tickPrice, :tickGeneric, :tickReqParams, :tickString, :marketDataType]) && (last(v) == instr), pairs(client.requestMappings))
+    ongoingRequests = filter(((k,v),) -> (last(k) in [:tickSize, :tickPrice, :tickGeneric, :tickReqParams, :tickString, :marketDataType]) && (last(v) == instr), pairs(client.requestMappings))
     requestId = first(first(keys(ongoingRequests)))
 
-    ongoingCallbacks = Dictionaries.filterview(((k,v),) -> first(k) == instr, pairs(client.mergedCallbacks))
-    lk = ReentrantLock()
-    lock(lk) do
-        setdiff!(keys(client.requestMappings), keys(Dictionary(ongoingRequests)))
-        setdiff!(keys(client.mergedCallbacks), keys(Dictionary(ongoingCallbacks)))
-    end
+    ongoingCallbacks = filter(((k,v),) -> first(k) == instr, pairs(client.mergedCallbacks))
+
+    deletefrom!(client.requestMappings, keys(ongoingRequests))
+    deletefrom!(client.mergedCallbacks, keys(ongoingCallbacks))
 
     InteractiveBrokers.cancelMktData(client, requestId)
 end

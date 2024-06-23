@@ -26,8 +26,8 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
 
     function InteractiveBrokersObservable(host=nothing, port::Union{Nothing,Int}=nothing, clientId::Union{Nothing,Int}=nothing, connectOptions::Union{Nothing,String}=nothing, optionalCapabilities::Union{Nothing,String}=nothing)
         ib = new(
-            Dict{Pair{Int,Symbol},Tuple{Function,Rocket.Subject,Any}}(),
-            Dict{Symbol,Rocket.Subscribable}(),
+            Dictionary{Pair{Int,Symbol},Tuple{Function,Rocket.Subject,Any}}(),
+            Dictionary{Symbol,Rocket.Subscribable}(),
             host,
             port,
             clientId,

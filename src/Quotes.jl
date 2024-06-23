@@ -12,14 +12,17 @@ import Lucky.Units as Units
 using Dates
 
 abstract type AbstractQuote end
+struct AbstractTick end
 
 QuoteType(I::Type{<:Instrument}, params...) = error("You probably forgot to implement QuoteType(::$(I), $(params...))")
 QuoteType(Q::Type{<:AbstractQuote}) = Q
 Units.TimestampType(Q::Type{<:AbstractQuote}) = error("You probably forgot to implement TimestampType(::$(Q))")
 
-struct PriceQuote{I,Q,D} <: AbstractQuote
+struct PriceQuote{I,T,Q,S,D} <: AbstractQuote
     instrument::I
+    tick::T
     price::Q
+    size::S
     timestamp::D
 end
 

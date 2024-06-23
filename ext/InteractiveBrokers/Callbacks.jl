@@ -1,3 +1,15 @@
+macro load_tick(struct_name::String)
+    return :($(esc(Symbol(struct_name)))())
+end
+
+struct ASK <: AbstractTick end
+struct BID <: AbstractTick end
+struct LAST <: AbstractTick end
+struct HIGH <: AbstractTick end
+struct LOW <: AbstractTick end
+struct CLOSE <: AbstractTick end
+struct VOLUME <: AbstractTick end
+
 function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErrorMessage)
     if (err.id == -1)
         @info "Skipped Message: $(err)"

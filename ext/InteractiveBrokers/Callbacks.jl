@@ -8,7 +8,7 @@ struct CLOSE <: AbstractTick end
 struct VOLUME <: AbstractTick end
 
 function dispatch(tag)
-    return Dict("ASK" => ASK, "BID" => BID, "LAST" => LAST, "HIGH" => HIGH, "LOW" => LOW, "OPNE" => OPEN, "CLOSE" => CLOSE, "VOLUME" => VOLUME)[tag]()
+    return Dict("ASK" => ASK, "BID" => BID, "LAST" => LAST, "HIGH" => HIGH, "LOW" => LOW, "OPEN" => OPEN, "CLOSE" => CLOSE, "VOLUME" => VOLUME)[tag]()
 end
 
 function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErrorMessage)
@@ -45,7 +45,7 @@ function tickSize(ib::InteractiveBrokersObservable, tickerId::Int, field::String
     #TODO Use & dispatch
     if occursin("VOLUME", field)
         mapping = ib.requestMappings[Pair(tickerId, :tickSize)]
-        qte = Lucky.VolumeQuote(mapping[3], size, nothing)
+        qte = Lucky.VolumeQuote(mapping[3], size*100, nothing)
         next!(mapping[2], qte)
         return
     end

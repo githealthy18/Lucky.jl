@@ -96,12 +96,12 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     tickPriceSubject = Subject(Lucky.PriceQuote)
     tickSizeSubject = Subject(Lucky.VolumeQuote)
     tickStringSubject = Subject(DateTime)
-    client.requestMappings[Pair(requestId, :tickPrice)] = (tickPrice, tickPriceSubject, instr)
-    client.requestMappings[Pair(requestId, :tickSize)] = (tickSize, tickSizeSubject, instr)
-    client.requestMappings[Pair(requestId, :tickString)] = (tickString, tickStringSubject, instr)
-    client.requestMappings[Pair(requestId, :tickGeneric)] = (tickGeneric, Subject(Pair), instr)
-    client.requestMappings[Pair(requestId, :marketDataType)] = (marketDataType, Subject(Pair), instr)
-    client.requestMappings[Pair(requestId, :tickReqParams)] = (tickReqParams, Subject(Pair), instr)
+    insert!(client.requestMappings, Pair(requestId, :tickPrice), (tickPrice, tickPriceSubject, instr))
+    insert!(client.requestMappings, Pair(requestId, :tickSize), (tickSize, tickSizeSubject, instr))
+    insert!(client.requestMappings, Pair(requestId, :tickString), (tickString, tickStringSubject, instr))
+    insert!(client.requestMappings, Pair(requestId, :tickGeneric), (tickGeneric, Subject(Pair), instr))
+    insert!(client.requestMappings, Pair(requestId, :marketDataType), (marketDataType, Subject(Pair), instr))
+    insert!(client.requestMappings, Pair(requestId, :tickReqParams), (tickReqParams, Subject(Pair), instr))
 
     # TODO default subject type depending on callback    
     merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].price, tup[1].size, tup[2])
@@ -111,8 +111,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     merged_vol = tickSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_vol)
 
     # Output callback
-    client.mergedCallbacks[Pair(instr, :tick)] = merged
-    client.mergedCallbacks[Pair(instr, :volume)] = merged_vol
+    insert!(client.mergedCallbacks, Pair(instr, :tick), merged)
+    insert!(client.mergedCallbacks, Pair(instr, :volume), merged_vol)
 
     setTimeout(timeout) do 
         Lucky.end_feed(client, instr, Val{:livedata})

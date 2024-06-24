@@ -9,7 +9,7 @@ using DataFrames
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::Dictionary{Pair{Int,Symbol},Tuple{Function,Rocket.Subject,Any}}
-    mergedCallbacks::Dictionary{Pair{Instrument,Symbol},Rocket.Subscribable}
+    mergedCallbacks::Dictionary{Pair{Instrument,Symbol},Union{Rocket.Subject, Rocket.Subscribable}}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}

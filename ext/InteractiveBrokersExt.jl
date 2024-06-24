@@ -65,7 +65,7 @@ function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
     params = (; zip(fields, values)...)
 
     obs.connection = InteractiveBrokers.connect(; params...)
-    InteractiveBrokers.start_reader(obs.connection, wrapper(obs), Tab=DataFrame)
+    InteractiveBrokers.start_reader(obs.connection, wrapper(obs), DataFrame)
     # Send pending commands
     while !isempty(obs.pendingCmds)
         cmd = pop!(obs.pendingCmds)

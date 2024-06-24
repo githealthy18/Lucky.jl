@@ -16,6 +16,9 @@
             subscribe!(qt_vol, logger("live_vol"))
             subscribe!(qt2, logger("live2"))
             subscribe!(qt_vol2, logger("live_vol2"))
+
+            hist = Lucky.feed(client, stock, Val(:historicaldata)) # reqHistoricalData should return a Subscribable
+            connect(client)
             # TODO Test quote params InteractiveBrokers.reqMktData(ib, 1, contract, "100,101,104,106,165,221,225,236", false)
             # TODO Test if a subject            
 

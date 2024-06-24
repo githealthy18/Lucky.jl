@@ -77,4 +77,5 @@ end
 function historicalData(ib::InteractiveBrokersObservable, reqId::Int, bar::DataFrame)
     mapping = ib.requestMappings[Pair(reqId, :historicalData)]
     next!(mapping[2], bar)
+    println(bar)
 end

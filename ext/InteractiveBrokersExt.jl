@@ -14,6 +14,8 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     port::Union{Nothing,Int}
 
     clientId::Union{Nothing,Int}
+    requestId::Int
+    nextValidId::Union{missing,Int} #
 
     connectOptions::Union{Nothing,String}
     optionalCapabilities::Union{Nothing,String}
@@ -31,6 +33,8 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             host,
             port,
             clientId,
+            0,
+            missing,
             connectOptions,
             optionalCapabilities,
             nothing,
@@ -83,11 +87,23 @@ function Lucky.service(::Val{:interactivebrokers}; host=nothing, port::Int=7497,
     return InteractiveBrokersObservable(host, port, clientId, connectOptions, optionalCapabilities)
 end
 
-const reqIdCounter = ReqIdMaster()
+function nextRequestId(client::InteractiveBrokersObservable)
+    client.requestId += 1
+    return client.requestId
+end
+
+function nextValidId(ib::InteractiveBrokersObservable)
+    isnothing(ib.connection) && return nothing
+
+    if ismissing(ib.nextValidId)
+        InteractiveBrokers.reqIds(ib)
+    end
+
+    return ib.nextValidId
+end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
-    #TODO Next Valid Id
-    requestId = reqIdCounter()
+    requestId = nextRequestId(client)
     # TODO options
     InteractiveBrokers.reqMktData(client, requestId, instr, "", false)
 
@@ -131,7 +147,6 @@ function deletefrom!(dict::Dictionary, inds::Indices)
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})
-    println("ending...")
     ongoingRequests = filter(((k,v),) -> (last(k) in [:tickSize, :tickPrice, :tickGeneric, :tickReqParams, :tickString, :marketDataType]) && (last(v) == instr), pairs(client.requestMappings))
     requestId = first(first(keys(ongoingRequests)))
 

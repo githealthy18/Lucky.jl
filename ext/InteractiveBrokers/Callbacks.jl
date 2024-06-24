@@ -29,8 +29,7 @@ function managedAccounts(ib::InteractiveBrokersObservable, accountsList::String)
 end
 
 function nextValidId(ib::InteractiveBrokersObservable, orderId::Int)
-    # TODO ???
-    println("NextValidId: $orderId")
+    ib.nextValidId = orderId 
 end
 
 function tickGeneric(ib::InteractiveBrokersObservable, tickerId::Int, tickType::String, value::Float64)
@@ -40,13 +39,11 @@ function tickGeneric(ib::InteractiveBrokersObservable, tickerId::Int, tickType::
 end
 
 function marketDataType(ib::InteractiveBrokersObservable, reqId::Int, marketDataType::InteractiveBrokers.MarketDataType)
-    # TODO ???
     mapping = ib.requestMappings[Pair(reqId, :marketDataType)]
     println("MarketDataType: $(mapping[3]) $marketDataType")
 end
 
 function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick::Float64, bboExchange::String, snapshotPermissions::Int)
-    # TODO ???
     mapping = ib.requestMappings[Pair(tickerId, :tickReqParams)]
     println("tickReqParams: $(mapping[3]) $minTick $bboExchange $snapshotPermissions")
 end

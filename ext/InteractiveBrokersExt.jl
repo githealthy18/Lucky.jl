@@ -156,7 +156,7 @@ end
 function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=30000)
     requestId = nextRequestId(client)
     # TODO options
-    InteractiveBrokers.reqHistoricalData(client, requestId, instr, asset.underlying, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
+    InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
     historicalDataSubject = Subject(DataFrame)
     insert!(client.requestMappings, Pair(requestId, :historicalData), (historicalData, historicalDataSubject, instr))

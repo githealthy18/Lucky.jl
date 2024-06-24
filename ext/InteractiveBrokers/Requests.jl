@@ -24,7 +24,7 @@ function InteractiveBrokers.cancelMktData(ib::InteractiveBrokersObservable, reqI
     delayedReq(f, ib)
 end
 
-function InteractiveBroker.reqHistoricalData(ib::InteractiveBrokersObservable, reqId::Int, instr::Instrument, endDateTime::DateTime, durationStr::String, barSizeSetting::String, whatToShow::String, useRTH::Int, formatDate::Int, keepUpToDate::Bool, chartOptions::NamedTuple=(;))
+function InteractiveBrokers.reqHistoricalData(ib::InteractiveBrokersObservable, reqId::Int, instr::Instrument, endDateTime::DateTime, durationStr::String, barSizeSetting::String, whatToShow::String, useRTH::Int, formatDate::Int, keepUpToDate::Bool, chartOptions::NamedTuple=(;))
     f = (connection) -> InteractiveBrokers.reqHistoricalData(connection, reqId, InteractiveBrokers.Contract(instr), endDateTime, durationStr, barSizeSetting, whatToShow, useRTH, formatDate, keepUpToDate, chartOptions)
     delayedReq(f, ib)
 end

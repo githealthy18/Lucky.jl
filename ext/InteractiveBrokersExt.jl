@@ -65,7 +65,7 @@ function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
     params = (; zip(fields, values)...)
 
     obs.connection = InteractiveBrokers.connect(; params...)
-    InteractiveBrokers.start_reader(obs.connection, wrapper(obs))
+    InteractiveBrokers.start_reader(obs.connection, wrapper(obs), Tab=DataFrame)
     # Send pending commands
     while !isempty(obs.pendingCmds)
         cmd = pop!(obs.pendingCmds)
@@ -158,7 +158,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
     # TODO options
     InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
-    historicalDataSubject = Subject(Dict)
+    historicalDataSubject = Subject(DataFrame)
     insert!(client.requestMappings, Pair(requestId, :historicalData), (historicalData, historicalDataSubject, instr))
     insert!(client.mergedCallbacks, Pair(instr, :history), historicalDataSubject)
 

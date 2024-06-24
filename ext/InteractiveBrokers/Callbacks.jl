@@ -74,7 +74,7 @@ function tickString(ib::InteractiveBrokersObservable, tickerId::Int, tickType::S
     end
 end
 
-function historicalData(ib::InteractiveBrokersObservable, reqId::Int, bar::Dict)
+function historicalData(ib::InteractiveBrokersObservable, reqId::Int, bar::DataFrame)
     println("here")
     mapping = ib.requestMappings[Pair(reqId, :historicalData)]
     next!(mapping[2], bar)

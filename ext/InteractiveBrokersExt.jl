@@ -196,7 +196,7 @@ function wrapper(client::InteractiveBrokersObservable)
     setproperty!(wrap, :tickGeneric, tickGeneric)
     setproperty!(wrap, :marketDataType, marketDataType)
     setproperty!(wrap, :tickReqParams, tickReqParams)
-    setpropert!(wrap, :historicalData, historicalData)
+    setproperty!(wrap, :historicalData, historicalData)
 
     return wrap
 end

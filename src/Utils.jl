@@ -10,4 +10,11 @@ function percentage(num::Number; rounded::Union{Nothing,Int}=nothing, humanreada
     return round(num; digits=rounded)
 end
 
+function deletefrom!(dict::Dictionary, inds::Indices)
+    for i in inds
+        delete!(dict, i)
+    end
+end
+
+
 end

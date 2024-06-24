@@ -5,6 +5,7 @@ using Lucky
 using Rocket
 using Dates
 using Dictionaries
+using DataFrames
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::Dictionary{Pair{Int,Symbol},Tuple{Function,Rocket.Subject,Any}}
@@ -140,22 +141,44 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     return merged, merged_vol
 end
 
-function deletefrom!(dict::Dictionary, inds::Indices)
-    for i in inds
-        delete!(dict, i)
-    end
-end
-
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})
     ongoingRequests = filter(((k,v),) -> (last(k) in [:tickSize, :tickPrice, :tickGeneric, :tickReqParams, :tickString, :marketDataType]) && (last(v) == instr), pairs(client.requestMappings))
     requestId = first(first(keys(ongoingRequests)))
 
     ongoingCallbacks = filter(((k,v),) -> first(k) == instr, pairs(client.mergedCallbacks))
 
-    deletefrom!(client.requestMappings, keys(ongoingRequests))
-    deletefrom!(client.mergedCallbacks, keys(ongoingCallbacks))
+    Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+    Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(ongoingCallbacks))
 
     InteractiveBrokers.cancelMktData(client, requestId)
+end
+
+function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=30000)
+    requestId = nextRequestId(client)
+    # TODO options
+    InteractiveBrokers.reqHistoricalData(client, requestId, instr, asset.underlying, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
+
+    historicalDataSubject = Subject(DataFrame)
+    insert!(client.requestMappings, Pair(requestId, :historicalData), (historicalData, historicalDataSubject, instr))
+    insert!(client.mergedCallbacks, Pair(instr, :history), historicalDataSubject)
+
+    setTimeout(timeout) do 
+        Lucky.end_feed(client, instr, Val(:historicaldata))
+    end
+
+    return historicalDataSubject
+end
+
+function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:historicaldata})
+    ongoingRequests = filter(((k,v),) -> (last(k) == :historicalData) && (last(v) == instr), pairs(client.requestMappings))
+    requestId = first(first(keys(ongoingRequests)))
+
+    ongoingCallbacks = filter(((k,v),) -> first(k) == instr, pairs(client.mergedCallbacks))
+
+    Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+    Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(ongoingCallbacks))
+
+    InteractiveBrokers.cancelHistoricalData(client, requestId)
 end
 
 function wrapper(client::InteractiveBrokersObservable)

@@ -73,3 +73,8 @@ function tickString(ib::InteractiveBrokersObservable, tickerId::Int, tickType::S
         next!(mapping[2], unix2datetime(parse(Int64,value))) # TODO Handle timezones
     end
 end
+
+function historicalData(ib::InteractiveBrokersObservable, reqId::Int, bar::DataFrame)
+    mapping = ib.requestMappings[Pair(reqId, :historicalData)]
+    next!(mapping[2], bar)
+end

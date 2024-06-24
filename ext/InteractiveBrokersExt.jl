@@ -15,7 +15,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
 
     clientId::Union{Nothing,Int}
     requestId::Int
-    nextValidId::Union{missing,Int} #
+    nextValidId::Union{Missing,Int} #
 
     connectOptions::Union{Nothing,String}
     optionalCapabilities::Union{Nothing,String}

@@ -153,7 +153,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     InteractiveBrokers.cancelMktData(client, requestId)
 end
 
-function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=30000)
+function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=60000)
     requestId = nextRequestId(client)
     # TODO options
     InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)

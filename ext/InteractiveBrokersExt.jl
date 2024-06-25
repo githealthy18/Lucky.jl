@@ -103,6 +103,12 @@ function nextValidId(ib::InteractiveBrokersObservable)
     return ib.nextValidId
 end
 
+function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Instrument)
+    return filter(((k,v),) -> last(k) in requestTypes && last(v)==instr, pairs(dict))
+
+function getCallbacks(dict::Dictionary, instr::Instrument)
+    return filter(((k,v),) -> first(k)==instr, pairs(dict))
+
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
     requestId = nextRequestId(client)
     # TODO options
@@ -142,10 +148,10 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})
-    ongoingRequests = filter(((k,v),) -> (last(k) in [:tickSize, :tickPrice, :tickGeneric, :tickReqParams, :tickString, :marketDataType]) && (last(v) == instr), pairs(client.requestMappings))
+    ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
     requestId = first(first(keys(ongoingRequests)))
 
-    ongoingCallbacks = filter(((k,v),) -> first(k) == instr, pairs(client.mergedCallbacks))
+    ongoingCallbacks = getCallbacks(client.mergedCallbacks, instr)
 
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
     Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(ongoingCallbacks))
@@ -170,10 +176,10 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:historicaldata})
-    ongoingRequests = filter(((k,v),) -> (last(k) == :historicalData) && (last(v) == instr), pairs(client.requestMappings))
+    ongoingRequests = getRequests(client.requestMappings, [:historicalData], instr)
     requestId = first(first(keys(ongoingRequests)))
 
-    ongoingCallbacks = filter(((k,v),) -> first(k) == instr, pairs(client.mergedCallbacks))
+    ongoingCallbacks = getCallbacks(client.mergedCallbacks, instr)
 
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
     Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(ongoingCallbacks))

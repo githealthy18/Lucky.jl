@@ -223,6 +223,7 @@ secType(::T) where {T<:Lucky.Option} = "OPT"
 symbol(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement symbol(::$(T))")
 symbol(::T) where {C,T<:Lucky.Cash{C}} = String(C)
 symbol(::T) where {S,C,T<:Lucky.Stock{S,C}} = String(S)
+symbol(::Type{<:Lucky.Stock{S,C}}) where {S,C} = String(S)
 symbol(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = symbol(S)
 
 exchange(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement exchange(::$(T))")
@@ -234,7 +235,7 @@ right(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to impl
 right(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = String(R)
 
 expiry(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement expiry(::$(T))")
-expiry(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = Date(E, "yyyymmdd")
+expiry(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = Dates.format(E, "yyyymmdd")
 
 function InteractiveBrokers.Contract(i::Lucky.Instrument)
     return InteractiveBrokers.Contract(

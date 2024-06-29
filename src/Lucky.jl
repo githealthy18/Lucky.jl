@@ -3,7 +3,8 @@ module Lucky
 # ==== Constants & Utils
 include("Constants.jl")
 using .Constants
-export ORDER_SIDE, OPTION_RIGHT
+export ORDER_SIDE, BUY_SIDE, SELL_SIDE
+export OPTION_RIGHT, CALL, PUT
 
 include("Utils.jl")
 

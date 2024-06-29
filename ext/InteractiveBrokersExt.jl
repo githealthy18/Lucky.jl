@@ -105,9 +105,11 @@ end
 
 function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Instrument)
     return filter(((k,v),) -> last(k) in requestTypes && last(v)==instr, pairs(dict))
+end
 
 function getCallbacks(dict::Dictionary, instr::Instrument)
     return filter(((k,v),) -> first(k)==instr, pairs(dict))
+end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
     requestId = nextRequestId(client)
@@ -252,5 +254,5 @@ function InteractiveBrokers.Contract(i::Lucky.Option)
         lastTradeDateOrMonth=expiry(i)
     )
 end
-    
+
 end

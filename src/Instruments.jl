@@ -3,6 +3,8 @@ module Instruments
 export Instrument, InstrumentType
 import Lucky.Units as Units
 
+using Dates
+
 abstract type Instrument end
 
 # InstrumentType(I::Type{<:Instrument}, params...) = error("You probably forgot to implement InstrumentType($(I), $(params...))")
@@ -13,5 +15,6 @@ Units.currency(i::I) where {I<:Instrument} = error("You probably forgot to imple
 
 include("instruments/Cash.jl")
 include("instruments/Stocks.jl")
+include("instruments/Options.jl")
 
 end

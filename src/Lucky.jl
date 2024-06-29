@@ -3,7 +3,7 @@ module Lucky
 # ==== Constants & Utils
 include("Constants.jl")
 using .Constants
-export ORDER_SIDE
+export ORDER_SIDE, OPTION_RIGHT
 
 include("Utils.jl")
 
@@ -20,7 +20,7 @@ export Ohlc
 include("Instruments.jl")
 using .Instruments
 export Instrument, InstrumentType
-export Cash, Stock
+export Cash, Stock, Option
 
 include("Quotes.jl")
 using .Quotes

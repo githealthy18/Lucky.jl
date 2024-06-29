@@ -8,7 +8,7 @@ using Dictionaries
 using DataFrames
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
-    requestMappings::Dictionary{Pair{Int,Symbol},Tuple{Function,Rocket.Subject,Any}}
+    requestMappings::Dictionary{Pair{Int,Symbol},Tuple{Function,Rocket.Subject,Any,Bool}}
     mergedCallbacks::Dictionary{Pair{Instrument,Symbol},Union{Rocket.Subject, Rocket.Subscribable}}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
@@ -119,12 +119,12 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     tickPriceSubject = Subject(Lucky.PriceQuote)
     tickSizeSubject = Subject(Lucky.VolumeQuote)
     tickStringSubject = Subject(DateTime)
-    insert!(client.requestMappings, Pair(requestId, :tickPrice), (tickPrice, tickPriceSubject, instr))
-    insert!(client.requestMappings, Pair(requestId, :tickSize), (tickSize, tickSizeSubject, instr))
-    insert!(client.requestMappings, Pair(requestId, :tickString), (tickString, tickStringSubject, instr))
-    insert!(client.requestMappings, Pair(requestId, :tickGeneric), (tickGeneric, Subject(Pair), instr))
-    insert!(client.requestMappings, Pair(requestId, :marketDataType), (marketDataType, Subject(Pair), instr))
-    insert!(client.requestMappings, Pair(requestId, :tickReqParams), (tickReqParams, Subject(Pair), instr))
+    insert!(client.requestMappings, Pair(requestId, :tickPrice), (tickPrice, tickPriceSubject, instr, false))
+    insert!(client.requestMappings, Pair(requestId, :tickSize), (tickSize, tickSizeSubject, instr, false))
+    insert!(client.requestMappings, Pair(requestId, :tickString), (tickString, tickStringSubject, instr, false))
+    insert!(client.requestMappings, Pair(requestId, :tickGeneric), (tickGeneric, Subject(Pair), instr, false))
+    insert!(client.requestMappings, Pair(requestId, :marketDataType), (marketDataType, Subject(Pair), instr, false))
+    insert!(client.requestMappings, Pair(requestId, :tickReqParams), (tickReqParams, Subject(Pair), instr, false))
 
     # TODO default subject type depending on callback    
     merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].price, tup[1].size, tup[2])
@@ -138,7 +138,9 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :volume), merged_vol)
 
     setTimeout(timeout) do 
-        Lucky.end_feed(client, instr, Val(:livedata))
+        if !client.requestMappings[Pair(requestId, :tickPrice)][4]
+            Lucky.end_feed(client, instr, Val(:livedata))
+        end
     end
 
     # subscribe!(client.obs, tickPriceSubject)
@@ -165,11 +167,13 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
     InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
     historicalDataSubject = Subject(DataFrame)
-    insert!(client.requestMappings, Pair(requestId, :historicalData), (historicalData, historicalDataSubject, instr))
+    insert!(client.requestMappings, Pair(requestId, :historicalData), (historicalData, historicalDataSubject, instr, false))
     insert!(client.mergedCallbacks, Pair(instr, :history), historicalDataSubject)
 
     setTimeout(timeout) do 
-        Lucky.end_feed(client, instr, Val(:historicaldata))
+        if !client.requestMappings[Pair(requestId, :historicalData)][4]
+            Lucky.end_feed(client, instr, Val(:historicaldata))
+        end
     end
 
     return historicalDataSubject
@@ -203,6 +207,8 @@ function wrapper(client::InteractiveBrokersObservable)
     setproperty!(wrap, :marketDataType, marketDataType)
     setproperty!(wrap, :tickReqParams, tickReqParams)
     setproperty!(wrap, :historicalData, historicalData)
+    setproperty!(wrap, :secDefOptParams, secDefOptParams)
+    setproperty!(wrap, :tickOptionComputation, tickOptionComputation)
 
     return wrap
 end
@@ -210,14 +216,22 @@ end
 secType(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement secType(::$(T))")
 secType(::T) where {T<:Lucky.Cash} = "CASH"
 secType(::T) where {T<:Lucky.Stock} = "STK"
+secType(::T) where {T<:Lucky.Option} = "OPT"
 
 symbol(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement symbol(::$(T))")
 symbol(::T) where {C,T<:Lucky.Cash{C}} = String(C)
 symbol(::T) where {S,C,T<:Lucky.Stock{S,C}} = String(S)
+symbol(::T) where {S,C,R,E,T<:Lucky.Option{S,C,R,E}} = String(S)
 
 exchange(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement exchange(::$(T))")
 exchange(::T) where {C,T<:Lucky.Cash{C}} = "IDEALPRO" # TODO: Support Virtual Forex
 exchange(::T) where {S,C,T<:Lucky.Stock{S,C}} = "SMART"
+
+right(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement right(::$(T))")
+right(::T) where {S,C,R,E,T<:Lucky.Option{S,C,R,E}} = String(R)
+
+expiry(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement expiry(::$(T))")
+expiry(::T) where {S,C,R,E,T<:Lucky.Option{S,C,R,E}} = String(E, "yyyymmdd")
 
 function InteractiveBrokers.Contract(i::Lucky.Instrument)
     return InteractiveBrokers.Contract(
@@ -227,5 +241,15 @@ function InteractiveBrokers.Contract(i::Lucky.Instrument)
         currency=Lucky.Units.currency(i)
     )
 end
+
+function InteractiveBrokers.Contract(i::Lucky.Option)
+    return InteractiveBrokers.Contract(
+        symbol=symbol(i),
+        secType=secType(i),
+        exchange=exchange(i),
+        currency=Lucky.Units.currency(i)
+        right=right(i),
+        lastTradeDateOrMonth=expiry(i)
+    )
 
 end

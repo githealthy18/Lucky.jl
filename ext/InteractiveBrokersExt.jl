@@ -223,17 +223,18 @@ secType(::T) where {T<:Lucky.Option} = "OPT"
 symbol(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement symbol(::$(T))")
 symbol(::T) where {C,T<:Lucky.Cash{C}} = String(C)
 symbol(::T) where {S,C,T<:Lucky.Stock{S,C}} = String(S)
-symbol(::T) where {S,C,R,E,T<:Lucky.Option{S,C,R,E}} = String(S)
+symbol(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = symbol(S)
 
 exchange(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement exchange(::$(T))")
 exchange(::T) where {C,T<:Lucky.Cash{C}} = "IDEALPRO" # TODO: Support Virtual Forex
 exchange(::T) where {S,C,T<:Lucky.Stock{S,C}} = "SMART"
+exchange(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = "SMART"
 
 right(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement right(::$(T))")
-right(::T) where {S,C,R,E,T<:Lucky.Option{S,C,R,E}} = String(R)
+right(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = String(R)
 
 expiry(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement expiry(::$(T))")
-expiry(::T) where {S,C,R,E,T<:Lucky.Option{S,C,R,E}} = Date(E, "yyyymmdd")
+expiry(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = Date(E, "yyyymmdd")
 
 function InteractiveBrokers.Contract(i::Lucky.Instrument)
     return InteractiveBrokers.Contract(

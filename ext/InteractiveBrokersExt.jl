@@ -231,7 +231,7 @@ right(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to impl
 right(::T) where {S,C,R,E,T<:Lucky.Option{S,C,R,E}} = String(R)
 
 expiry(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement expiry(::$(T))")
-expiry(::T) where {S,C,R,E,T<:Lucky.Option{S,C,R,E}} = String(E, "yyyymmdd")
+expiry(::T) where {S,C,R,E,T<:Lucky.Option{S,C,R,E}} = Date(E, "yyyymmdd")
 
 function InteractiveBrokers.Contract(i::Lucky.Instrument)
     return InteractiveBrokers.Contract(
@@ -251,5 +251,6 @@ function InteractiveBrokers.Contract(i::Lucky.Option)
         right=right(i),
         lastTradeDateOrMonth=expiry(i)
     )
-
+end
+    
 end

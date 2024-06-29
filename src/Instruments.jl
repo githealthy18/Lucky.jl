@@ -3,6 +3,8 @@ module Instruments
 export Instrument, InstrumentType
 import Lucky.Units as Units
 
+using Lucky.Constants
+
 using Dates
 
 abstract type Instrument end

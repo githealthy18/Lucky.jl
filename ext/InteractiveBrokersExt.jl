@@ -202,6 +202,7 @@ function wrapper(client::InteractiveBrokersObservable)
     setproperty!(wrap, :nextValidId, nextValidId)
 
     # Optional callbacks
+    setproperty!(wrap, :accountSummary, accountSummary)
     setproperty!(wrap, :tickPrice, tickPrice)
     setproperty!(wrap, :tickSize, tickSize)
     setproperty!(wrap, :tickString, tickString)

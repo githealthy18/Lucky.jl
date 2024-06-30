@@ -79,6 +79,15 @@ function historicalData(ib::InteractiveBrokersObservable, reqId::Int, bar::DataF
     next!(mapping[2], bar)
 end
 
+function accountSummary(ib::InteractiveBrokersObservable, reqId::Int, account::String, tag::String, value::String, currency::String)
+    if tag == "TotalCashValue"
+        value = parse(Float64, value)
+        mapping = ib.requestMappings[Pair(reqId, :accountSummary)]
+        next!(mapping[2], value)
+        println("AccountSummary: $(mapping[3]) $account $tag $value $currency")
+    end
+end
+
 function tickOptionComputation end
 
 function secDefOptParams end

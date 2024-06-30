@@ -39,6 +39,11 @@ function InteractiveBrokers.reqMarketDataType(ib::InteractiveBrokersObservable, 
     delayedReq(f, ib)
 end
 
+function InteractiveBrokers.reqAccountSummary(ib::InteractiveBrokersObservable, reqId::Int, group::String, tags::String)
+    f = (connection) -> InteractiveBrokers.reqAccountSummary(connection, reqId, group, tags)
+    delayedReq(f, ib)
+end
+
 function InteractiveBrokers.reqIds(ib::InteractiveBrokersObservable)
     f = (connection) -> InteractiveBrokers.reqIds(connection)
     delayedReq(f, ib)

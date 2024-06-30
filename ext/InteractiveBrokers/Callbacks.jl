@@ -84,10 +84,15 @@ function accountSummary(ib::InteractiveBrokersObservable, reqId::Int, account::S
         value = parse(Float64, value)
         mapping = ib.requestMappings[Pair(reqId, :accountSummary)]
         next!(mapping[2], value)
-        println("AccountSummary: $(mapping[3]) $account $tag $value $currency")
     end
 end
 
 function tickOptionComputation end
 
-function secDefOptParams end
+function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, reqId::Int, exchange::String, underlyingConId::Int, tradingClass::String, multiplier::String, expirations::Vector{String}, strikes::Vector{Float64})
+    mapping = ib.requestMappings[Pair(reqId, :securityDefinitionOptionalParameter)]
+    next!
+    println("SecurityDefinitionOptionalParameter: $(mapping[3]) $exchange $underlyingConId $tradingClass $multiplier")
+end
+
+# function secDefOptParams(ib::InteractiveBrokersObservable, reqId::Int,  end

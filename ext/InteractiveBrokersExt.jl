@@ -165,7 +165,7 @@ end
 
 function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=60000)
     requestId = nextRequestId(client)
-    # TODO options
+
     InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
     historicalDataSubject = Subject(DataFrame)
@@ -191,6 +191,24 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(ongoingCallbacks))
 
     InteractiveBrokers.cancelHistoricalData(client, requestId)
+end
+
+function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter}; timeout=60000)
+    requestId = nextRequestId(client)
+
+    InteractiveBrokers.secDefOptParams(client, requestId, instr)
+
+    secDefOptParamsSubject = Subject(DataFrame)
+    insert!(client.requestMappings, Pair(requestId, :secDefOptParams), (securityDefinitionOptionalParameter, secDefOptParamsSubject, instr, false))
+    insert!(client.mergedCallbacks, Pair(instr, :secDefOptParams), secDefOptParamsSubject)
+
+    setTimeout(timeout) do 
+        if !client.requestMappings[Pair(requestId, :secDefOptParams)][4]
+            Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
+        end
+    end
+
+    return secDefOptParamsSubject
 end
 
 function wrapper(client::InteractiveBrokersObservable)
@@ -226,6 +244,9 @@ symbol(::T) where {C,T<:Lucky.Cash{C}} = String(C)
 symbol(::T) where {S,C,T<:Lucky.Stock{S,C}} = String(S)
 symbol(::Type{<:Lucky.Stock{S,C}}) where {S,C} = String(S)
 symbol(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = symbol(S)
+
+conId(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement conId(::$(T))")
+conId(::T) where {C,T<:Lucky.Cash{C}} = nothing
 
 exchange(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement exchange(::$(T))")
 exchange(::T) where {C,T<:Lucky.Cash{C}} = "IDEALPRO" # TODO: Support Virtual Forex

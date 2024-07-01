@@ -238,6 +238,7 @@ function wrapper(client::InteractiveBrokersObservable)
 
     # Optional callbacks
     setproperty!(wrap, :accountSummary, accountSummary)
+    setproperty!(wrap, :contractDetails, contractDetails)
     setproperty!(wrap, :tickPrice, tickPrice)
     setproperty!(wrap, :tickSize, tickSize)
     setproperty!(wrap, :tickString, tickString)

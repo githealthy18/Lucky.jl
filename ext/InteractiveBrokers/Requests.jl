@@ -54,6 +54,11 @@ function InteractiveBrokers.reqSecDefOptParams(ib::InteractiveBrokersObservable,
     delayedReq(f, ib)
 end
 
+function InteractiveBrokers.reqContractDetails(ib::InteractiveBrokersObservable, reqId::Int, instr::Instrument)
+    f = (connection) -> InteractiveBrokers.reqContractDetails(connection, reqId, InteractiveBrokers.Contract(instr))
+    delayedReq(f, ib)
+end
+
 function InteractiveBrokers.reqIds(ib::InteractiveBrokersObservable)
     f = (connection) -> InteractiveBrokers.reqIds(connection)
     delayedReq(f, ib)

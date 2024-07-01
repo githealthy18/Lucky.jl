@@ -100,4 +100,7 @@ function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, r
     end
 end
 
+function contractDetails(ib::InteractiveBrokersObservable, reqId::Int, contractDetails::InteractiveBrokers.ContractDetails)
+    println("contractDetails: $(contractDetails)")
+end
 # function secDefOptParams(ib::InteractiveBrokersObservable, reqId::Int,  end

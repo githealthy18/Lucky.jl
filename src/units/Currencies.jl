@@ -21,3 +21,4 @@ currency(::Type{C}) where {C<:Currency} = C
 
 Base.show(io::IO, ::Type{Currency{S}}) where {S} = print(io, "$(S)")
 Base.convert(String, ::C) where {S,C<:Currency{S}} = String(S)
+Base.convert(String, ::Type{<:Currency{S}}) where {S} = String(S)

@@ -1,8 +1,8 @@
 export Option
 
-struct Option{S,R,E} <: Instrument end
+struct Option{S,R,K,E} <: Instrument end
 
 
-Option(S::Stock, R::OPTION_RIGHT, E::Dates.Date) = Option{InstrumentType(S),R,E}()
+Option(S::Stock, R::OPTION_RIGHT, K::Float64, E::Dates.Date) = Option{InstrumentType(S),R,K,E}()
 
-Units.currency(::Option{I,R,E}) where {S,C,R,E,I<:Stock{S,C}} = Units.CurrencyType(C)
+Units.currency(::Option{I,R,K,E}) where {S,C,R,K,E,I<:Stock{S,C}} = Units.CurrencyType(C)

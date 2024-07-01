@@ -90,9 +90,14 @@ end
 function tickOptionComputation end
 
 function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, reqId::Int, exchange::String, underlyingConId::Int, tradingClass::String, multiplier::String, expirations::Vector{String}, strikes::Vector{Float64})
-    mapping = ib.requestMappings[Pair(reqId, :securityDefinitionOptionalParameter)]
-    next!
-    println("SecurityDefinitionOptionalParameter: $(mapping[3]) $exchange $underlyingConId $tradingClass $multiplier")
+    exp_mapping = ib.requestMappings[Pair(reqId, :expirations)]
+    strike_mapping = ib.requestMappings[Pair(reqId, :strikes)]
+    for exp in sort!(Date.(expirations, "yyyymmdd"))
+        next!(exp_mapping[2], exp)
+        for str in strikes
+            next!(strike_mapping[2], str)
+        end
+    end
 end
 
 # function secDefOptParams(ib::InteractiveBrokersObservable, reqId::Int,  end

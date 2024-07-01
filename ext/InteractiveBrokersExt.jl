@@ -196,11 +196,16 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter}; timeout=60000)
     requestId = nextRequestId(client)
 
-    InteractiveBrokers.secDefOptParams(client, requestId, instr)
+    InteractiveBrokers.secDefOptParams(client, requestId, instr, "")
 
-    secDefOptParamsSubject = Subject(DataFrame)
-    insert!(client.requestMappings, Pair(requestId, :secDefOptParams), (securityDefinitionOptionalParameter, secDefOptParamsSubject, instr, false))
-    insert!(client.mergedCallbacks, Pair(instr, :secDefOptParams), secDefOptParamsSubject)
+    expirationSubject = Subject(Date)
+    strikeSubject = Subject(Float64)
+    insert!(client.requestMappings, Pair(requestId, :expirations), (securityDefinitionOptionalParameter, expirationSubject, instr, false))
+    insert!(client.requestMappings, Pair(requestId, :strikes), (securityDefinitionOptionalParameter, strikeSubject, instr, false))
+    insert!(client.mergedCallbacks, Pair(instr, :expirations), expirationSubject)
+    insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
+
+    source = combineLatest(expirationSubject |> take(4), strikeSubject) |> merge_map(Tuple, d -> from([CALL, PUT]) |> map(Tuple, r -> (d..., r))) |> map(Tuple, d -> Option(instr, d[3], d[2], d[1]))
 
     setTimeout(timeout) do 
         if !client.requestMappings[Pair(requestId, :secDefOptParams)][4]
@@ -209,6 +214,18 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     end
 
     return secDefOptParamsSubject
+end
+
+function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
+    ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
+    requestId = first(first(keys(ongoingRequests)))
+
+    ongoingCallbacks = getCallbacks(client.mergedCallbacks, instr)
+
+    Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+    Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(ongoingCallbacks))
+
+    InteractiveBrokers.cancelSecDefOptParams(client, requestId)
 end
 
 function wrapper(client::InteractiveBrokersObservable)
@@ -243,7 +260,7 @@ symbol(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to imp
 symbol(::T) where {C,T<:Lucky.Cash{C}} = String(C)
 symbol(::T) where {S,C,T<:Lucky.Stock{S,C}} = String(S)
 symbol(::Type{<:Lucky.Stock{S,C}}) where {S,C} = String(S)
-symbol(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = symbol(S)
+symbol(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = symbol(S)
 
 conId(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement conId(::$(T))")
 conId(::T) where {C,T<:Lucky.Cash{C}} = nothing
@@ -251,13 +268,13 @@ conId(::T) where {C,T<:Lucky.Cash{C}} = nothing
 exchange(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement exchange(::$(T))")
 exchange(::T) where {C,T<:Lucky.Cash{C}} = "IDEALPRO" # TODO: Support Virtual Forex
 exchange(::T) where {S,C,T<:Lucky.Stock{S,C}} = "SMART"
-exchange(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = "SMART"
+exchange(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = "SMART"
 
 right(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement right(::$(T))")
-right(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = String(R)
+right(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = String(R)
 
 expiry(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement expiry(::$(T))")
-expiry(::T) where {S,R,E,T<:Lucky.Option{S,R,E}} = Dates.format(E, "yyyymmdd")
+expiry(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = Dates.format(E, "yyyymmdd")
 
 function InteractiveBrokers.Contract(i::Lucky.Instrument)
     return InteractiveBrokers.Contract(
@@ -280,3 +297,5 @@ function InteractiveBrokers.Contract(i::Lucky.Option)
 end
 
 end
+
+source = combineLatest(strikeSubject) |> merge_map(Tuple, d -> from([CALL, PUT]) |> map(Tuple, r -> (d..., r)))

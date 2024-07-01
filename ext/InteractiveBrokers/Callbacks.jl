@@ -89,7 +89,7 @@ end
 
 function tickOptionComputation end
 
-function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, reqId::Int, exchange::String, underlyingConId::Int, tradingClass::String, multiplier::String, expirations::Vector{String}, strikes::Vector{Float64})
+function securityDefinitionOptionalParameters(ib::InteractiveBrokersObservable, reqId::Int, exchange::String, underlyingConId::Int, tradingClass::String, multiplier::String, expirations::Vector{String}, strikes::Vector{Float64})
     exp_mapping = ib.requestMappings[Pair(reqId, :expirations)]
     strike_mapping = ib.requestMappings[Pair(reqId, :strikes)]
     for exp in sort!(Date.(expirations, "yyyymmdd"))

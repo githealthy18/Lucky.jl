@@ -297,5 +297,3 @@ function InteractiveBrokers.Contract(i::Lucky.Option)
 end
 
 end
-
-source = combineLatest(strikeSubject) |> merge_map(Tuple, d -> from([CALL, PUT]) |> map(Tuple, r -> (d..., r)))

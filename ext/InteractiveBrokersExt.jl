@@ -180,7 +180,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.BID_SIZE), CallbackValue(tickSize, bidSizeSubject, instr, true))
     insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.LAST_SIZE), CallbackValue(tickSize, lastSizeSubject, instr, true))
     
-    insert!(client.requestMappings, CallbackKey(requestId, :tickString, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickString, tickStringSubject, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickString, InteractiveBrokers.TickTypes.LAST_TIMESTAMP), CallbackValue(tickString, tickStringSubject, instr, true))
     insert!(client.requestMappings, CallbackKey(requestId, :tickGeneric, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickGeneric, nothing, instr, true))
     insert!(client.requestMappings, CallbackKey(requestId, :marketDataType, InteractiveBrokers.TickTypes.LAST), CallbackValue(marketDataType, nothing, instr, true))
     insert!(client.requestMappings, CallbackKey(requestId, :tickReqParams, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickReqParams, nothing, instr, true))
@@ -193,8 +193,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     lastSize = lastSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_lastSize)
 
     setTimeout(timeout) do 
-        if client.requestMappings[CallbackKey(requestId, :tickString, InteractiveBrokers.LAST)].live
-            print("ENDING")
+        if client.requestMappings[CallbackKey(requestId, :tickPrice, InteractiveBrokers.LAST)].live
             Lucky.end_feed(client, instr, Val(:livedata))
         end
     end

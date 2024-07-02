@@ -62,8 +62,8 @@ function tickSize(ib::InteractiveBrokersObservable, tickerId::Int, field::Intera
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]
         mult = field == InteractiveBrokers.TickTypes.VOLUME ? 100 : 1
-        Lucky.VolumeQuote(val.instrument, size*mult, Dates.now())
-        next!(val.subject, size)
+        qte = Lucky.VolumeQuote(val.instrument, size*mult, Dates.now())
+        next!(val.subject, qte)
     end
 end
 

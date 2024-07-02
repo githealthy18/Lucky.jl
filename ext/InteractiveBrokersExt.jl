@@ -194,6 +194,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     setTimeout(timeout) do 
         if client.requestMappings[CallbackKey(requestId, :tickString, InteractiveBrokers.LAST)].live
+            print("ENDING")
             Lucky.end_feed(client, instr, Val(:livedata))
         end
     end

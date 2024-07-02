@@ -7,9 +7,39 @@ using Dates
 using Dictionaries
 using DataFrames
 
+struct CallbackKey
+    requestId::Int
+    callbackSymbol::Symbol
+    tickType::InteractiveBrokers.TickTypes.TICK_TYPES
+end
+
+struct CallbackValue
+    callbackFunction::Function
+    subject::Rocket.Subject
+    instrument::Lucky.Instrument
+    live::Bool
+end
+
+const CallbackMapping = Dictionary{CallbackKey,CallbackValue}
+
+struct LiveSubjects
+    lastPrice::Rocket.Subject
+    bidPrice::Rocket.Subject
+    askPrice::Rocket.Subject
+    highPrice::Rocket.Subject
+    lowPrice::Rocket.Subject
+    openPrice::Rocket.Subject
+    closePrice::Rocket.Subject
+    volume::Rocket.Subject
+    askSize::Rocket.Subject
+    bidSize::Rocket.Subject
+    lastSize::Rocket.Subject
+end
+
+
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
-    requestMappings::Dictionary{Pair{Int,Symbol},Tuple{Function,Rocket.Subject,Any,Bool}}
-    mergedCallbacks::Dictionary{Pair{Instrument,Symbol},Union{Rocket.Subject, Rocket.Subscribable}}
+    requestMappings::CallbackMapping()
+    mergedCallbacks::Dictionary{Instrument,LiveSubjects}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}
@@ -118,37 +148,74 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     # TODO callbacks depending on requested data
 
-    tickPriceSubject = Subject(Lucky.PriceQuote)
-    tickSizeSubject = Subject(Lucky.VolumeQuote)
+    lastPriceSubject = Subject(Lucky.PriceQuote)
+
+    bidPriceSubject = Subject(Lucky.PriceQuote)
+    askPriceSubject = Subject(Lucky.PriceQuote)
+
+    highPriceSubject = Subject(Lucky.PriceQuote)
+    lowPriceSubject = Subject(Lucky.PriceQuote)
+    openPriceSubject = Subject(Lucky.PriceQuote)
+    closePriceSubject = Subject(Lucky.PriceQuote)
+
+    volumeSubject = Subject(Lucky.VolumeQuote)
+    askSizeSubject = Subject(Lucky.VolumeQuote)
+    bidSizeSubject = Subject(Lucky.VolumeQuote)
+    lastSizeSubject = Subject(Lucky.VolumeQuote)
+
     tickStringSubject = Subject(DateTime)
-    insert!(client.requestMappings, Pair(requestId, :tickPrice), (tickPrice, tickPriceSubject, instr, false))
-    insert!(client.requestMappings, Pair(requestId, :tickSize), (tickSize, tickSizeSubject, instr, false))
-    insert!(client.requestMappings, Pair(requestId, :tickString), (tickString, tickStringSubject, instr, false))
-    insert!(client.requestMappings, Pair(requestId, :tickGeneric), (tickGeneric, Subject(Pair), instr, false))
-    insert!(client.requestMappings, Pair(requestId, :marketDataType), (marketDataType, Subject(Pair), instr, false))
-    insert!(client.requestMappings, Pair(requestId, :tickReqParams), (tickReqParams, Subject(Pair), instr, false))
+
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickPrice, lastPriceSubject, instr, false))
+
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.BID), CallbackValue(tickPrice, bidPriceSubject, instr, false))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.ASK), CallbackValue(tickPrice, askPriceSubject, instr, false))
+
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.HIGH), CallbackValue(tickPrice, highPriceSubject, instr, false))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LOW), CallbackValue(tickPrice, lowPriceSubject, instr, false))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.OPEN), CallbackValue(tickPrice, openPriceSubject, instr, false))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.CLOSE), CallbackValue(tickPrice, closePriceSubject, instr, false))
+
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.VOLUME), CallbackValue(tickSize, volumeSubject, instr, false))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.ASK_SIZE), CallbackValue(tickSize, askSizeSubject, instr, false))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.BID_SIZE), CallbackValue(tickSize, bidSizeSubject, instr, false))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.LAST_SIZE), CallbackValue(tickSize, lastSizeSubject, instr, false))
+    
+    insert!(client.requestMappings, CallbackKey(requestId, :tickString, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickString, tickStringSubject, instr, false))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickGeneric, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickGeneric, Subject(Pair), instr, false))
+    insert!(client.requestMappings, CallbackKey(requestId, :marketDataType, InteractiveBrokers.TickTypes.LAST), CallbackValue(marketDataType, Subject(Pair), instr, false))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickReqParams, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickReqParams, Subject(Pair), instr, false))
 
     # TODO default subject type depending on callback    
     merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].price, tup[1].size, tup[2])
-    merged = tickPriceSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.PriceQuote, merge)
+    last = lastPriceSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.PriceQuote, merge)
 
-    merge_vol = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].volume, tup[2])
-    merged_vol = tickSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_vol)
-
-    # Output callback
-    insert!(client.mergedCallbacks, Pair(instr, :tick), merged)
-    insert!(client.mergedCallbacks, Pair(instr, :volume), merged_vol)
+    merge_lastSize = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].volume, tup[2])
+    lastSize = lastSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_lastSize)
 
     setTimeout(timeout) do 
-        if !client.requestMappings[Pair(requestId, :tickPrice)][4]
+        if !client.requestMappings[CallbackKey(requestId, :tickString, InteractiveBrokers.LAST)].live
             Lucky.end_feed(client, instr, Val(:livedata))
         end
     end
 
-    # subscribe!(client.obs, tickPriceSubject)
-    # subscribe!(client.obs, tickStringSubject)
+    output = LiveSubjects(
+        last,
+        bidPriceSubject,
+        askPriceSubject,
+        highPriceSubject,
+        lowPriceSubject,
+        openPriceSubject,
+        closePriceSubject,
+        volumeSubject,
+        askSizeSubject,
+        bidSizeSubject,
+        lastSize
+    )
 
-    return merged, merged_vol
+    # Output callback
+    insert!(client.mergedCallbacks, instr, output)
+
+    return output
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})

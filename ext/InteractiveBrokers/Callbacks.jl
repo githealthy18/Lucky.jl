@@ -48,19 +48,19 @@ function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick:
     println("tickReqParams: $(mapping[3]) $minTick $bboExchange $snapshotPermissions")
 end
 
-function tickPrice(ib::InteractiveBrokersObservable, tickerId::Int, field::String, price::Union{Float64,Nothing}, size::Union{Float64,Nothing}, attrib::InteractiveBrokers.TickAttrib)
+function tickPrice(ib::InteractiveBrokersObservable, tickerId::Int, field::InteractiveBrokers.TickTypes.TICK_TYPES, price::Union{Float64,Nothing}, size::Union{Float64,Nothing}, attrib::InteractiveBrokers.TickAttrib)
     # TODO use attrib
     # ex data: 1 DELAYED_BID -1.0
     mapping = ib.requestMappings[Pair(tickerId, :tickPrice)]
-    qte = Lucky.PriceQuote(mapping[3], dispatch(field), price, size, nothing)
+    qte = Lucky.PriceQuote(mapping[3], dispatch(field), price, size, Dates.now())
     next!(mapping[2], qte)
 end
 
-function tickSize(ib::InteractiveBrokersObservable, tickerId::Int, field::String, size::Float64)
+function tickSize(ib::InteractiveBrokersObservable, tickerId::Int, field::InteractiveBrokers.TickTypes.TICK_TYPES, size::Float64)
     #TODO Use & dispatch
     if occursin("VOLUME", field)
         mapping = ib.requestMappings[Pair(tickerId, :tickSize)]
-        qte = Lucky.VolumeQuote(mapping[3], size*100, nothing)
+        qte = Lucky.VolumeQuote(mapping[3], size*100, Dates.now())
         next!(mapping[2], qte)
         return
     end

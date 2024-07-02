@@ -15,7 +15,7 @@ end
 
 struct CallbackValue
     callbackFunction::Function
-    subject::Union{Rocket.Subject, Nothing}
+    subject::Union{Rocket.Subscribable, Nothing}
     instrument::Lucky.Instrument
     live::Bool
 end
@@ -39,7 +39,7 @@ end
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
-    mergedCallbacks::Dictionary{Instrument,Union{Rocket.Subject,LiveSubjects}}
+    mergedCallbacks::Dictionary{Instrument,Union{Rocket.Subscribable,LiveSubjects}}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}

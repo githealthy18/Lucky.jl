@@ -25,7 +25,7 @@ export Cash, Stock, Option
 
 include("Quotes.jl")
 using .Quotes
-export AbstractQuote, Quote, QuoteType, AbstractTick, TickType
+export AbstractQuote, Quote, QuoteType
 export timestamp
 
 include("Positions.jl")

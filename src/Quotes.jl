@@ -4,7 +4,6 @@ export AbstractQuote
 export Quote, QuoteType
 export timestamp
 export PriceQuote, OhlcQuote, VolumeQuote
-export AbstractTick, TickType
 
 using Lucky.Instruments
 using Lucky.Ohlcs

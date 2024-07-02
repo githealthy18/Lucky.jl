@@ -22,24 +22,24 @@ end
 
 const CallbackMapping = Dictionary{CallbackKey,CallbackValue}
 
-struct LiveSubjects
-    lastPrice::Rocket.Subject
-    bidPrice::Rocket.Subject
-    askPrice::Rocket.Subject
-    highPrice::Rocket.Subject
-    lowPrice::Rocket.Subject
-    openPrice::Rocket.Subject
-    closePrice::Rocket.Subject
-    volume::Rocket.Subject
-    askSize::Rocket.Subject
-    bidSize::Rocket.Subject
-    lastSize::Rocket.Subject
+struct TickQuoteFeeds
+    lastPrice::Union{Rocket.Subscribable, Rocket.Subject}
+    bidPrice::Union{Rocket.Subscribable, Rocket.Subject}
+    askPrice::Union{Rocket.Subscribable, Rocket.Subject}
+    highPrice::Union{Rocket.Subscribable, Rocket.Subject}
+    lowPrice::Union{Rocket.Subscribable, Rocket.Subject}
+    openPrice::Union{Rocket.Subscribable, Rocket.Subject}
+    closePrice::Union{Rocket.Subscribable, Rocket.Subject}
+    volume::Union{Rocket.Subscribable, Rocket.Subject}
+    askSize::Union{Rocket.Subscribable, Rocket.Subject}
+    bidSize::Union{Rocket.Subscribable, Rocket.Subject}
+    lastSize::Union{Rocket.Subscribable, Rocket.Subject}
 end
 
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
-    mergedCallbacks::Dictionary{Instrument,Union{Rocket.Subscribable,Rocket.Subject,LiveSubjects}}
+    mergedCallbacks::Dictionary{Instrument,Union{Rocket.Subscribable,Rocket.Subject,TickQuoteFeeds}}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}
@@ -198,7 +198,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
         end
     end
 
-    output = LiveSubjects(
+    output = TickQuoteFeeds(
         last,
         bidPriceSubject,
         askPriceSubject,

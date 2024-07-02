@@ -38,7 +38,7 @@ end
 
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
-    requestMappings::CallbackMapping()
+    requestMappings::CallbackMapping
     mergedCallbacks::Dictionary{Instrument,Union{Rocket.Subject,LiveSubjects}}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
@@ -59,7 +59,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
 
     function InteractiveBrokersObservable(host=nothing, port::Union{Nothing,Int}=nothing, clientId::Union{Nothing,Int}=nothing, connectOptions::Union{Nothing,String}=nothing, optionalCapabilities::Union{Nothing,String}=nothing)
         ib = new(
-            Dictionary{Pair{Int,Symbol},Tuple{Function,Rocket.Subject,Any}}(),
+            CallbackMapping(),
             Dictionary{Symbol,Rocket.Subscribable}(),
             host,
             port,

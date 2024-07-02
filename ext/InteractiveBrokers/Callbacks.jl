@@ -61,7 +61,7 @@ function tickSize(ib::InteractiveBrokersObservable, tickerId::Int, field::Intera
     key = CallbackKey(tickerId, :tickSize, field)
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]
-        mult = field == InteractiveBrokers.TickTypes.VOLUME_MULTIPLIER ? 100 : 1
+        mult = field == InteractiveBrokers.TickTypes.VOLUME ? 100 : 1
         Lucky.VolumeQuote(val.instrument, size*mult, Dates.now())
         next!(val.subject, size)
     end

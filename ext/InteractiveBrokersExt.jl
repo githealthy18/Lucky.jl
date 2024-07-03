@@ -144,22 +144,22 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     # TODO callbacks depending on requested data
 
-    lastPriceSubject = Subject(Lucky.PriceQuote)
+    lastPriceSubject = RecentSubject(Lucky.PriceQuote)
 
-    bidPriceSubject = Subject(Lucky.PriceQuote)
-    askPriceSubject = Subject(Lucky.PriceQuote)
+    bidPriceSubject = RecentSubject(Lucky.PriceQuote)
+    askPriceSubject = RecentSubject(Lucky.PriceQuote)
 
-    highPriceSubject = Subject(Lucky.PriceQuote)
-    lowPriceSubject = Subject(Lucky.PriceQuote)
-    openPriceSubject = Subject(Lucky.PriceQuote)
-    closePriceSubject = Subject(Lucky.PriceQuote)
+    highPriceSubject = RecentSubject(Lucky.PriceQuote)
+    lowPriceSubject = RecentSubject(Lucky.PriceQuote)
+    openPriceSubject = RecentSubject(Lucky.PriceQuote)
+    closePriceSubject = RecentSubject(Lucky.PriceQuote)
 
-    volumeSubject = Subject(Lucky.VolumeQuote)
-    askSizeSubject = Subject(Lucky.VolumeQuote)
-    bidSizeSubject = Subject(Lucky.VolumeQuote)
-    lastSizeSubject = Subject(Lucky.VolumeQuote)
+    volumeSubject = RecentSubject(Lucky.VolumeQuote)
+    askSizeSubject = RecentSubject(Lucky.VolumeQuote)
+    bidSizeSubject = RecentSubject(Lucky.VolumeQuote)
+    lastSizeSubject = RecentSubject(Lucky.VolumeQuote)
 
-    tickStringSubject = Subject(DateTime)
+    tickStringSubject = RecentSubject(DateTime)
 
     insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickPrice, lastPriceSubject, instr, true))
 
@@ -229,7 +229,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
 
     InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
-    historicalDataSubject = Subject(DataFrame)
+    historicalDataSubject = RecentSubject(DataFrame)
     insert!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr, true))
     insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
@@ -257,8 +257,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "")
 
-    expirationSubject = Subject(Date)
-    strikeSubject = Subject(Float64)
+    expirationSubject = RecentSubject(Date)
+    strikeSubject = RecentSubject(Float64)
     insert!(client.requestMappings, CallbackKey(requestId, :expirations, nothing), CallbackValue(securityDefinitionOptionalParameter, expirationSubject, instr, true))
     insert!(client.requestMappings, CallbackKey(requestId, :strikes, nothing), Callbackvalue(securityDefinitionOptionalParameter, strikeSubject, instr, true))
     insert!(client.mergedCallbacks, Pair(instr, :expirations), expirationSubject)
@@ -280,7 +280,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     InteractiveBrokers.reqContractDetails(client, requestId, instr)
 
-    contractDetailsSubject = Subject(InteractiveBrokers.Contract)
+    contractDetailsSubject = RecentSubject(InteractiveBrokers.Contract)
     insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr, true))
     insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 

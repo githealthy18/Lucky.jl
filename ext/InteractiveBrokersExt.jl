@@ -223,7 +223,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     requestId = first(keys(ongoingRequests)).requestId
 
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-    Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(Pair(instr, :livedata)))
+    Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :livedata))
 
     InteractiveBrokers.cancelMktData(client, requestId)
 end
@@ -251,7 +251,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     requestId = first(keys(ongoingRequests)).requestId
 
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-    Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(Pair(instr, :historicaldata)))
+    Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :historicaldata))
 
     InteractiveBrokers.cancelHistoricalData(client, requestId)
 end
@@ -275,8 +275,8 @@ end
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
     ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-    Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(Pair(instr, :expirations)))
-    Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(Pair(instr, :strikes)))
+    Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :expirations))
+    Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :strikes))
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})
@@ -294,7 +294,7 @@ end
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})
     ongoingRequests = getRequests(client.requestMappings, [:contractDetails], instr)
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-    Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(Pair(instr, :contractDetails)))
+    Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :contractDetails))
 end
 
 function wrapper(client::InteractiveBrokersObservable)

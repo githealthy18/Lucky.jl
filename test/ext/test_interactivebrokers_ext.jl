@@ -18,6 +18,7 @@
             subscribe!(qt_vol2, logger("live_vol2"))
 
             hist = Lucky.feed(client, stock, Val(:historicaldata); timeout=120000)
+            subscribe!(hist, logger("hist"))
             subscribe!(hist, lambda(DataFrame; on_next=(d)->println(d))) # reqHistoricalData should return a Subscribable
             connect(client)
             # TODO Test quote params InteractiveBrokers.reqMktData(ib, 1, contract, "100,101,104,106,165,221,225,236", false)

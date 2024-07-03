@@ -137,10 +137,6 @@ function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Inst
     return filter(((k,v),) -> k.callbackSymbol in requestTypes && v.instrument==instr, pairs(dict))
 end
 
-function getCallbacks(dict::Dictionary, instr::Instrument)
-    return filter(((k,v),) -> k==instr, pairs(dict))
-end
-
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
     requestId = nextRequestId(client)
     # TODO options
@@ -259,7 +255,7 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
     requestId = nextRequestId(client)
 
-    InteractiveBrokers.secDefOptParams(client, requestId, instr, "")
+    InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "")
 
     expirationSubject = Subject(Date)
     strikeSubject = Subject(Float64)
@@ -286,7 +282,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     contractDetailsSubject = Subject(InteractiveBrokers.Contract)
     insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr, true))
-    insert!(client.mergedCallbacks, keys(Pair(instr, :contractDetails), contractDetailsSubject))
+    insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 
     return contractDetailsSubject
 end

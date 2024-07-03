@@ -1,9 +1,3 @@
-mutable struct ReqIdMaster
-    id::Int
-    ReqIdMaster() = new(0)
-end
-
-(r::ReqIdMaster)() = (r.id += 1)
 
 @inline function delayedReq(fn::Function, ib::InteractiveBrokersObservable)
     if isnothing(ib.connection)

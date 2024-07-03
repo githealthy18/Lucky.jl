@@ -138,7 +138,7 @@ function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Inst
 end
 
 function getCallbacks(dict::Dictionary, instr::Instrument)
-    return filter(((k,v),) -> v.instrument==instr, pairs(dict))
+    return filter(((k,v),) -> k.instrument==instr, pairs(dict))
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
@@ -186,7 +186,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.requestMappings, CallbackKey(requestId, :tickReqParams, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickReqParams, nothing, instr, true))
 
     # TODO default subject type depending on callback    
-    merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].price, tup[1].size, tup[2])
+    merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].price, tup[1].size, tup[2])
     last = lastPriceSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.PriceQuote, merge)
 
     merge_lastSize = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].volume, tup[2])

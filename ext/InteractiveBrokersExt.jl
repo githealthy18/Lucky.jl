@@ -39,7 +39,7 @@ end
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
-    mergedCallbacks::Dictionary{Instrument,Union{Rocket.Subscribable,Rocket.Subject,TickQuoteFeeds}}
+    mergedCallbacks::Dictionary{Pair{Instrument, Symbol},Union{Rocket.Subscribable,Rocket.Subject,TickQuoteFeeds}}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}
@@ -138,7 +138,7 @@ function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Inst
 end
 
 function getCallbacks(dict::Dictionary, instr::Instrument)
-    return filter(((k,v),) -> k.instrument==instr, pairs(dict))
+    return filter(((k,v),) -> k==instr, pairs(dict))
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
@@ -213,7 +213,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     )
 
     # Output callback
-    insert!(client.mergedCallbacks, instr, output)
+    insert!(client.mergedCallbacks, Pair(instr, :livedata), output)
 
     return output
 end
@@ -222,10 +222,8 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
     requestId = first(keys(ongoingRequests)).requestId
 
-    ongoingCallbacks = getCallbacks(client.mergedCallbacks, instr)
-
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-    Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(ongoingCallbacks))
+    Lucky.Utils.deletefrom!(client.mergedCallbacks, Pair(instr, :livedata))
 
     InteractiveBrokers.cancelMktData(client, requestId)
 end
@@ -237,7 +235,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
 
     historicalDataSubject = Subject(DataFrame)
     insert!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr, true))
-    insert!(client.mergedCallbacks, instr, historicalDataSubject)
+    insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
     setTimeout(timeout) do 
         if client.requestMappings[CallbackKey(requestId, :historicalData, nothing)].live
@@ -252,10 +250,8 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     ongoingRequests = getRequests(client.requestMappings, [:historicalData], instr)
     requestId = first(keys(ongoingRequests)).requestId
 
-    ongoingCallbacks = getCallbacks(client.mergedCallbacks, instr)
-
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-    Lucky.Utils.deletefrom!(client.mergedCallbacks, keys(ongoingCallbacks))
+    Lucky.Utils.deletefrom!(client.mergedCallbacks, Pair(instr, :historicaldata))
 
     InteractiveBrokers.cancelHistoricalData(client, requestId)
 end
@@ -269,11 +265,18 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     strikeSubject = Subject(Float64)
     insert!(client.requestMappings, CallbackKey(requestId, :expirations, nothing), CallbackValue(securityDefinitionOptionalParameter, expirationSubject, instr, true))
     insert!(client.requestMappings, CallbackKey(requestId, :strikes, nothing), Callbackvalue(securityDefinitionOptionalParameter, strikeSubject, instr, true))
-    insert!(client.mergedCallbacks, instr, expirationSubject)
-    insert!(client.mergedCallbacks, instr, strikeSubject)
+    insert!(client.mergedCallbacks, Pair(instr, :expirations), expirationSubject)
+    insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
 
     source = combineLatest(expirationSubject |> take(4), strikeSubject) |> merge_map(Tuple, d -> from([CALL, PUT]) |> map(Tuple, r -> (d..., r))) |> map(Option, d -> Option(instr, d[3], d[2], d[1]))
     return source
+end
+
+function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
+    ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
+    Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+    Lucky.Utils.deletefrom!(client.mergedCallbacks, Pair(instr, :expirations))
+    Lucky.Utils.deletefrom!(client.mergedCallbacks, Pair(instr, :strikes))
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})
@@ -283,9 +286,15 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     contractDetailsSubject = Subject(InteractiveBrokers.Contract)
     insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr, true))
-    insert!(client.mergedCallbacks, instr, contractDetailsSubject)
+    insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 
     return contractDetailsSubject
+end
+
+function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})
+    ongoingRequests = getRequests(client.requestMappings, [:contractDetails], instr)
+    Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+    Lucky.Utils.deletefrom!(client.mergedCallbacks, Pair(instr, :contractDetails))
 end
 
 function wrapper(client::InteractiveBrokersObservable)

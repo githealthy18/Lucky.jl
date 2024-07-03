@@ -45,8 +45,8 @@ QuoteType(I::Type{<:Instrument}, Q::Type{<:Ohlc}) = OhlcQuote{I,Q}
 QuoteType(I::Type{<:Instrument}, S::Type{<:Number}, P::Type{<:Number}, D::Type{<:Dates.AbstractTime}=Dates.DateTime) = PriceQuote{I,P,S,D}
 QuoteType(I::Type{<:Instrument}, V::Type{<:Number}, D::Type{<:Dates.AbstractTime}=Dates.DateTime) = VolumeQuote{I,V,D}
 QuoteType(i::Instrument, Q::Type{<:Ohlc}) = QuoteType(InstrumentType(i), Q)
-QuoteType(i::Instrument, S::Type{<:Number}, P::Type{<:Number}=Float64, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), P, S, D)
-QuoteType(i::Instrument, V::Type{<:Number}=Int, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), V, D)
+QuoteType(i::Instrument, S::Type{<:Number}, P::Type{<:Number}, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), P, S, D)
+QuoteType(i::Instrument, V::Type{<:Number}, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), V, D)
 
 Units.currency(q::AbstractQuote) = Units.currency(q.instrument)
 timestamp(q::OhlcQuote) = q.ohlc.timestamp

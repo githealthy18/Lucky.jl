@@ -257,7 +257,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     conId = Lucky.feed(client, instr, Val(:contractDetails)) |> Rocket.first()
 
-    subscribe!(conId, lambda(InteractiveBrokers.ContractDetails; on_next=(d)-> InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, d.contract.exchange, d.contract.conId)))
+    subscribe!(conId, lambda(InteractiveBrokers.ContractDetails; on_next=(d)-> InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "", d.contract.conId)))
 
     #InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "")
 

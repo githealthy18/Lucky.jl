@@ -255,6 +255,8 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
     requestId = nextRequestId(client)
 
+    conId = Lucky.feed(client, instr, Val(:contractDetails)) |> first() |> getproperty(:conId)
+
     InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "")
 
     expirationSubject = RecentSubject(Date)
@@ -265,6 +267,10 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
 
     source = combineLatest(expirationSubject |> take(4), strikeSubject) |> merge_map(Tuple, d -> from([CALL, PUT]) |> map(Tuple, r -> (d..., r))) |> map(Option, d -> Option(instr, d[3], d[2], d[1]))
+
+    setTimeout(30000) do 
+        Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
+    end
     return source
 end
 
@@ -283,6 +289,10 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     contractDetailsSubject = RecentSubject(InteractiveBrokers.Contract)
     insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr, true))
     insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
+
+    setTimeout(30000) do 
+        Lucky.end_feed(client, instr, Val(:contractDetails))
+    end
 
     return contractDetailsSubject
 end

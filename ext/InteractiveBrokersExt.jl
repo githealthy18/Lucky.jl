@@ -15,7 +15,7 @@ end
 
 struct CallbackValue
     callbackFunction::Function
-    subject::Union{Rocket.Subscribable, Rocket.Subject, Nothing}
+    subject::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance, Nothing}
     instrument::Lucky.Instrument
     live::Bool
 end
@@ -23,23 +23,23 @@ end
 const CallbackMapping = Dictionary{CallbackKey,CallbackValue}
 
 struct TickQuoteFeeds
-    lastPrice::Union{Rocket.Subscribable, Rocket.Subject}
-    bidPrice::Union{Rocket.Subscribable, Rocket.Subject}
-    askPrice::Union{Rocket.Subscribable, Rocket.Subject}
-    highPrice::Union{Rocket.Subscribable, Rocket.Subject}
-    lowPrice::Union{Rocket.Subscribable, Rocket.Subject}
-    openPrice::Union{Rocket.Subscribable, Rocket.Subject}
-    closePrice::Union{Rocket.Subscribable, Rocket.Subject}
-    volume::Union{Rocket.Subscribable, Rocket.Subject}
-    askSize::Union{Rocket.Subscribable, Rocket.Subject}
-    bidSize::Union{Rocket.Subscribable, Rocket.Subject}
-    lastSize::Union{Rocket.Subscribable, Rocket.Subject}
+    lastPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    bidPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    askPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    highPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    lowPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    openPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    closePrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    volume::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    askSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    bidSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    lastSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
 end
 
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
-    mergedCallbacks::Dictionary{Pair{Instrument, Symbol},Union{Rocket.Subscribable,Rocket.Subject,TickQuoteFeeds}}
+    mergedCallbacks::Dictionary{Pair{Instrument, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeeds}}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}

@@ -264,7 +264,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     expirationSubject = RecentSubject(Date)
     strikeSubject = RecentSubject(Float64)
     insert!(client.requestMappings, CallbackKey(requestId, :expirations, nothing), CallbackValue(securityDefinitionOptionalParameter, expirationSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :strikes, nothing), Callbackvalue(securityDefinitionOptionalParameter, strikeSubject, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :strikes, nothing), CallbackValue(securityDefinitionOptionalParameter, strikeSubject, instr, true))
     insert!(client.mergedCallbacks, Pair(instr, :expirations), expirationSubject)
     insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
 

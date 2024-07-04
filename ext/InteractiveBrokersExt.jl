@@ -286,7 +286,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     InteractiveBrokers.reqContractDetails(client, requestId, instr)
 
-    contractDetailsSubject = RecentSubject(InteractiveBrokers.Contract)
+    contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails)
     insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr, true))
     insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 

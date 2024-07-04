@@ -116,6 +116,9 @@ function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, r
 end
 
 function contractDetails(ib::InteractiveBrokersObservable, reqId::Int, contractDetails::InteractiveBrokers.ContractDetails)
-    println("contractDetails: $(contractDetails)")
+    key = CallbackKey(reqId, :contractDetails, nothing)
+    if haskey(ib.requestMappings, key)
+        val = ib.requestMappings[key]
+        next!(val.subject, contractDetails)
+    end
 end
-# function secDefOptParams(ib::InteractiveBrokersObservable, reqId::Int,  end

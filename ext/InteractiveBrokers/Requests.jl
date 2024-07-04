@@ -43,7 +43,7 @@ function InteractiveBrokers.cancelAccountSummary(ib::InteractiveBrokersObservabl
     delayedReq(f, ib)
 end
 
-function InteractiveBrokers.reqSecDefOptParams(ib::InteractiveBrokersObservable, reqId::Int, instr::Instrument, futFopExchange::String)
+function InteractiveBrokers.reqSecDefOptParams(ib::InteractiveBrokersObservable, reqId::Int, instr::Instrument, futFopExchange::String, conId::Int)
     f = (connection) -> InteractiveBrokers.reqSecDefOptParams(connection, reqId, symbol(instr), futFopExchange, secType(instr), conId(instr))
     delayedReq(f, ib)
 end

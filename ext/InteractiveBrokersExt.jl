@@ -255,9 +255,11 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
     requestId = nextRequestId(client)
 
-    conId = Lucky.feed(client, instr, Val(:contractDetails)) |> first() |> getproperty(:conId)
+    conId = Lucky.feed(client, instr, Val(:contractDetails)) |> Rocket.first()
 
-    InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "")
+    subscribe!(conId, lambda(InteractiveBrokers.ContractDetails; on_next=(d)-> InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, d.contract.exchange, d.contract.conId)))
+
+    #InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "")
 
     expirationSubject = RecentSubject(Date)
     strikeSubject = RecentSubject(Float64)

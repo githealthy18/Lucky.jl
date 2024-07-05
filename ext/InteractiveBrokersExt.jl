@@ -144,22 +144,22 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     # TODO callbacks depending on requested data
 
-    lastPriceSubject = RecentSubject(Lucky.PriceQuote)
+    lastPriceSubject = RecentSubject(Lucky.PriceQuote; scheduler=AsyncScheduler())
 
-    bidPriceSubject = RecentSubject(Lucky.PriceQuote)
-    askPriceSubject = RecentSubject(Lucky.PriceQuote)
+    bidPriceSubject = RecentSubject(Lucky.PriceQuote; scheduler=AsyncScheduler())
+    askPriceSubject = RecentSubject(Lucky.PriceQuote; scheduler=AsyncScheduler())
 
-    highPriceSubject = RecentSubject(Lucky.PriceQuote)
-    lowPriceSubject = RecentSubject(Lucky.PriceQuote)
-    openPriceSubject = RecentSubject(Lucky.PriceQuote)
-    closePriceSubject = RecentSubject(Lucky.PriceQuote)
+    highPriceSubject = RecentSubject(Lucky.PriceQuote; scheduler=AsyncScheduler())
+    lowPriceSubject = RecentSubject(Lucky.PriceQuote; scheduler=AsyncScheduler())
+    openPriceSubject = RecentSubject(Lucky.PriceQuote; scheduler=AsyncScheduler())
+    closePriceSubject = RecentSubject(Lucky.PriceQuote; scheduler=AsyncScheduler())
 
-    volumeSubject = RecentSubject(Lucky.VolumeQuote)
-    askSizeSubject = RecentSubject(Lucky.VolumeQuote)
-    bidSizeSubject = RecentSubject(Lucky.VolumeQuote)
-    lastSizeSubject = RecentSubject(Lucky.VolumeQuote)
+    volumeSubject = RecentSubject(Lucky.VolumeQuote; scheduler=AsyncScheduler())
+    askSizeSubject = RecentSubject(Lucky.VolumeQuote; scheduler=AsyncScheduler())
+    bidSizeSubject = RecentSubject(Lucky.VolumeQuote; scheduler=AsyncScheduler())
+    lastSizeSubject = RecentSubject(Lucky.VolumeQuote; scheduler=AsyncScheduler())
 
-    tickStringSubject = RecentSubject(DateTime)
+    tickStringSubject = RecentSubject(DateTime; scheduler=AsyncScheduler())
 
     insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickPrice, lastPriceSubject, instr, true))
 
@@ -229,7 +229,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
 
     InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
-    historicalDataSubject = RecentSubject(DataFrame)
+    historicalDataSubject = RecentSubject(DataFrame; scheduler=AsyncScheduler())
     insert!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr, true))
     insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
@@ -261,8 +261,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     #InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "")
 
-    expirationSubject = RecentSubject(Date)
-    strikeSubject = RecentSubject(Float64)
+    expirationSubject = RecentSubject(Date; scheduler=AsyncScheduler())
+    strikeSubject = RecentSubject(Float64; scheduler=AsyncScheduler())
     insert!(client.requestMappings, CallbackKey(requestId, :expirations, nothing), CallbackValue(securityDefinitionOptionalParameter, expirationSubject, instr, true))
     insert!(client.requestMappings, CallbackKey(requestId, :strikes, nothing), CallbackValue(securityDefinitionOptionalParameter, strikeSubject, instr, true))
     insert!(client.mergedCallbacks, Pair(instr, :expirations), expirationSubject)
@@ -288,7 +288,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     InteractiveBrokers.reqContractDetails(client, requestId, instr)
 
-    contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails)
+    contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails; scheduler=AsyncScheduler())
     insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr, true))
     insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 

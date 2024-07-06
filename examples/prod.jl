@@ -8,14 +8,14 @@ using Minio
 using Impute
 using ShiftedArrays
 using Lucky.Quotes: Last, Bid, Ask, Mark, High, Low, Close, Open, Volume, AskSize, BidSize, LastSize
-using Lucky.Utils: after_hours
+using Lucky.Utils: after_hours, assign_businessday
 
 BusinessDays.initcache(:USNYSE)
 
 const cfg = MinioConfig("http://localhost:9000")
 
 function base_processor(data::DataFrame)
-    df = copy(data)
+    df = copy(data[!, [:time, :high, :low, :open, :close, :volume]])
     dropmissing!(df)
     # df[!,2:end] = convert.(Float32, df[!,2:end])
     df.time = DateTime.(df.time, "yyyymmdd")
@@ -27,7 +27,8 @@ function base_processor(data::DataFrame)
     df.returns = (log.(df.close) - ShiftedArrays.lag(log.(df.close)))
     dropmissing!(df)
     bday_col = assign_businessday(df[:, 1])
-    return data
+    df.bday = bday_col
+    return df
 end
 
 mutable struct PreModelProcessor{S, A} <: AbstractStrategy
@@ -37,9 +38,8 @@ mutable struct PreModelProcessor{S, A} <: AbstractStrategy
     next::A
 end
 
-PreModelProcessor(processor::Function, markov::MarkovModel{S}, arch::ArchModel{S}, next::A) where {S, A} = PreModelProcessor(missing, processor, markov, arch, next)
-
 function Rocket.on_next!(step::PreModelProcessor, data::DataFrame)
+    println("Processing Data")
     result = step.processor(data)
     next!(step.next, result)
     next!(step.markov, result.returns)
@@ -111,7 +111,7 @@ stock = Stock(:AAPL,:USD)
 stockType = InstrumentType(stock)
 dataset = PreModelDataset(stock)
 premodelProcessor = PreModelProcessor(base_processor, MarkovModel(stockType, cfg, "prod", dataset), ArchModel(stockType, cfg, "prod", dataset), dataset)
-actor = PreModel(lambda(DataFrame; on_complete = ()->println("Done!")))
+actor = PreModel(premodelProcessor)
 hist = Lucky.feed(client, stock, Val(:historicaldata))
 feeds = Lucky.feed(client, stock, Val(:livedata))
 source = merged((hist |> first(), feeds.openPrice |> first(), feeds.highPrice |> first(), feeds.lowPrice |> first(), feeds.markPrice |> first(), feeds.volume |> first()))

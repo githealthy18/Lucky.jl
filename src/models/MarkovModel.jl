@@ -43,5 +43,5 @@ function Rocket.on_next!(model::MarkovModel{I}, returns::Vector{Float64}) where 
     pred_prob1[2:end] = pred_probabilities[:,1]
     pred_prob2[2:end] = pred_probabilities[:,2]
     pred_prob3[2:end] = pred_probabilities[:,3]
-    next!(model.next, MarkovPrediction{I}(pred_values, pred_prob1, pred_prob2, pred_prob3))
+    next!(model.next, MarkovPrediction{I}(pred_beta, pred_prob1, pred_prob2, pred_prob3))
 end

@@ -9,6 +9,8 @@ using Lucky.Utils: after_hours
 
 BusinessDays.initcache(:USNYSE)
 
+const cfg = MinioConfig("http://localhost:9000")
+
 mutable struct PreModelProcessor{A} <: AbstractStrategy
     data::DataFrame
     open::Union{Missing, Lucky.PriceQuote{I,Open,P,S,D} where {I,P,S,D}}

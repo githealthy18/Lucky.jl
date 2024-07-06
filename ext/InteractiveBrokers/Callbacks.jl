@@ -1,4 +1,4 @@
-using Lucky.Quotes: LastTick, BidTick, AskTick, HighTick, LowTick, CloseTick, OpenTick, VolumeTick, AskSizeTick, BidSizeTick, LastSizeTick
+using Lucky.Quotes: Last, Bid, Ask, Mark, High, Low, Close, Open, Volume, AskSize, BidSize, LastSize
 const MAPPED_TICKS = Dictionary(
     [
         InteractiveBrokers.TickTypes.LAST,

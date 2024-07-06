@@ -34,6 +34,7 @@ struct MarkovPrediction{I<:Instrument}
 end
 
 function Rocket.on_next!(model::MarkovModel{I}, returns::Vector{Float64}) where {I}
+    println("MARKOVING")
     pred_values, pred_probabilities = MarSwitching.predict(model.model; y=returns)
     pred_beta = Vector{Union{Missing, Float64}}(undef, length(returns))
     pred_prob1 = Vector{Union{Missing, Float64}}(undef, length(returns))

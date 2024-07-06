@@ -39,7 +39,6 @@ mutable struct PreModelProcessor{S, A} <: AbstractStrategy
 end
 
 function Rocket.on_next!(step::PreModelProcessor, data::DataFrame)
-    println("Processing Data")
     result = step.processor(data)
     next!(step.next, result)
     next!(step.markov, result.returns)
@@ -56,11 +55,11 @@ function Rocket.on_next!(step::PreModelDataset, data::DataFrame)
     step.data = data
 end
 
-function Rocket.on_next!(step::PreModelDataset, msg::MarkovPrediction)
+function Rocket.on_next!(step::PreModelDataset{I}, msg::MarkovPrediction{I}) where {I}
     println("Markov Prediction: $(msg)")
 end
 
-function Rocket.on_next!(step::PreModelDataset, msg::ArchPrediction)
+function Rocket.on_next!(step::PreModelDataset{I}, msg::ArchPrediction{I}) where {I}
     println("Arch Prediction: $(msg)")
 end
 

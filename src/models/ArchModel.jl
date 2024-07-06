@@ -35,15 +35,16 @@ struct ArchPrediction{I<:Instrument}
 end
 
 function Rocket.on_next!(model::ArchModel{I}, returns::Vector{Float64}) where {I}
+    println("ARCHING")
     l = length(returns)
     pred_variances = Vector{Union{Missing, Float64}}(undef, l)
     pred_vars = Vector{Union{Missing, Float64}}(undef, l)
     pred_vols = Vector{Union{Missing, Float64}}(undef, l)
-    for i in 1:l-700
-        pred_model = ARCHModels.UnivariateARCHModel(model.model.spec, returns[1:700+i];fitted=true)
-        pred_variances[700+i] = ARCHModels.predict.(pred_model, :variance)
-        pred_vars[700+i] = ARCHModels.predict.(pred_model, :VaR)
-        pred_vols[700+i] = ARCHModels.predict.(pred_model, :volatility)
+    for i in 1:l-1000
+        pred_model = ARCHModels.UnivariateARCHModel(model.model.spec, returns[1:1000+i];fitted=true)
+        pred_variances[1000+i] = ARCHModels.predict.(pred_model, :variance)
+        pred_vars[1000+i] = ARCHModels.predict.(pred_model, :VaR)
+        pred_vols[1000+i] = ARCHModels.predict.(pred_model, :volatility)
     end
     pred_modeler = UnivariateARCHModel(model.model.spec, returns; fitted=true)
     vars = VaRs(pred_modeler, 0.05)

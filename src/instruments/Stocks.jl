@@ -1,4 +1,4 @@
-export Stock, symbol
+export Stock
 
 struct Stock{S,C} <: Instrument end
 

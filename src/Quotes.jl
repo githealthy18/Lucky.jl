@@ -18,7 +18,25 @@ QuoteType(I::Type{<:Instrument}, params...) = error("You probably forgot to impl
 QuoteType(Q::Type{<:AbstractQuote}) = Q
 Units.TimestampType(Q::Type{<:AbstractQuote}) = error("You probably forgot to implement TimestampType(::$(Q))")
 
-struct PriceQuote{I,Q,S,D} <: AbstractQuote
+abstract type AbstractTick end
+
+struct BidTick <: AbstractTick end
+struct AskTick <: AbstractTick end
+struct LastTick <: AbstractTick end
+struct OpenTick <: AbstractTick end
+struct HighTick <: AbstractTick end
+struct LowTick <: AbstractTick end
+struct CloseTick <: AbstractTick end
+struct VolumeTick <: AbstractTick end
+struct BidSizeTick <: AbstractTick end
+struct AskSizeTick <: AbstractTick end
+struct LastSizeTick <: AbstractTick end
+
+TickType(T::Type{<:AbstractTick}, params...) = error("You probably forgot to implement TickType(::$(T), $(params...))")
+TickType(::T) where {T<:AbstractTick} = T
+
+
+struct PriceQuote{I,T,Q,S,D} <: AbstractQuote
     instrument::I
     price::Q
     size::S
@@ -30,7 +48,7 @@ struct OhlcQuote{I,Q} <: AbstractQuote
     ohlc::Q
 end
 
-struct VolumeQuote{I,Q,D} <: AbstractQuote
+struct VolumeQuote{I,T,Q,D} <: AbstractQuote
     instrument::I
     volume::Q
     timestamp::D

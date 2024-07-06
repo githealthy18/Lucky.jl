@@ -7,13 +7,14 @@ using ARCHModels
 using Serialization
 
 
-mutable struct ArchModel{S} <: AbstractModel
-    model::Union{Nothing, <:UnivariateARCHModel}
-end
+struct ArchModel{I<:Instrument, S} <: AbstractModel
+    server::S
+    bucket::String
+    model::UnivariateARCHModel
 
-ModelSymbol(::ArchModel{S}) where S = S
-
-function Rocket.on_next!(model::ArchModel, msg::ReadModelMsg)
-    stream = s3_get(msg.server, msg.bucket, String(ModelSymbol(model)) * "/archmodel.jld2")
-    model.model = deserialize(IOBuffer(stream))
+    ArchModel{I}(server::S, bucket::String) where {I, S} = begin
+        stream = s3_get(server, bucket, symbol(I) * "/archmodel.jld2")
+        model = deserialize(IOBuffer(stream))
+        new{I, S, B}(server, bucket, model)
+    end
 end

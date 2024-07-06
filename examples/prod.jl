@@ -33,16 +33,16 @@ end
 
 mutable struct PreModelProcessor{S, A} <: AbstractStrategy
     processor::Function
-    markov::MarkovModel{S,A}
-    arch::ArchModel{S,A}
+    markov::MarkovModel{S}
+    arch::ArchModel{S}
     next::A
 end
 
 function Rocket.on_next!(step::PreModelProcessor, data::DataFrame)
     result = step.processor(data)
     next!(step.next, result)
-    next!(step.markov, result.returns)
-    next!(step.arch, result.returns)
+    Threads.@spawn next!(step.markov, result.returns)
+    Threads.@spawn next!(step.arch, result.returns)
 end
 
 mutable struct PreModelDataset{S} <: AbstractStrategy
@@ -53,6 +53,10 @@ PreModelDataset(::I) where {I<:Instrument} = PreModelDataset{I}(missing)
 
 function Rocket.on_next!(step::PreModelDataset, data::DataFrame)
     step.data = data
+end
+
+function Rocket.on_complete!(step::PreModelDataset)
+    println("Completed PreModelDataset")
 end
 
 function Rocket.on_next!(step::PreModelDataset{I}, msg::MarkovPrediction{I}) where {I}
@@ -105,11 +109,20 @@ end
 client = Lucky.service(:interactivebrokers)
 connect(client)
 
-
+InteractiveBrokers.reqMarketDataType(client, InteractiveBrokers.REALTIME)
 stock = Stock(:AAPL,:USD)
 stockType = InstrumentType(stock)
 dataset = PreModelDataset(stock)
-premodelProcessor = PreModelProcessor(base_processor, MarkovModel(stockType, cfg, "prod", dataset), ArchModel(stockType, cfg, "prod", dataset), dataset)
+
+data = Subject(DataFrame)
+markov = Subject(MarkovPrediction; scheduler = ThreadScheduler())
+arch = Subject(ArchPrediction; scheduler = ThreadScheduler())
+
+source = merged((data |> first(), markov |> first(), arch |> first()))
+
+subscribe!(source, dataset)
+
+premodelProcessor = PreModelProcessor(base_processor, MarkovModel(stockType, cfg, "prod", markov), ArchModel(stockType, cfg, "prod", arch), data)
 actor = PreModel(premodelProcessor)
 hist = Lucky.feed(client, stock, Val(:historicaldata))
 feeds = Lucky.feed(client, stock, Val(:livedata))

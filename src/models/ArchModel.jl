@@ -35,7 +35,6 @@ struct ArchPrediction{I<:Instrument}
 end
 
 function Rocket.on_next!(model::ArchModel{I}, returns::Vector{Float64}) where {I}
-    println("ARCHING")
     l = length(returns)
     pred_variances = Vector{Union{Missing, Float64}}(undef, l)
     pred_vars = Vector{Union{Missing, Float64}}(undef, l)

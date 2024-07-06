@@ -34,7 +34,6 @@ struct MarkovPrediction{I<:Instrument}
 end
 
 function Rocket.on_next!(model::MarkovModel{I,A}, returns::Vector{Float64}) where {I,A}
-    println("MARKOVING STARTED")
     pred_values, pred_probabilities = MarSwitching.predict(model.model; y=returns)
     pred_beta = Vector{Union{Missing, Float64}}(undef, length(returns))
     pred_prob1 = Vector{Union{Missing, Float64}}(undef, length(returns))
@@ -45,6 +44,5 @@ function Rocket.on_next!(model::MarkovModel{I,A}, returns::Vector{Float64}) wher
     pred_prob2[2:end] = pred_probabilities[:,2]
     pred_prob3[2:end] = pred_probabilities[:,3]
     result = MarkovPrediction{I}(pred_beta, pred_prob1, pred_prob2, pred_prob3)
-    println(result)
     next!(model.next, result)
 end

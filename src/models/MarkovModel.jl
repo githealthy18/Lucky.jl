@@ -27,12 +27,12 @@ struct MarkovPrediction{I<:Instrument}
     regime3::Vector{Float64}
 end
 
-function Rocket.on_next!(model::MarkovModel{I, A}, returns::Vector{Float64}) where {I, A}
+function Rocket.on_next!(model::MarkovModel{I}, returns::Vector{Float64}) where {I}
     pred_values, pred_probabilities = MarSwitching.predict(model.model; y=returns)
-    pred_beta = Vector{Union{Missing, Float32, Float64}}(undef, length(returns))
-    pred_prob1 = Vector{Union{Missing, Float32, Float64}}(undef, length(returns))
-    pred_prob2 = Vector{Union{Missing, Float32, Float64}}(undef, length(returns))
-    pred_prob3 = Vector{Union{Missing, Float32, Float64}}(undef, length(returns))
+    pred_beta = Vector{Union{Missing, Float64}}(undef, length(returns))
+    pred_prob1 = Vector{Union{Missing, Float64}}(undef, length(returns))
+    pred_prob2 = Vector{Union{Missing, Float64}}(undef, length(returns))
+    pred_prob3 = Vector{Union{Missing, Float64}}(undef, length(returns))
     pred_beta[2:end] = pred_values
     pred_prob1[2:end] = pred_probabilities[:,1]
     pred_prob2[2:end] = pred_probabilities[:,2]

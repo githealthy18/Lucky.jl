@@ -45,6 +45,6 @@ function Rocket.on_next!(model::MarkovModel{I,A}, returns::Vector{Float64}) wher
     pred_prob2[2:end] = pred_probabilities[:,2]
     pred_prob3[2:end] = pred_probabilities[:,3]
     result = MarkovPrediction{I}(pred_beta, pred_prob1, pred_prob2, pred_prob3)
-    println("MARKOVING FINISHED")
+    println(result)
     next!(model.next, result)
 end

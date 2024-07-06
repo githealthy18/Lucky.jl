@@ -1,3 +1,35 @@
+const MAPPED_TICKS = Dictionary(
+    [
+        InteractiveBrokers.TickTypes.LAST,
+        InteractiveBrokers.TickTypes.BID,
+        InteractiveBrokers.TickTypes.ASK,
+        InteractiveBrokers.TickTypes.HIGH,
+        InteractiveBrokers.TickTypes.LOW,
+        InteractiveBrokers.TickTypes.CLOSE,
+        InteractiveBrokers.TickTypes.OPEN,
+        InteractiveBrokers.TickTypes.VOLUME,
+        InteractiveBrokers.TickTypes.ASK_SIZE,
+        InteractiveBrokers.TickTypes.BID_SIZE,
+        InteractiveBrokers.TickTypes.LAST_SIZE
+    ],
+    [
+        LastTick,
+        BidTick,
+        AskTick,
+        HighTick,
+        LowTick,
+        CloseTick,
+        OpenTick,
+        VolumeTick,
+        AskSizeTick,
+        BidSizeTick,
+        LastSizeTick
+    ]
+)
+
+function dispatch(field::InteractiveBrokers.TickTypes.TICK_TYPES)
+    MAPPED_TICKS[field]()
+end
 
 function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErrorMessage)
     if (err.id == -1)
@@ -51,7 +83,7 @@ function tickPrice(ib::InteractiveBrokersObservable, tickerId::Int, field::Inter
     key = CallbackKey(tickerId, :tickPrice, field)
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]
-        qte = Lucky.Quote(val.instrument, price, size, Dates.now())
+        qte = Lucky.Quote(val.instrument, dispatch(field), price, size, Dates.now())
         next!(val.subject, qte)
     end
 end
@@ -62,7 +94,7 @@ function tickSize(ib::InteractiveBrokersObservable, tickerId::Int, field::Intera
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]
         mult = field == InteractiveBrokers.TickTypes.VOLUME ? 100 : 1
-        qte = Lucky.VolumeQuote(val.instrument, size*mult, Dates.now())
+        qte = Lucky.VolumeQuote(val.instrument, dispatch(field), size*mult, Dates.now())
         next!(val.subject, qte)
     end
 end

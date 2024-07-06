@@ -1,6 +1,7 @@
 export MarkovModel
 
 using Lucky.Models
+using Lucky.Instruments
 using Rocket
 using Minio
 using MarSwitching

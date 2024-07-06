@@ -1,6 +1,7 @@
 export ArchModel
 
 using Lucky.Models
+using Lucky.Instruments
 using Rocket
 using Minio
 using ARCHModels

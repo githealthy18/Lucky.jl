@@ -15,7 +15,7 @@ InstrumentType(::I) where {I<:Instrument} = I
 Units.currency(I::Type{<:Instrument}) = error("You probably forgot to implement currency(::$(I)")
 Units.currency(i::I) where {I<:Instrument} = error("You probably forgot to implement currency(::$(I)")
 
-symbol(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement symbol(::$(T))")
+symbol(::T) where {T<:Instrument} = Base.error("You probably forgot to implement symbol(::$(T))")
 
 include("instruments/Cash.jl")
 include("instruments/Stocks.jl")

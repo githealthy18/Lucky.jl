@@ -5,6 +5,8 @@ using DataFrames
 using InteractiveBrokers
 using BusinessDays
 using Minio
+using Impute
+using ShiftedArrays
 using Lucky.Quotes: Last, Bid, Ask, Mark, High, Low, Close, Open, Volume, AskSize, BidSize, LastSize
 using Lucky.Utils: after_hours
 
@@ -12,14 +14,52 @@ BusinessDays.initcache(:USNYSE)
 
 const cfg = MinioConfig("http://localhost:9000")
 
-mutable struct PreModelProcessor{A} <: AbstractStrategy
-    data::DataFrame
-    open::Union{Missing, Lucky.PriceQuote{I,Open,P,S,D} where {I,P,S,D}}
-    high::Union{Missing,Lucky.PriceQuote{I,High,P,S,D} where {I,P,S,D}}
-    low::Union{Missing, Lucky.PriceQuote{I,Low,P,S,D} where {I,P,S,D}}
-    close::Union{Missing, Lucky.PriceQuote{I,Close,P,S,D} where {I,P,S,D}, Lucky.PriceQuote{I,Mark,P,S,D} where {I,P,S,D}}
-    volume::Union{Missing, Lucky.VolumeQuote{I,Volume,P,D} where {I,P,D}}
+function base_processor(data::DataFrame)
+    df = copy(data)
+    dropmissing!(df)
+    # df[!,2:end] = convert.(Float32, df[!,2:end])
+    df.time = DateTime.(df.time, "yyyymmdd")
+    date_vec = df.time[begin]:Day(1):df.time[end] |> collect
+    date_df = DataFrame(time=date_vec)
+    df = outerjoin(df, date_df, on=:time)
+    sort!(df, [:time])
+    Impute.interp!(df)
+    df.returns = (log.(df.close) - ShiftedArrays.lag(log.(df.close)))
+    dropmissing!(df)
+    bday_col = assign_businessday(df[:, 1])
+    return data
+end
+
+mutable struct PreModelProcessor{S, A} <: AbstractStrategy
+    processor::Function
+    markov::MarkovModel{S, A}
+    arch::ArchModel{S, A}
     next::A
+end
+
+PreModelProcessor(processor::Function, markov::MarkovModel{S}, arch::ArchModel{S}, next::A) where {S, A} = PreModelProcessor(missing, processor, markov, arch, next)
+
+function Rocket.on_next!(step::PreModelProcessor, data::DataFrame)
+    result = step.processor(data)
+    next!(step.next, result)
+    next!(step.markov, result.returns)
+    next!(step.arch, result.returns)
+end
+
+mutable struct PreModelDataset{S} <: AbstractStrategy
+    data::Union{Missing, DataFrame}
+end
+
+function Rocket.on_next!(step::PreModelDataset, data::DataFrame)
+    step.data = data
+end
+
+function Rocket.on_next!(step::PreModelDataset, msg::MarkovPrediction)
+    println("Markov Prediction: $(msg)")
+end
+
+function Rocket.on_next!(step::PreModelDataset, msg::ArchPrediction)
+    println("Arch Prediction: $(msg)")
 end
 
 mutable struct PreModel{A} <: AbstractStrategy

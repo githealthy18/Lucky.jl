@@ -20,6 +20,12 @@ function MarkovModel(I::Instrument, server::MinioConfig, bucket::String, next::A
     MarkovModel{I}(model)
 end
 
+function MarkovModel(I::Type{<:Instrument}, server::MinioConfig, bucket::String, next::Actor{Any}) 
+    stream = s3_get(server, bucket, Units.symbol(I) * "/markov_switching.jld2")
+    model = deserialize(IOBuffer(stream))
+    MarkovModel{I}(model)
+end
+
 struct MarkovPrediction{I<:Instrument}
     beta::Vector{Float64}
     regime1::Vector{Float64}

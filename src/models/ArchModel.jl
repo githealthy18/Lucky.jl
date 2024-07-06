@@ -20,6 +20,12 @@ function ArchModel(I::Instrument, server::MinioConfig, bucket::String, next::Act
     ArchModel{I}(model, next)
 end
 
+function ArchModel(I::Type{<:Instrument}, server::MinioConfig, bucket::String, next::Actor{Any}) 
+    stream = s3_get(server, bucket, Units.symbol(I) * "/archmodel.jld2")
+    model = deserialize(IOBuffer(stream))
+    ArchModel{I}(model, next)
+end
+
 struct ArchPrediction{I<:Instrument}
     vars::Vector{Float64}
     volatilities::Vector{Float64}

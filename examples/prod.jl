@@ -32,8 +32,8 @@ end
 
 mutable struct PreModelProcessor{S, A} <: AbstractStrategy
     processor::Function
-    markov::MarkovModel{S, A}
-    arch::ArchModel{S, A}
+    markov::MarkovModel{S}
+    arch::ArchModel{S}
     next::A
 end
 
@@ -49,6 +49,8 @@ end
 mutable struct PreModelDataset{S} <: AbstractStrategy
     data::Union{Missing, DataFrame}
 end
+
+PreModelDataset(::I) where {I<:Instrument} = PreModelDataset{I}(missing)
 
 function Rocket.on_next!(step::PreModelDataset, data::DataFrame)
     step.data = data
@@ -98,12 +100,17 @@ function Rocket.on_complete!(strat::PreModel)
         strat.data.open[end] = strat.open.price
         strat.data.volume[end] = strat.volume.volume
     end
-    complete!(strat.next)
+    next!(strat.next, strat.data)
 end
 
 client = Lucky.service(:interactivebrokers)
 connect(client)
+
+
 stock = Stock(:AAPL,:USD)
+stockType = InstrumentType(stock)
+dataset = PreModelDataset(stock)
+premodelProcessor = PreModelProcessor(base_processor, MarkovModel(stockType, cfg, "prod", dataset), ArchModel(stockType, cfg, "prod", dataset), dataset)
 actor = PreModel(lambda(DataFrame; on_complete = ()->println("Done!")))
 hist = Lucky.feed(client, stock, Val(:historicaldata))
 feeds = Lucky.feed(client, stock, Val(:livedata))

@@ -27,10 +27,10 @@ function MarkovModel(I::Type{<:Instrument}, server::MinioConfig, bucket::String,
 end
 
 struct MarkovPrediction{I<:Instrument}
-    beta::Vector{Float64}
-    regime1::Vector{Float64}
-    regime2::Vector{Float64}
-    regime3::Vector{Float64}
+    beta::Vector{Union{Missing, Float64}}
+    regime1::Vector{Union{Missing, Float64}}
+    regime2::Vector{Union{Missing, Float64}}
+    regime3::Vector{Union{Missing, Float64}}
 end
 
 function Rocket.on_next!(model::MarkovModel{I,A}, returns::Vector{Float64}) where {I,A}

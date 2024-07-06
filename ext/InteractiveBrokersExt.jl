@@ -26,6 +26,7 @@ struct TickQuoteFeeds
     lastPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     bidPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     askPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    markPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     highPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     lowPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     openPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
@@ -140,7 +141,7 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
     requestId = nextRequestId(client)
     # TODO options
-    InteractiveBrokers.reqMktData(client, requestId, instr, "", false)
+    InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
 
     # TODO callbacks depending on requested data
 
@@ -148,6 +149,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     bidPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=AsyncScheduler()))
     askPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=AsyncScheduler()))
+    markPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=AsyncScheduler()))
 
     highPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=AsyncScheduler()))
     lowPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=AsyncScheduler()))
@@ -165,6 +167,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.BID), CallbackValue(tickPrice, bidPriceSubject, instr, true))
     insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.ASK), CallbackValue(tickPrice, askPriceSubject, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.MARK_PRICE), CallbackValue(tickPrice, markPriceSubject, instr, true))
 
     insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.HIGH), CallbackValue(tickPrice, highPriceSubject, instr, true))
     insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LOW), CallbackValue(tickPrice, lowPriceSubject, instr, true))
@@ -198,6 +201,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
         last,
         bidPriceSubject,
         askPriceSubject,
+        markPriceSubject,
         highPriceSubject,
         lowPriceSubject,
         openPriceSubject,

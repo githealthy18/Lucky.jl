@@ -20,21 +20,21 @@ Units.TimestampType(Q::Type{<:AbstractQuote}) = error("You probably forgot to im
 
 abstract type AbstractTick end
 
-struct BidTick <: AbstractTick end
-struct AskTick <: AbstractTick end
-struct LastTick <: AbstractTick end
-struct OpenTick <: AbstractTick end
-struct HighTick <: AbstractTick end
-struct LowTick <: AbstractTick end
-struct CloseTick <: AbstractTick end
-struct VolumeTick <: AbstractTick end
-struct BidSizeTick <: AbstractTick end
-struct AskSizeTick <: AbstractTick end
-struct LastSizeTick <: AbstractTick end
+struct Bid <: AbstractTick end
+struct Ask <: AbstractTick end
+struct Mark <: AbstractTick end
+struct Last <: AbstractTick end
+struct Open <: AbstractTick end
+struct High <: AbstractTick end
+struct Low <: AbstractTick end
+struct Close <: AbstractTick end
+struct Volume <: AbstractTick end
+struct BidSize <: AbstractTick end
+struct AskSize <: AbstractTick end
+struct LastSize <: AbstractTick end
 
 TickType(T::Type{<:AbstractTick}, params...) = error("You probably forgot to implement TickType(::$(T), $(params...))")
 TickType(::T) where {T<:AbstractTick} = T
-
 
 struct PriceQuote{I,T,Q,S,D} <: AbstractQuote
     instrument::I
@@ -67,6 +67,11 @@ QuoteType(I::Type{<:Instrument}, T::Type{<:AbstractTick}, V::Type{<:Number}, D::
 QuoteType(i::Instrument, Q::Type{<:Ohlc}) = QuoteType(InstrumentType(i), Q)
 QuoteType(i::Instrument, T::Type{<:AbstractTick}, S::Type{<:Number}, P::Type{<:Number}, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), T, P, S, D)
 QuoteType(i::Instrument, T::Type{<:AbstractTick}, V::Type{<:Number}, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), T, V, D)
+
+TickType(::PriceQuote{I,T,P,S,D}) where {I,T,P,S,D} = T
+TickType(::VolumeQuote{I,T,V,D}) where {I,T,V,D} = T
+TickType(::Type{<:PriceQuote{I,T,P,S,D}}) where {I,T,P,S,D} = T
+TickType(::Type{<:VolumeQuote{I,T,V,D}}) where {I,T,V,D} = T
 
 Units.currency(q::AbstractQuote) = Units.currency(q.instrument)
 timestamp(q::OhlcQuote) = q.ohlc.timestamp

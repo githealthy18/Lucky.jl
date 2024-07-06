@@ -101,7 +101,6 @@ function tickOptionComputation end
 function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, reqId::Int, exchange::String, underlyingConId::Int, tradingClass::String, multiplier::String, expirations::Vector{String}, strikes::Vector{Float64})
     exp_key = CallbackKey(reqId, :expirations, nothing)
     strike_key = CallbackKey(reqId, :strikes, nothing)
-    println("securityDefinitionOptionalParameter: $expirations $strikes")
     for exp in sort!(Date.(expirations, "yyyymmdd"))
         if haskey(ib.requestMappings, exp_key)
             exp_val = ib.requestMappings[exp_key]

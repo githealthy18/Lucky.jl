@@ -25,6 +25,9 @@
             # TODO Test if a subject            
 
             feeds = Lucky.feed(client, stock, Val(:livedata))
+            subscribe!([(feeds.highPrice, actor), (feeds.lowPrice, actor), (feeds.openPrice, actor), (feeds.closePrice, actor)])
+            subscribe!([(feeds.markPrice, logger("MARK")), (feeds.bidPrice, logger("BID"))])
+            connect(client)
             subscribe!([(feeds.askPrice, logger("ASK")), (feeds.lastPrice, logger("LAST"))])
 
             hist = Lucky.feed(client, stock, Val(:historicaldata); timeout=30000)

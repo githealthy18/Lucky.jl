@@ -2,11 +2,67 @@ using Dates
 using Lucky
 using Rocket
 using DataFrames
+using InteractiveBrokers
+using Lucky.Quotes: Last, Bid, Ask, Mark, High, Low, Close, Open, Volume, AskSize, BidSize, LastSize
 
 mutable struct PreModel{A} <: AbstractStrategy
     data::DataFrame
+    open::Union{Missing, Lucky.PriceQuote{I,Open,P,S,D} where {I,P,S,D}}
+    high::Union{Missing,Lucky.PriceQuote{I,High,P,S,D} where {I,P,S,D}}
+    low::Union{Missing, Lucky.PriceQuote{I,Low,P,S,D} where {I,P,S,D}}
+    close::Union{Missing, Lucky.PriceQuote{I,Close,P,S,D} where {I,P,S,D}}
+    volume::Union{Missing, Lucky.PriceQuote{I,Volume,P,D} where {I,P,S,D}}
     next::A
 end
+
+PreModel(next::A) where {A} = PreModel(DataFrame(), missing, missing, missing, missing, missing, next)
+
+function Rocket.on_next!(strat::PreModel, data::DataFrame)
+    strat.data = data
+end
+
+function Rocket.on_next!(strat::PreModel, data::Lucky.PriceQuote{I,T,P,S,D}) where {I,T,P,S,D}
+    setproperty!(strat, Symbol(lowercase(String(Symbol(T)))), data)
+end
+
+# function Rocket.on_next!(strat::PreModel, data::Lucky.PriceQuote{I,T,P,S,D}) where {I,T<:Low,P,S,D}
+#     strat.low = data.price
+# end
+
+# function Rocket.on_next!(strat::PreModel, data::Lucky.PriceQuote{I,T,P,S,D}) where {I,T<:Mark,P,S,D}
+#     strat.close = data.price
+# end
+
+# function Rocket.on_next!(strat::PreModel, data::Lucky.PriceQuote{I,T,P,S,D}) where {I,T<:Close,P,S,D}
+#     strat.close = data.price
+# end
+
+# function Rocket.on_next!(strat::PreModel, data::Lucky.PriceQuote{I,T,P,S,D}) where {I,T<:Open,P,S,D}
+#     strat.open = data.price
+# end
+
+# function Rocket.on_next!(strat::PreModel, data::Lucky.VolumeQuote{I,T,P,D}) where {I,T<:Volume,P,D}
+#     strat.volume = data.volume
+# end
+
+function Rocket.on_complete!(strat::PreModel)
+    println("Completed")
+    strat.data.high[end] = strat.high.price
+    strat.data.low[end] = strat.low.price
+    strat.data.close[end] = strat.close.price
+    strat.data.open[end] = strat.open.price
+    strat.data.volume[end] = strat.volume.volume
+    complete!(strat.next)
+end
+
+client = Lucky.service(:interactivebrokers)
+InteractiveBrokers.reqMarketDataType(client, InteractiveBrokers.FROZEN)
+stock = Stock(:AAPL,:USD)
+actor = PreModel(lambda(DataFrame; on_complete = ()->println("Done!")))
+hist = Lucky.feed(client, stock, Val(:historicaldata))
+feeds = Lucky.feed(client, stock, Val(:livedata))
+source = merged((hist |> first(), feeds.openPrice |> first(), feeds.highPrice |> first(), feeds.lowPrice |> first(), feeds.closePrice |> first(), feeds.volume |> first()))
+subscribe!(source, actor)
 
 mutable struct GoldenCross{A} <: AbstractStrategy
     cashPosition::Union{Nothing,CashPositionType}

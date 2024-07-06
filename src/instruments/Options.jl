@@ -1,4 +1,4 @@
-export Option
+export Option, symbol
 
 struct Option{S,R,K,E} <: Instrument end
 

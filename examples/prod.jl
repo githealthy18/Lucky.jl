@@ -4,6 +4,7 @@ using Rocket
 using DataFrames
 using InteractiveBrokers
 using BusinessDays
+using Minio
 using Lucky.Quotes: Last, Bid, Ask, Mark, High, Low, Close, Open, Volume, AskSize, BidSize, LastSize
 using Lucky.Utils: after_hours
 

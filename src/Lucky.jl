@@ -21,7 +21,7 @@ export Ohlc
 include("Instruments.jl")
 using .Instruments
 export Instrument, InstrumentType
-export Cash, Stock, Option
+export Cash, Stock, Option, symbol
 
 include("Quotes.jl")
 using .Quotes

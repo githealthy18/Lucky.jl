@@ -1,4 +1,4 @@
-export Cash
+export Cash, symbol
 
 # TODO Improvement: have Cash made a singleton
 struct Cash{C} <: Instrument end

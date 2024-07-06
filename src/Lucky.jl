@@ -66,6 +66,10 @@ include("Strategies.jl")
 using .Strategies
 export AbstractStrategy
 
+include("Models.jl")
+using .Models
+export AbstractModel, ModelType
+
 # === Others
 
 include("observables/Feeders.jl")

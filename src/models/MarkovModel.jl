@@ -9,18 +9,18 @@ using MarSwitching
 using Serialization
 
 
-struct MarkovModel{I<:Instrument} <: AbstractModel
+struct MarkovModel{I<:Instrument,A} <: AbstractModel
     model::MSM
-    next::Actor{Any}
+    next::A
 end
 
-function MarkovModel(I::Instrument, server::MinioConfig, bucket::String, next::Actor{Any}) 
+function MarkovModel(I::Instrument, server::MinioConfig, bucket::String, next::A) where {A}
     stream = s3_get(server, bucket, Units.symbol(I) * "/markov_switching.jld2")
     model = deserialize(IOBuffer(stream))
     MarkovModel{I}(model, next)
 end
 
-function MarkovModel(I::Type{<:Instrument}, server::MinioConfig, bucket::String, next::Actor{Any}) 
+function MarkovModel(I::Type{<:Instrument}, server::MinioConfig, bucket::String, next::A) where {A}
     stream = s3_get(server, bucket, Units.symbol(I) * "/markov_switching.jld2")
     model = deserialize(IOBuffer(stream))
     MarkovModel{I}(model, next)
@@ -33,8 +33,8 @@ struct MarkovPrediction{I<:Instrument}
     regime3::Vector{Float64}
 end
 
-function Rocket.on_next!(model::MarkovModel{I}, returns::Vector{Float64}) where {I}
-    println("MARKOVING")
+function Rocket.on_next!(model::MarkovModel{I,A}, returns::Vector{Float64}) where {I,A}
+    println("MARKOVING STARTED")
     pred_values, pred_probabilities = MarSwitching.predict(model.model; y=returns)
     pred_beta = Vector{Union{Missing, Float64}}(undef, length(returns))
     pred_prob1 = Vector{Union{Missing, Float64}}(undef, length(returns))
@@ -44,5 +44,7 @@ function Rocket.on_next!(model::MarkovModel{I}, returns::Vector{Float64}) where 
     pred_prob1[2:end] = pred_probabilities[:,1]
     pred_prob2[2:end] = pred_probabilities[:,2]
     pred_prob3[2:end] = pred_probabilities[:,3]
-    next!(model.next, MarkovPrediction{I}(pred_beta, pred_prob1, pred_prob2, pred_prob3))
+    println("MARKOVING FINISHED")
+    result = MarkovPrediction{I}(pred_beta, pred_prob1, pred_prob2, pred_prob3)
+    next!(model.next, result)
 end

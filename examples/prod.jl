@@ -33,8 +33,8 @@ end
 
 mutable struct PreModelProcessor{S, A} <: AbstractStrategy
     processor::Function
-    markov::MarkovModel{S}
-    arch::ArchModel{S}
+    markov::MarkovModel{S,A}
+    arch::ArchModel{S,A}
     next::A
 end
 

@@ -7,14 +7,12 @@ using ARCHModels
 using Serialization
 
 
-struct ArchModel{I<:Instrument, S} <: AbstractModel
-    server::S
-    bucket::String
+struct ArchModel{I<:Instrument} <: AbstractModel
     model::UnivariateARCHModel
+end
 
-    ArchModel{I}(server::S, bucket::String) where {I, S} = begin
-        stream = s3_get(server, bucket, symbol(I) * "/archmodel.jld2")
-        model = deserialize(IOBuffer(stream))
-        new{I, S, B}(server, bucket, model)
-    end
+function ArchModel(I::Instrument, server::MinioConfig, bucket::String) 
+    stream = s3_get(server, bucket, symbol(I) * "/archmodel.jld2")
+    model = deserialize(IOBuffer(stream))
+    ArchModel{I}(model)
 end

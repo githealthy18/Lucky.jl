@@ -69,6 +69,7 @@ export AbstractStrategy
 include("Models.jl")
 using .Models
 export AbstractModel, ModelType
+export ArchModel, MarkovModel
 
 # === Others
 

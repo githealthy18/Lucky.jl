@@ -9,10 +9,10 @@ using Serialization
 
 struct MarkovModel{I} <: AbstractModel
     model::MSM
+end
 
-    MarkovModel{I}(server::S, bucket::String) where {I, S} = begin
-        stream = s3_get(server, bucket, symbol(I) * "/markov_switching.jld2")
-        model = deserialize(IOBuffer(stream))
-        new{I}(model)
-    end
+function MarkovModel(I::Instrument, server::MinioConfig, bucket::String) 
+    stream = s3_get(server, bucket, symbol(I) * "/markov_switching.jld2")
+    model = deserialize(IOBuffer(stream))
+    MarkovModel{I}(model)
 end

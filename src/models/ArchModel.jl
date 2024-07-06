@@ -17,13 +17,13 @@ end
 function ArchModel(I::Instrument, server::MinioConfig, bucket::String, next::A) where {A}
     stream = s3_get(server, bucket, Units.symbol(I) * "/archmodel.jld2")
     model = deserialize(IOBuffer(stream))
-    ArchModel{I}(model, next)
+    ArchModel{I,A}(model, next)
 end
 
 function ArchModel(I::Type{<:Instrument}, server::MinioConfig, bucket::String, next::A) where {A}
     stream = s3_get(server, bucket, Units.symbol(I) * "/archmodel.jld2")
     model = deserialize(IOBuffer(stream))
-    ArchModel{I}(model, next)
+    ArchModel{I,A}(model, next)
 end
 
 struct ArchPrediction{I<:Instrument}

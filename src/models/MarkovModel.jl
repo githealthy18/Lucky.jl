@@ -17,13 +17,13 @@ end
 function MarkovModel(I::Instrument, server::MinioConfig, bucket::String, next::A) where {A}
     stream = s3_get(server, bucket, Units.symbol(I) * "/markov_switching.jld2")
     model = deserialize(IOBuffer(stream))
-    MarkovModel{I}(model, next)
+    MarkovModel{I,A}(model, next)
 end
 
 function MarkovModel(I::Type{<:Instrument}, server::MinioConfig, bucket::String, next::A) where {A}
     stream = s3_get(server, bucket, Units.symbol(I) * "/markov_switching.jld2")
     model = deserialize(IOBuffer(stream))
-    MarkovModel{I}(model, next)
+    MarkovModel{I,A}(model, next)
 end
 
 struct MarkovPrediction{I<:Instrument}

@@ -180,7 +180,8 @@ struct FetchPrediction{I, A}
     next::A
 end
 
-FetchPrediction(I::Instrument, next::A) where {A} = FetchPrediction{I, A}(next)
+FetchPrediction(I::Instrument, next::A) where {A} = FetchPrediction{InstrumentType(I), A}(next)
+FetchPrediction(I::Type{<:Instrument}, next::A) where {A} = FetchPrediction{I, A}(next)
 
 const predictionSubject = Subject(PredictionDataMsg; scheduler = Rocket.ThreadsScheduler())
 
@@ -235,7 +236,8 @@ mutable struct PreModelDataset{I} <: AbstractStrategy
     data::Union{Missing, DataFrame}
 end
 
-PreModelDataset(::I) where {I<:Instrument} = PreModelDataset{I}(missing)
+PreModelDataset(I::Instrument) = PreModelDataset{InstrumentType(I)}(missing)
+PreModelDataset(I::Type{<:Instrument}) = PreModelDataset{I}(missing)
 
 function Rocket.on_next!(step::PreModelDataset, data::DataFrame)
     step.data = data
@@ -278,7 +280,8 @@ mutable struct PreModel{I,A} <: AbstractStrategy
     next::A
 end
 
-PreModel(I::Instrument, next::A) where {A} = PreModel{I}(DataFrame(), missing, missing, missing, missing, missing, next)
+PreModel(I::Instrument, next::A) where {A} = PreModel{InstrumentType(I),A}(DataFrame(), missing, missing, missing, missing, missing, next)
+PreModel(I::Type{<:Instrument}, next::A) where {A} = PreModel{I,A}(DataFrame(), missing, missing, missing, missing, missing, next)
 
 function Rocket.on_next!(strat::PreModel, data::DataFrame)
     strat.data = data
@@ -316,9 +319,10 @@ mutable struct PostModel{I,A} <: AbstractStrategy
     next::A
 end
 
-PostModel(I::Instrument, client, next::A) where {A} = PostModel{I,A}(client, Vector{Lucky.Option}(), missing, next, 4.0, 0.05)
+PostModel(I::Instrument, client, next::A) where {A} = PostModel{InstrumentType(I),A}(client, Vector{Lucky.Option}(), missing, 4.0, 0.05, next)
+PostModel(I::Type{<:Instrument}, client, next::A) where {A} = PostModel{I,A}(client, Vector{Lucky.Option}(), missing, 4.0, 0.05, next)
 
-function Rocket.on_next!(strat::PostModel{I}, data::Lucky.PriceQuote{I,T,P,S,D}) where {I,T,P,S,D}
+function Rocket.on_next!(strat::PostModel{I,A}, data::Lucky.PriceQuote) where {I,A}
     strat.spot = data
 
     expiration_subject, strike_subject = Lucky.feed(strat.client, I, Val(:securityDefinitionOptionalParameter))
@@ -326,7 +330,7 @@ function Rocket.on_next!(strat::PostModel{I}, data::Lucky.PriceQuote{I,T,P,S,D})
     subscribe!(source, strat)
 end
 
-function Rocket.on_next!(strat::PostModel{I}, data::Lucky.Option{}) where 
+function Rocket.on_next!(strat::PostModel, data::Lucky.Option)
     push!(strat.chain, data)
 end
 
@@ -336,7 +340,7 @@ connect(client)
 InteractiveBrokers.reqMarketDataType(client, InteractiveBrokers.REALTIME)
 stock = Stock(:AAPL,:USD)
 stockType = InstrumentType(stock)
-dataset = PreModelDataset(stock)
+dataset = PreModelDataset(stockType)
 
 data = Subject(DataFrame)
 markov = Subject(MarkovPrediction; scheduler = Rocket.ThreadsScheduler())
@@ -346,8 +350,8 @@ source = merged((data |> first(), markov |> first(), arch |> first()))
 
 subscribe!(source, dataset)
 
-premodelProcessor = PreModelProcessor(base_processor, MarkovModel(stock, cfg, "prod", markov), ArchModel(stock, cfg, "prod", arch), data)
-actor = PreModel(stock, premodelProcessor)
+premodelProcessor = PreModelProcessor(base_processor, MarkovModel(stockType, cfg, "prod", markov), ArchModel(stockType, cfg, "prod", arch), data)
+actor = PreModel(stockType, premodelProcessor)
 hist = Lucky.feed(client, stock, Val(:historicaldata))
 feeds = Lucky.feed(client, stock, Val(:livedata))
 source = merged((hist |> first(), feeds.openPrice |> first(), feeds.highPrice |> first(), feeds.lowPrice |> first(), feeds.markPrice |> first(), feeds.volume |> first()))

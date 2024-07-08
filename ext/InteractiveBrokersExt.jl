@@ -272,12 +272,10 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :expirations), expirationSubject)
     insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
 
-    source = combineLatest(expirationSubject |> take(4), strikeSubject) |> merge_map(Tuple, d -> from([CALL, PUT]) |> map(Tuple, r -> (d..., r))) |> map(Option, d -> Option(instr, d[3], d[2], d[1]))
-
     setTimeout(30000) do 
         Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
     end
-    return expiration_subject, strike_subject
+    return expirationSubject, strikeSubject
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})

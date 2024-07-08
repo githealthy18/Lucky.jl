@@ -277,7 +277,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     setTimeout(30000) do 
         Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
     end
-    return source
+    return expiration_subject, strike_subject
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})

@@ -263,10 +263,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     subscribe!(conId, lambda(InteractiveBrokers.ContractDetails; on_next=(d)-> InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "", d.contract.conId)))
 
-    #InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "")
-
-    expirationSubject = RecentSubject(Date, Subject(Date; scheduler=AsyncScheduler()))
-    strikeSubject = RecentSubject(Float64, Subject(Float64; scheduler=AsyncScheduler()))
+    expirationSubject = RecentSubject(Date)
+    strikeSubject = RecentSubject(Float64)
     insert!(client.requestMappings, CallbackKey(requestId, :expirations, nothing), CallbackValue(securityDefinitionOptionalParameter, expirationSubject, instr, true))
     insert!(client.requestMappings, CallbackKey(requestId, :strikes, nothing), CallbackValue(securityDefinitionOptionalParameter, strikeSubject, instr, true))
     insert!(client.mergedCallbacks, Pair(instr, :expirations), expirationSubject)

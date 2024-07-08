@@ -326,8 +326,8 @@ PostModel(I::Type{<:Instrument}, client, next::A) where {A} = PostModel{I,A}(cli
 function Rocket.on_next!(strat::PostModel{I,A}, data::Lucky.PriceQuote) where {I,A}
     strat.spot = data
 
-    expiration_subject, strike_subject = Lucky.feed(strat.client, strat.instrument, Val(:securityDefinitionOptionalParameter))
-    source = combineLatest(expirationSubject |> take(strat.expiration_count), strikeSubject |> filter((d) -> isapprox(d.price, strat.spot; rtol=strat.strike_tolerance)) |> merge_map(Tuple, d -> from([CALL, PUT]) |> map(Tuple, r -> (d..., r))) |> map(Option, d -> Option(I, d[3], d[2], d[1])))
+    expirationSubject, strikeSubject = Lucky.feed(strat.client, strat.instrument, Val(:securityDefinitionOptionalParameter))
+    source = combineLatest(expirationSubject |> take(strat.expiration_count), strikeSubject |> filter((d) -> isapprox(d, strat.spot.price; rtol=strat.strike_tolerance))) |> merge_map(Tuple, d -> from([CALL, PUT]) |> map(Tuple, r -> (d..., r))) |> map(Option, d -> Option(strat.instrument, d[3], d[2], d[1]))
     subscribe!(source, strat)
 end
 

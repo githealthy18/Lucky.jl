@@ -9,7 +9,7 @@ using MarSwitching
 using Serialization
 
 
-struct MarkovModel{I<:Instrument,A} <: AbstractModel
+struct MarkovModel{I,A} <: AbstractModel
     model::MSM
     next::A
 end
@@ -26,7 +26,7 @@ function MarkovModel(I::Type{<:Instrument}, server::MinioConfig, bucket::String,
     MarkovModel{I,A}(model, next)
 end
 
-struct MarkovPrediction{I<:Instrument}
+struct MarkovPrediction{I}
     beta::Vector{Union{Missing, Float64}}
     regime1::Vector{Union{Missing, Float64}}
     regime2::Vector{Union{Missing, Float64}}

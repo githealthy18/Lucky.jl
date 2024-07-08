@@ -9,7 +9,7 @@ using ARCHModels
 using Serialization
 
 
-struct ArchModel{I<:Instrument,A} <: AbstractModel
+struct ArchModel{I,A} <: AbstractModel
     model::UnivariateARCHModel
     next::A
 end
@@ -26,7 +26,7 @@ function ArchModel(I::Type{<:Instrument}, server::MinioConfig, bucket::String, n
     ArchModel{I,A}(model, next)
 end
 
-struct ArchPrediction{I<:Instrument}
+struct ArchPrediction{I}
     vars::Vector{Float64}
     volatilities::Vector{Float64}
     pred_vars::Vector{Union{Missing, Float64}}

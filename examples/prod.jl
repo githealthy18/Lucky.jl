@@ -326,7 +326,7 @@ function Rocket.on_next!(strat::PostModel{I}, data::Lucky.PriceQuote{I,T,P,S,D})
     subscribe!(source, strat)
 end
 
-function Rocket.on_next!(strat::PostModel{I}, data::Lucky.Option)
+function Rocket.on_next!(strat::PostModel{I}, data::Lucky.Option{}) where 
     push!(strat.chain, data)
 end
 
@@ -346,7 +346,7 @@ source = merged((data |> first(), markov |> first(), arch |> first()))
 
 subscribe!(source, dataset)
 
-premodelProcessor = PreModelProcessor(base_processor, MarkovModel(stockType, cfg, "prod", markov), ArchModel(stockType, cfg, "prod", arch), data)
+premodelProcessor = PreModelProcessor(base_processor, MarkovModel(stock, cfg, "prod", markov), ArchModel(stock, cfg, "prod", arch), data)
 actor = PreModel(stock, premodelProcessor)
 hist = Lucky.feed(client, stock, Val(:historicaldata))
 feeds = Lucky.feed(client, stock, Val(:livedata))

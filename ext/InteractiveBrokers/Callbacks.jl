@@ -136,13 +136,25 @@ function tickOptionComputation end
 function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, reqId::Int, exchange::String, underlyingConId::Int, tradingClass::String, multiplier::String, expirations::Vector{String}, strikes::Vector{Float64})
     exp_key = CallbackKey(reqId, :expirations, nothing)
     strike_key = CallbackKey(reqId, :strikes, nothing)
+    stateful_expirations = Iterators.Stateful(sort!(Date.(expirations, "yyyymmdd")))
+    stateful_strikes = Iterators.Stateful(strikes)
     if (haskey(ib.requestMappings, exp_key) && haskey(ib.requestMappings, strike_key))
         exp_val = ib.requestMappings[exp_key]
         strike_val = ib.requestMappings[strike_key]
-        for exp in sort!(Date.(expirations, "yyyymmdd"))
-            next!(exp_val.subject, exp)
-            for str in strikes
-                next!(strike_val.subject, str)
+        for exp in stateful_expirations
+            if !isnothing(peek(stateful_expirations))
+                next!(exp_val.subject, exp)
+                for str in stateful_expirations
+                    if isnothing(peek(stateful_strikes))
+                        next!(strike_val.subject, str)
+                        complete!(strike_val.subject)
+                    else
+                        next!(strike_val.subject, str)
+                    end
+                end
+            else
+                next!(exp_val.subject, exp)
+                complete!(exp_val.subject)
             end
         end
     end

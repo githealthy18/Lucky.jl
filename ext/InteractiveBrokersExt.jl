@@ -17,12 +17,11 @@ struct CallbackValue
     callbackFunction::Function
     subject::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance, Nothing}
     instrument::Lucky.Instrument
-    live::Bool
 end
 
 const CallbackMapping = Dictionary{CallbackKey,CallbackValue}
 
-struct TickQuoteFeeds
+struct TickQuoteFeeds <: CompletionActor{Any}
     lastPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     bidPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     askPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
@@ -35,8 +34,21 @@ struct TickQuoteFeeds
     askSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     bidSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     lastSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    tickString::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
 end
 
+function Rocket.on_complete!(feeds::T) where {T<:TickQuoteFeeds}
+    completions = [
+        Rocket.complete!(getproperty(feeds,name)) for name in fieldnames(T)
+    ]
+end
+
+function isactive(feeds::T) where {T<:TickQuoteFeeds}
+    isactive = [ getproperty(feeds, name).subject.isactive for name in fieldnames(T) ]
+    return any(isactive)
+end
+
+function
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
@@ -163,26 +175,26 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     tickStringSubject = RecentSubject(DateTime, Subject(DateTime; scheduler=AsyncScheduler()))
 
-    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickPrice, lastPriceSubject, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickPrice, lastPriceSubject, instr))
 
-    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.BID), CallbackValue(tickPrice, bidPriceSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.ASK), CallbackValue(tickPrice, askPriceSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.MARK_PRICE), CallbackValue(tickPrice, markPriceSubject, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.BID), CallbackValue(tickPrice, bidPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.ASK), CallbackValue(tickPrice, askPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.MARK_PRICE), CallbackValue(tickPrice, markPriceSubject, instr))
 
-    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.HIGH), CallbackValue(tickPrice, highPriceSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LOW), CallbackValue(tickPrice, lowPriceSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.OPEN), CallbackValue(tickPrice, openPriceSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.CLOSE), CallbackValue(tickPrice, closePriceSubject, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.HIGH), CallbackValue(tickPrice, highPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LOW), CallbackValue(tickPrice, lowPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.OPEN), CallbackValue(tickPrice, openPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.CLOSE), CallbackValue(tickPrice, closePriceSubject, instr))
 
-    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.VOLUME), CallbackValue(tickSize, volumeSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.ASK_SIZE), CallbackValue(tickSize, askSizeSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.BID_SIZE), CallbackValue(tickSize, bidSizeSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.LAST_SIZE), CallbackValue(tickSize, lastSizeSubject, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.VOLUME), CallbackValue(tickSize, volumeSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.ASK_SIZE), CallbackValue(tickSize, askSizeSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.BID_SIZE), CallbackValue(tickSize, bidSizeSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.LAST_SIZE), CallbackValue(tickSize, lastSizeSubject, instr))
     
-    insert!(client.requestMappings, CallbackKey(requestId, :tickString, InteractiveBrokers.TickTypes.LAST_TIMESTAMP), CallbackValue(tickString, tickStringSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :tickGeneric, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickGeneric, nothing, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :marketDataType, InteractiveBrokers.TickTypes.LAST), CallbackValue(marketDataType, nothing, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :tickReqParams, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickReqParams, nothing, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickString, InteractiveBrokers.TickTypes.LAST_TIMESTAMP), CallbackValue(tickString, tickStringSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickGeneric, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickGeneric, nothing, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :marketDataType, InteractiveBrokers.TickTypes.LAST), CallbackValue(marketDataType, nothing, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickReqParams, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickReqParams, nothing, instr))
 
     # TODO default subject type depending on callback    
     merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].price, tup[1].size, tup[2])
@@ -190,12 +202,6 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     merge_lastSize = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
     lastSize = lastSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_lastSize)
-
-    setTimeout(timeout) do 
-        if client.requestMappings[CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LAST)].live
-            Lucky.end_feed(client, instr, Val(:livedata))
-        end
-    end
 
     output = TickQuoteFeeds(
         last,
@@ -209,11 +215,18 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
         volumeSubject,
         askSizeSubject,
         bidSizeSubject,
-        lastSize
+        lastSize,
+        tickStringSubject
     )
 
     # Output callback
     insert!(client.mergedCallbacks, Pair(instr, :livedata), output)
+
+    setTimeout(timeout) do 
+        if isactive(output)
+            Lucky.end_feed(client, instr, Val(:livedata))
+        end
+    end
 
     return output
 end
@@ -221,6 +234,8 @@ end
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})
     ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
     requestId = first(keys(ongoingRequests)).requestId
+
+    complete!(client.mergedCallbacks[Pair(instr, :livedata)])
 
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
     Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :livedata))
@@ -238,7 +253,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
     insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
     setTimeout(timeout) do 
-        if client.requestMappings[CallbackKey(requestId, :historicalData, nothing)].live
+        if isactive(historicalDataSubject.subject)
             Lucky.end_feed(client, instr, Val(:historicaldata))
         end
     end
@@ -249,6 +264,8 @@ end
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:historicaldata})
     ongoingRequests = getRequests(client.requestMappings, [:historicalData], instr)
     requestId = first(keys(ongoingRequests)).requestId
+
+    complete!(client.mergedCallbacks[Pair(instr, :historicaldata)])
 
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
     Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :historicaldata))

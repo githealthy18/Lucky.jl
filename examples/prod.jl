@@ -310,29 +310,49 @@ function Rocket.on_complete!(strat::PreModel)
     next!(strat.next, strat.data)
 end
 
-mutable struct PostModel{I,A} <: AbstractStrategy
+mutable struct ChainData{I,A} <: AbstractStrategy
     client
     instrument::I
-    chain::Vector{Lucky.Option}
     spot::Union{Missing, Lucky.PriceQuote{I,Mark,P,S,D} where {P,S,D}}
     expiration_count::Int
     strike_tolerance::Float64
     next::A
 end
 
-PostModel(I::Instrument, client, next::A) where {A} = PostModel(client, I, Vector{Lucky.Option}(), missing, 4, 0.05, next)
-PostModel(I::Type{<:Instrument}, client, next::A) where {A} = PostModel{I,A}(client, Vector{Lucky.Option}(), missing, 4.0, 0.05, next)
+ChainData(I::Instrument, client, next::A) where {A} = ChainData(client, I, missing, 4, 0.05, next)
+ChainData(I::Type{<:Instrument}, client, next::A) where {A} = ChainData{I,A}(client, missing, 4.0, 0.05, next)
 
 function Rocket.on_next!(strat::PostModel{I,A}, data::Lucky.PriceQuote) where {I,A}
     strat.spot = data
 
     expirationSubject, strikeSubject = Lucky.feed(strat.client, strat.instrument, Val(:securityDefinitionOptionalParameter))
     source = combineLatest(expirationSubject |> take(strat.expiration_count), strikeSubject |> filter((d) -> isapprox(d, strat.spot.price; rtol=strat.strike_tolerance))) |> merge_map(Tuple, d -> from([CALL, PUT]) |> map(Tuple, r -> (d..., r))) |> map(Option, d -> Option(strat.instrument, d[3], d[2], d[1]))
-    subscribe!(source, strat)
+    subscribe!(source, strat.next)
 end
 
-function Rocket.on_next!(strat::PostModel, data::Lucky.Option)
+function Rocket.on_complete!(strat::PostModel)
+    next!(strat.next, strat.spot)
+end
+
+mutable struct OptionProcessor{I,A} <: AbstractStrategy
+    instrument::I
+    spot::Union{Missing, Lucky.PriceQuote{I,Mark,P,S,D} where {P,S,D}}
+    chain::Vector{Lucky.Option}
+    next::A
+end
+
+OptionProcessor(I::Instrument, next::A) where {A} = OptionProcessor(I, missing, Vector{Lucky.Option}(), next)
+
+function Rocket.on_next!(strat::OptionProcessor{I, A}, data::Lucky.PriceQuote{I,Mark,P,S,D}) where {I,A,P,S,D}
+    strat.spot = data
+end
+
+function Rocket.on_next!(strat::OptionProcessor{I, A}, data::Lucky.Option{I, R, K, E}) where {I,A,R,K,E}
     push!(strat.chain, data)
+end
+
+function Rocket.on_complete!(strat::OptionProcessor)
+    next!(strat.next, strat.chain)
 end
 
 client = Lucky.service(:interactivebrokers)
@@ -354,13 +374,13 @@ subscribe!(source, dataset)
 premodelProcessor = PreModelProcessor(stock, base_processor, MarkovModel(stockType, cfg, "prod", markov), ArchModel(stockType, cfg, "prod", arch), data)
 actor = PreModel(stock, premodelProcessor)
 hist = Lucky.feed(client, stock, Val(:historicaldata))
-feeds = Lucky.feed(client, stock, Val(:livedata))
+feeds = Lucky.feed(client, stock, Val(:livedata); timeout=60000)
 source = merged((hist |> first(), feeds.openPrice |> first(), feeds.highPrice |> first(), feeds.lowPrice |> first(), feeds.markPrice |> first(), feeds.volume |> first()))
 subscribe!(source, actor)
-InteractiveBrokers.reqMarketDataType(client, InteractiveBrokers.FROZEN)
+# InteractiveBrokers.reqMarketDataType(client, InteractiveBrokers.FROZEN)
 
 postModel = PostModel(stock, client, lambda(Int; on_next=(d)->println(d)))
-subscribe!(feeds.markPrice, postModel)
+subscribe!(feeds.markPrice |> first(), postModel)
 
 mutable struct GoldenCross{A} <: AbstractStrategy
     cashPosition::Union{Nothing,CashPositionType}

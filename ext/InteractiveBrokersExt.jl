@@ -251,7 +251,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
     insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
     setTimeout(timeout) do 
-        if isactive(historicalDataSubject.subject)
+        if isactive(client.mergedCallbacks[Pair(instr, :historicaldata)].subject.subject)
             Lucky.end_feed(client, instr, Val(:historicaldata))
         end
     end

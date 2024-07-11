@@ -319,8 +319,8 @@ mutable struct ChainData{I,A} <: AbstractStrategy
     next::A
 end
 
-ChainData(I::Instrument, client, next::A) where {A} = ChainData(client, I, missing, 4, 0.05, next)
-ChainData(I::Type{<:Instrument}, client, next::A) where {A} = ChainData{I,A}(client, missing, 4.0, 0.05, next)
+ChainData(I::Instrument, client, next::A) where {A} = ChainData(client, I, missing, 4, 0.1, next)
+ChainData(I::Type{<:Instrument}, client, next::A) where {A} = ChainData{I,A}(client, missing, 4, 0.1, next)
 
 function Rocket.on_next!(strat::ChainData{I,A}, data::Lucky.PriceQuote) where {I,A}
     strat.spot = data
@@ -337,24 +337,40 @@ end
 chainKey = Lucky.Option{I,R,K,E} where {I,R,K,E}
 
 mutable struct OptionProcessor{I,A} <: AbstractStrategy
+    client
     instrument::I
     spot::Union{Missing, Lucky.PriceQuote{I,Mark,P,S,D} where {P,S,D}}
     chain::Dictionary{Lucky.Option{I,R,K,E} where {R,K,E}, Pair{Union{Missing, Lucky.PriceQuote{Q,Bid,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}, Union{Missing, Lucky.PriceQuote{Q,Ask,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}}}
+    livedata::Bool
     next::A
 end
 
-OptionProcessor(instr::I, next::A) where {I, A} = OptionProcessor(instr, missing, Dictionary{Lucky.Option{I,R,K,E} where {R,K,E}, Pair{Union{Missing, Lucky.PriceQuote{Q,Bid,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}, Union{Missing, Lucky.PriceQuote{Q,Ask,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}}}(), next)
+OptionProcessor(client, instr::I, next::A) where {I, A} = OptionProcessor(client, instr, missing, Dictionary{Lucky.Option{I,R,K,E} where {R,K,E}, Pair{Union{Missing, Lucky.PriceQuote{Q,Bid,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}, Union{Missing, Lucky.PriceQuote{Q,Ask,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}}}(), false, next)
 
 function Rocket.on_next!(strat::OptionProcessor{I, A}, data::Lucky.PriceQuote{I,Mark,P,S,D}) where {I,A,P,S,D}
     strat.spot = data
 end
 
 function Rocket.on_next!(strat::OptionProcessor{I, A}, data::Lucky.Option{I, R, K, E}) where {I,A,R,K,E}
-    insert!(strat.chain, data, Pair(missing, missing))
+    try
+        insert!(strat.chain, data, Pair(missing, missing))
+    catch e
+    end
 end
 
 function Rocket.on_complete!(strat::OptionProcessor)
-    next!(strat.next, strat.chain)
+    if !strat.livedata
+        strat.livedata = true
+        feeds = []
+        for (option, _) in pairs(strat.chain)
+            optionFeed = Lucky.feed(client, option, Val(:livedata))
+            push!(feeds, optionFeed.bidPrice |> first())
+            push!(feeds, optionFeed.askPrice |> first())
+        end
+        subscribe!(merged(feeds), strat)
+    else
+        println("Data Gathered")
+    end
 end
 
 client = Lucky.service(:interactivebrokers)
@@ -379,10 +395,11 @@ hist = Lucky.feed(client, stock, Val(:historicaldata))
 feeds = Lucky.feed(client, stock, Val(:livedata); timeout=60000)
 source = merged((hist |> first(), feeds.openPrice |> first(), feeds.highPrice |> first(), feeds.lowPrice |> first(), feeds.markPrice |> first(), feeds.volume |> first()))
 subscribe!(source, actor)
-# InteractiveBrokers.reqMarketDataType(client, InteractiveBrokers.FROZEN)
+InteractiveBrokers.reqMarketDataType(client, InteractiveBrokers.FROZEN)
 
-postModel = PostModel(stock, client, lambda(Int; on_next=(d)->println(d)))
-subscribe!(feeds.markPrice |> first(), postModel)
+optionProcessor = OptionProcessor(client, stock, lambda(Dictionary; on_next=(d)->println(d)))
+chainData = ChainData(stock, client, optionProcessor)
+subscribe!(feeds.markPrice |> first(), chainData)
 
 mutable struct GoldenCross{A} <: AbstractStrategy
     cashPosition::Union{Nothing,CashPositionType}

@@ -288,7 +288,9 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
 
     setTimeout(30000) do 
-        Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
+        if isactive(expirationSubject) or isactive(strikeSubject)
+            Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
+        end
     end
     return expirationSubject, strikeSubject
 end
@@ -296,6 +298,9 @@ end
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
     ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+
+    complete!(client.mergedCallbacks[Pair(instr, :expirations)])
+    complete!(client.mergedCallbacks[Pair(instr, :strikes)])
     Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :expirations))
     Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :strikes))
 end
@@ -310,7 +315,9 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 
     setTimeout(30000) do 
-        Lucky.end_feed(client, instr, Val(:contractDetails))
+        if isactive(contractDetailsSubject)
+            Lucky.end_feed(client, instr, Val(:contractDetails))
+        end
     end
 
     return contractDetailsSubject
@@ -318,6 +325,7 @@ end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})
     ongoingRequests = getRequests(client.requestMappings, [:contractDetails], instr)
+    complete!(client.mergedCallbacks[Pair(instr, :contractDetails)])
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
     Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :contractDetails))
 end

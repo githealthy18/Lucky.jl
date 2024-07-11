@@ -142,9 +142,9 @@ function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, r
         exp_val = ib.requestMappings[exp_key]
         strike_val = ib.requestMappings[strike_key]
         for exp in stateful_expirations
-            if !isnothing(peek(stateful_expirations))
+            if isnothing(peek(stateful_expirations))
                 next!(exp_val.subject, exp)
-                for str in stateful_expirations
+                for str in stateful_strikes
                     if isnothing(peek(stateful_strikes))
                         next!(strike_val.subject, str)
                         complete!(strike_val.subject)
@@ -152,9 +152,12 @@ function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, r
                         next!(strike_val.subject, str)
                     end
                 end
+                complete!(exp_val.subject)
             else
                 next!(exp_val.subject, exp)
-                complete!(exp_val.subject)
+                for str in stateful_strikes
+                    next!(strike_val.subject, str)
+                end
             end
         end
     end

@@ -48,8 +48,6 @@ function isactive(feeds::T) where {T<:TickQuoteFeeds}
     return any(isactive)
 end
 
-function
-
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
     mergedCallbacks::Dictionary{Pair{Instrument, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeeds}}

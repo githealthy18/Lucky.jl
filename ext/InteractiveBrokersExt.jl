@@ -249,7 +249,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
     InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
     historicalDataSubject = RecentSubject(DataFrame, Subject(DataFrame; scheduler=AsyncScheduler()))
-    insert!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr))
     insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
     setTimeout(timeout) do 
@@ -282,8 +282,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     expirationSubject = RecentSubject(Date)
     strikeSubject = RecentSubject(Float64)
-    insert!(client.requestMappings, CallbackKey(requestId, :expirations, nothing), CallbackValue(securityDefinitionOptionalParameter, expirationSubject, instr, true))
-    insert!(client.requestMappings, CallbackKey(requestId, :strikes, nothing), CallbackValue(securityDefinitionOptionalParameter, strikeSubject, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :expirations, nothing), CallbackValue(securityDefinitionOptionalParameter, expirationSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :strikes, nothing), CallbackValue(securityDefinitionOptionalParameter, strikeSubject, instr))
     insert!(client.mergedCallbacks, Pair(instr, :expirations), expirationSubject)
     insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
 
@@ -311,7 +311,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     InteractiveBrokers.reqContractDetails(client, requestId, instr)
 
     contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails, Subject(InteractiveBrokers.ContractDetails; scheduler=AsyncScheduler()))
-    insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr, true))
+    insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr))
     insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 
     setTimeout(30000) do 

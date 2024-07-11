@@ -322,7 +322,7 @@ end
 ChainData(I::Instrument, client, next::A) where {A} = ChainData(client, I, missing, 4, 0.05, next)
 ChainData(I::Type{<:Instrument}, client, next::A) where {A} = ChainData{I,A}(client, missing, 4.0, 0.05, next)
 
-function Rocket.on_next!(strat::PostModel{I,A}, data::Lucky.PriceQuote) where {I,A}
+function Rocket.on_next!(strat::ChainData{I,A}, data::Lucky.PriceQuote) where {I,A}
     strat.spot = data
 
     expirationSubject, strikeSubject = Lucky.feed(strat.client, strat.instrument, Val(:securityDefinitionOptionalParameter))
@@ -330,25 +330,27 @@ function Rocket.on_next!(strat::PostModel{I,A}, data::Lucky.PriceQuote) where {I
     subscribe!(source, strat.next)
 end
 
-function Rocket.on_complete!(strat::PostModel)
+function Rocket.on_complete!(strat::ChainData)
     next!(strat.next, strat.spot)
 end
+
+chainKey = Lucky.Option{I,R,K,E} where {I,R,K,E}
 
 mutable struct OptionProcessor{I,A} <: AbstractStrategy
     instrument::I
     spot::Union{Missing, Lucky.PriceQuote{I,Mark,P,S,D} where {P,S,D}}
-    chain::Vector{Lucky.Option}
+    chain::Dictionary{Lucky.Option{I,R,K,E} where {R,K,E}, Pair{Union{Missing, Lucky.PriceQuote{Q,Bid,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}, Union{Missing, Lucky.PriceQuote{Q,Ask,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}}}
     next::A
 end
 
-OptionProcessor(I::Instrument, next::A) where {A} = OptionProcessor(I, missing, Vector{Lucky.Option}(), next)
+OptionProcessor(instr::I, next::A) where {I, A} = OptionProcessor(instr, missing, Dictionary{Lucky.Option{I,R,K,E} where {R,K,E}, Pair{Union{Missing, Lucky.PriceQuote{Q,Bid,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}, Union{Missing, Lucky.PriceQuote{Q,Ask,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}}}(), next)
 
 function Rocket.on_next!(strat::OptionProcessor{I, A}, data::Lucky.PriceQuote{I,Mark,P,S,D}) where {I,A,P,S,D}
     strat.spot = data
 end
 
 function Rocket.on_next!(strat::OptionProcessor{I, A}, data::Lucky.Option{I, R, K, E}) where {I,A,R,K,E}
-    push!(strat.chain, data)
+    insert!(strat.chain, data, Pair(missing, missing))
 end
 
 function Rocket.on_complete!(strat::OptionProcessor)

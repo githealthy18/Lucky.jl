@@ -286,7 +286,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
 
     setTimeout(30000) do 
-        if isactive(expirationSubject) or isactive(strikeSubject)
+        if isactive(expirationSubject) || isactive(strikeSubject)
             Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
         end
     end

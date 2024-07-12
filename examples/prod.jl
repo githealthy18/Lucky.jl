@@ -187,12 +187,12 @@ const predictionSubject = Subject(PredictionDataMsg; scheduler = Rocket.ThreadsS
 function Rocket.on_next!(actor::PredictActor, msg::PredictionDataMsg{I}) where {I}
     pandas_data = Pandas.DataFrame(msg.data)
     pandas_bday = Pandas.DataFrame(msg.bday)
-    stock = symbol(I)
-    insert!(actor.remotecalls, I, @spawnat :any py"create_prediction_set"(stock, pandas_data, pandas_bday))
+    stock = symbol(msg.instrument)
+    insert!(actor.remotecalls, msg.instrument, @spawnat :any py"create_prediction_set"(stock, pandas_data, pandas_bday))
 end
 
 function Rocket.on_next!(actor::PredictActor, msg::FetchPrediction{I}) where {I}
-    data = fetch(actor.remotecalls[I])
+    data = fetch(actor.remotecalls[msg.instrument])
     df = pd_to_df(data)
     next!(msg.next, df)
 end
@@ -251,7 +251,7 @@ function Rocket.on_complete!(step::PreModelDataset{I}) where {I}
     dr = Dates.today()+Day(1):Day(1):Dates.today()+Day(7) |> collect
     future_bdays = assign_businessday(dr)
     future_bday_df = DataFrame(bday=future_bdays)
-    next!(predictionSubject, PredictionDataMsg(I, step.data, future_bday_df))
+    next!(predictionSubject, PredictionDataMsg(step.instrument, step.data, future_bday_df))
     println("Completed PreModelDataset")
 end
 

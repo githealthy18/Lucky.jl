@@ -233,7 +233,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :livedata), output)
 
     setTimeout(timeout) do 
-        if Rocket.isactive(output)
+        if haskey(client.mergedCallbacks, Pair(instr, :livedata)) || Rocket.isactive(output)
             Lucky.end_feed(client, instr, Val(:livedata))
         end
     end
@@ -263,7 +263,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
     insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
     setTimeout(timeout) do 
-        if Rocket.isactive(historicalDataSubject)
+        if haskey(client.mergedCallbacks, Pair(instr, :historicaldata)) || Rocket.isactive(historicalDataSubject)
             Lucky.end_feed(client, instr, Val(:historicaldata))
         end
     end
@@ -298,9 +298,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
 
     setTimeout(30000) do 
-        if Rocket.isactive(expirationSubject) || Rocket.isactive(strikeSubject)
-            Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
-        end
+        if (haskey(client.mergedCallbacks, Pair(instr, :expirations)) || Rocket.isactive(expirationSubject)) || (haskey(client.mergedCallbacks, Pair(instr, :strikes)) || Rocket.isactive(strikeSubject))
+        Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
     end
     return expirationSubject, strikeSubject
 end
@@ -325,7 +324,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 
     setTimeout(30000) do 
-        if Rocket.isactive(contractDetailsSubject)
+        if haskey(client.mergedCallbacks, Pair(instr, :contractDetails)) || Rocket.isactive(contractDetailsSubject)
             Lucky.end_feed(client, instr, Val(:contractDetails))
         end
     end

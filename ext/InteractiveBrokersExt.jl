@@ -299,7 +299,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     setTimeout(30000) do 
         if (haskey(client.mergedCallbacks, Pair(instr, :expirations)) || Rocket.isactive(expirationSubject)) || (haskey(client.mergedCallbacks, Pair(instr, :strikes)) || Rocket.isactive(strikeSubject))
-        Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
+            Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
+        end
     end
     return expirationSubject, strikeSubject
 end

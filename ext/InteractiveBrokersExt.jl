@@ -37,6 +37,10 @@ struct TickQuoteFeeds <: CompletionActor{Any}
     tickString::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
 end
 
+function Rocket.complete!(pwithproxy::ProxyObservable)
+    Rocket.complete!(pwithproxy.proxied_source.main)
+end
+
 function Rocket.on_complete!(feeds::T) where {T<:TickQuoteFeeds}
     completions = [
         Rocket.complete!(getproperty(feeds,name)) for name in fieldnames(T)
@@ -259,7 +263,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
     insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
     setTimeout(timeout) do 
-        if Rocket.isactive(historicalDataSubject.subject)
+        if Rocket.isactive(historicalDataSubject)
             Lucky.end_feed(client, instr, Val(:historicaldata))
         end
     end

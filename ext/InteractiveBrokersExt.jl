@@ -413,7 +413,7 @@ function InteractiveBrokers.Contract(i::Lucky.Option)
         currency=Lucky.Units.currency(i)
     )
     contract.right = right(i)
-    contract.lastTradeDateOrMonth = expiry(i)
+    contract.lastTradeDateOrContractMonth = expiry(i)
     contract.strike = strike(i)
     contract.multiplier = "100"
     return contract

@@ -328,6 +328,7 @@ function Rocket.on_next!(strat::ChainData{I,A}, data::Lucky.PriceQuote) where {I
     expirationSubject, strikeSubject = Lucky.feed(strat.client, strat.instrument, Val(:securityDefinitionOptionalParameter))
     source = combineLatest(expirationSubject |> take(strat.expiration_count), strikeSubject |> filter((d) -> isapprox(d, strat.spot.price; rtol=strat.strike_tolerance))) |> merge_map(Tuple, d -> from([CALL, PUT]) |> map(Tuple, r -> (d..., r))) |> map(Option, d -> Option(strat.instrument, d[3], d[2], d[1]))
     subscribe!(source, strat.next)
+    subscribe!(source, logger("ChainData"))
 end
 
 function Rocket.on_complete!(strat::ChainData)

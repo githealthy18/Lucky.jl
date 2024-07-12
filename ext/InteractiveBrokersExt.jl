@@ -390,6 +390,9 @@ exchange(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = "SMART"
 right(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement right(::$(T))")
 right(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = String(R)
 
+strike(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement strike(::$(T))")
+strike(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = K
+
 expiry(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement expiry(::$(T))")
 expiry(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = Dates.format(E, "yyyymmdd")
 
@@ -403,14 +406,17 @@ function InteractiveBrokers.Contract(i::Lucky.Instrument)
 end
 
 function InteractiveBrokers.Contract(i::Lucky.Option)
-    return InteractiveBrokers.Contract(
+    contract = InteractiveBrokers.Contract(
         symbol=symbol(i),
         secType=secType(i),
         exchange=exchange(i),
-        currency=Lucky.Units.currency(i),
-        right=right(i),
-        lastTradeDateOrMonth=expiry(i)
+        currency=Lucky.Units.currency(i)
     )
+    contract.right = right(i)
+    contract.lastTradeDateOrMonth = expiry(i)
+    contract.strike = strike(i)
+    contract.multiplier = "100"
+    return contract
 end
 
 end

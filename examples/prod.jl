@@ -378,6 +378,10 @@ function Rocket.on_next!(strat::OptionProcessor{I,A}, data::Lucky.PriceQuote{Luc
     push!(strat.chain[data.instrument], data)
 end
 
+function Rocket.on_next!(strat::OptionProcessor{I,A}, data::Lucky.PriceQuote{Lucky.Option{I, R, K, E},Ask,P,S,D}) where {I,A,R,K,E,P,S,D}
+    push!(strat.chain[data.instrument], data)
+end
+
 client = Lucky.service(:interactivebrokers)
 connect(client)
 

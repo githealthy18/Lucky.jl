@@ -308,11 +308,15 @@ end
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
     ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-
-    complete!(client.mergedCallbacks[Pair(instr, :expirations)])
-    complete!(client.mergedCallbacks[Pair(instr, :strikes)])
     Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :expirations))
     Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :strikes))
+
+    if Rock.isactive(client.mergedCallbacks[Pair(instr, :expirations)])
+        complete!(client.mergedCallbacks[Pair(instr, :expirations)])
+    end
+    if Rock.isactive(client.mergedCallbacks[Pair(instr, :strikes)])
+        complete!(client.mergedCallbacks[Pair(instr, :strikes)])
+    end
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})

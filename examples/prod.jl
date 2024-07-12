@@ -340,12 +340,12 @@ mutable struct OptionProcessor{I,A} <: AbstractStrategy
     client
     instrument::I
     spot::Union{Missing, Lucky.PriceQuote{I,Mark,P,S,D} where {P,S,D}}
-    chain::Dictionary{Lucky.Option{I,R,K,E} where {R,K,E}, Pair{Union{Missing, Lucky.PriceQuote{Q,Bid,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}, Union{Missing, Lucky.PriceQuote{Q,Ask,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}}}
+    chain::Dictionary{Lucky.Option{I,R,K,E} where {R,K,E}, Vector{Union{Lucky.PriceQuote{Q,Bid,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}},Lucky.PriceQuote{Q,Ask,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}}}
     livedata::Bool
     next::A
 end
 
-OptionProcessor(client, instr::I, next::A) where {I, A} = OptionProcessor(client, instr, missing, Dictionary{Lucky.Option{I,R,K,E} where {R,K,E}, Pair{Union{Missing, Lucky.PriceQuote{Q,Bid,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}, Union{Missing, Lucky.PriceQuote{Q,Ask,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}}}(), false, next)
+OptionProcessor(client, instr::I, next::A) where {I, A} = OptionProcessor(client, instr, missing, Dictionary{Lucky.Option{I,R,K,E} where {R,K,E}, Vector{Union{Lucky.PriceQuote{Q,Bid,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}},Lucky.PriceQuote{Q,Ask,P,S,D} where {R,K,E,P,S,D,Q<:Lucky.Option{I,R,K,E}}}}}(), false, next)
 
 function Rocket.on_next!(strat::OptionProcessor{I, A}, data::Lucky.PriceQuote{I,Mark,P,S,D}) where {I,A,P,S,D}
     strat.spot = data
@@ -353,12 +353,13 @@ end
 
 function Rocket.on_next!(strat::OptionProcessor{I, A}, data::Lucky.Option{I, R, K, E}) where {I,A,R,K,E}
     try
-        insert!(strat.chain, data, Pair(missing, missing))
+        insert!(strat.chain, data, Vector{Union{Lucky.PriceQuote{Lucky.Option{I, R, K, E},Bid,P,S,D} where {P,S,D},Lucky.PriceQuote{Lucky.Option{I, R, K, E},Ask,P,S,D} where {P,S,D}}}())
     catch e
     end
 end
 
 function Rocket.on_complete!(strat::OptionProcessor)
+    println("Gathering")
     if !strat.livedata
         strat.livedata = true
         feeds = []
@@ -371,6 +372,10 @@ function Rocket.on_complete!(strat::OptionProcessor)
     else
         println("Data Gathered")
     end
+end
+
+function Rocket.on_next!(strat::OptionProcessor{I,A}, data::Lucky.PriceQuote{Lucky.Option{I, R, K, E},Bid,P,S,D}) where {I,A,R,K,E,P,S,D}
+    push!(strat.chain[data.instrument], data)
 end
 
 client = Lucky.service(:interactivebrokers)

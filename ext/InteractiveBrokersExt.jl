@@ -43,7 +43,7 @@ function Rocket.on_complete!(feeds::T) where {T<:TickQuoteFeeds}
     ]
 end
 
-function isactive(feeds::T) where {T<:TickQuoteFeeds}
+function Rocket.isactive(feeds::T) where {T<:TickQuoteFeeds}
     isactive = [ getproperty(feeds, name).subject.isactive for name in fieldnames(T) ]
     return any(isactive)
 end
@@ -221,7 +221,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :livedata), output)
 
     setTimeout(timeout) do 
-        if isactive(output)
+        if Rocket.isactive(output)
             Lucky.end_feed(client, instr, Val(:livedata))
         end
     end
@@ -251,7 +251,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
     insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
     setTimeout(timeout) do 
-        if isactive(client.mergedCallbacks[Pair(instr, :historicaldata)].subject.subject)
+        if Rocket.isactive(historicalDataSubject.subject)
             Lucky.end_feed(client, instr, Val(:historicaldata))
         end
     end
@@ -286,7 +286,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
 
     setTimeout(30000) do 
-        if isactive(expirationSubject) || isactive(strikeSubject)
+        if Rocket.isactive(expirationSubject) || Rocket.isactive(strikeSubject)
             Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
         end
     end
@@ -313,7 +313,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 
     setTimeout(30000) do 
-        if isactive(contractDetailsSubject)
+        if Rocket.isactive(contractDetailsSubject)
             Lucky.end_feed(client, instr, Val(:contractDetails))
         end
     end

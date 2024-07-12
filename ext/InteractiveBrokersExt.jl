@@ -43,8 +43,16 @@ function Rocket.on_complete!(feeds::T) where {T<:TickQuoteFeeds}
     ]
 end
 
+function Rocket.isactive(subject::Rocket.RecentSubjectInstance)
+    return subject.subject.isactive
+end
+
+function Rocket.isactive(withproxy::ProxyObservable)
+    return Rocket.isactive(withproxy.proxied_source.main)
+end
+
 function Rocket.isactive(feeds::T) where {T<:TickQuoteFeeds}
-    isactive = [ getproperty(feeds, name).subject.isactive for name in fieldnames(T) ]
+    isactive = [ Rocket.isactive(getproperty(feeds, name)) for name in fieldnames(T) ]
     return any(isactive)
 end
 

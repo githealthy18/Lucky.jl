@@ -391,7 +391,7 @@ subscribe!(source, dataset)
 
 premodelProcessor = PreModelProcessor(stock, base_processor, MarkovModel(stockType, cfg, "prod", markov), ArchModel(stockType, cfg, "prod", arch), data)
 actor = PreModel(stock, premodelProcessor)
-hist = Lucky.feed(client, stock, Val(:historicaldata); timeout=1000)
+hist = Lucky.feed(client, stock, Val(:historicaldata))
 feeds = Lucky.feed(client, stock, Val(:livedata); timeout=60000)
 source = merged((hist |> first(), feeds.openPrice |> first(), feeds.highPrice |> first(), feeds.lowPrice |> first(), feeds.markPrice |> first(), feeds.volume |> first()))
 subscribe!(source, actor)

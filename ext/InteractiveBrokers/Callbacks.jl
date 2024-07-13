@@ -147,13 +147,16 @@ function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, r
                 for str in stateful_strikes
                     if isnothing(peek(stateful_strikes))
                         next!(strike_val.subject, str)
+                        println("Completing Strike")
                         complete!(strike_val.subject)
                     else
                         next!(strike_val.subject, str)
                     end
                 end
+                println("Completing Exp")
                 complete!(exp_val.subject)
             else
+                println("Not clse")
                 next!(exp_val.subject, exp)
                 for str in stateful_strikes
                     next!(strike_val.subject, str)

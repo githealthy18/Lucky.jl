@@ -233,6 +233,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     insert!(client.mergedCallbacks, Pair(instr, :livedata), output)
 
     setTimeout(timeout) do 
+        println("here")
         if haskey(client.mergedCallbacks, Pair(instr, :livedata)) || Rocket.isactive(output)
             Lucky.end_feed(client, instr, Val(:livedata))
         end

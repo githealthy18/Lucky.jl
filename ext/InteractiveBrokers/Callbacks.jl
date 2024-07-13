@@ -136,33 +136,17 @@ function tickOptionComputation end
 function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, reqId::Int, exchange::String, underlyingConId::Int, tradingClass::String, multiplier::String, expirations::Vector{String}, strikes::Vector{Float64})
     exp_key = CallbackKey(reqId, :expirations, nothing)
     strike_key = CallbackKey(reqId, :strikes, nothing)
-    stateful_expirations = Iterators.Stateful(sort!(Date.(expirations, "yyyymmdd")))
-    stateful_strikes = Iterators.Stateful(strikes)
     if (haskey(ib.requestMappings, exp_key) && haskey(ib.requestMappings, strike_key))
         exp_val = ib.requestMappings[exp_key]
         strike_val = ib.requestMappings[strike_key]
-        for exp in stateful_expirations
-            if isnothing(peek(stateful_expirations))
-                next!(exp_val.subject, exp)
-                for str in stateful_strikes
-                    if isnothing(peek(stateful_strikes))
-                        next!(strike_val.subject, str)
-                        println("Completing Strike")
-                        complete!(strike_val.subject)
-                    else
-                        next!(strike_val.subject, str)
-                    end
-                end
-                println("Completing Exp")
-                complete!(exp_val.subject)
-            else
-                println("Not clse")
-                next!(exp_val.subject, exp)
-                for str in stateful_strikes
-                    next!(strike_val.subject, str)
-                end
+        for exp in sort!(Date.(expirations, "yyyymmdd"))
+            next!(exp_val.subject, exp)
+            for str in strikes
+                next!(strike_val.subject, str)
             end
         end
+        complete!(strike_val.subject)
+        complete!(exp_val.subject)
     end
 end
 

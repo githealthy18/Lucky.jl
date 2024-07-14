@@ -43,7 +43,7 @@ function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErr
     if (err.errorCode == 200) # No security definition has been found for the request
         requestMappings = getRequestsById(ib.requestMappings, err.id)
         instr = last(first(requestMappings)).instrument
-        callbacks = getCallbacksByInstrument(ib.callbacks, instr)
+        callbacks = getCallbacksByInstrument(ib.mergedCallbacks, instr)
         for (k,_) in pairs(callbacks)
             Lucky.end_feed(ib, instr, Val(k.second))
         end

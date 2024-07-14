@@ -40,7 +40,7 @@ function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErr
         return
     end
 
-    if (err.code == 200) # No security definition has been found for the request
+    if (err.errorCode == 200) # No security definition has been found for the request
         requestMappings = getRequestsById(ib.requestMappings, err.id)
         instr = last(first(requestMappings)).instrument
         callbacks = getCallbacksByInstrument(ib.callbacks, instr)

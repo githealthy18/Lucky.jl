@@ -16,6 +16,7 @@ CurrencyType(s::Symbol) = CurrencyType(Currency{s})
 CurrencyType(s::AbstractString) = CurrencyType(Symbol(s))
 
 symbol(::Currency{S}) where {S} = S
+currency(::Currency{S}) where {S} = String(S)
 
 Base.show(io::IO, ::Type{Currency{S}}) where {S} = print(io, "$(S)")
 Base.String(::Currency{S}) where {S} = String(S)

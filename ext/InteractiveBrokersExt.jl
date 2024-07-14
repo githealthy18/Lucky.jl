@@ -6,6 +6,7 @@ using Rocket
 using Dates
 using Dictionaries
 using DataFrames
+import Lucky.Units as Units
 
 struct CallbackKey
     requestId::Int
@@ -369,7 +370,7 @@ function wrapper(client::InteractiveBrokersObservable)
     setproperty!(wrap, :historicalData, historicalData)
     setproperty!(wrap, :securityDefinitionOptionalParameter, securityDefinitionOptionalParameter)
     setproperty!(wrap, :tickOptionComputation, tickOptionComputation)
-    
+
     return wrap
 end
 
@@ -377,12 +378,6 @@ secType(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to im
 secType(::T) where {T<:Lucky.Cash} = "CASH"
 secType(::T) where {T<:Lucky.Stock} = "STK"
 secType(::T) where {T<:Lucky.Option} = "OPT"
-
-symbol(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement symbol(::$(T))")
-symbol(::T) where {C,T<:Lucky.Cash{C}} = String(C)
-symbol(::T) where {S,C,T<:Lucky.Stock{S,C}} = String(S)
-symbol(::Type{<:Lucky.Stock{S,C}}) where {S,C} = String(S)
-symbol(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = symbol(S)
 
 conId(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement conId(::$(T))")
 conId(::T) where {C,T<:Lucky.Cash{C}} = nothing
@@ -393,13 +388,13 @@ exchange(::T) where {S,C,T<:Lucky.Stock{S,C}} = "SMART"
 exchange(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = "SMART"
 
 right(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement right(::$(T))")
-right(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = String(R)
+right(option::Option) = String(option.right)
 
 strike(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement strike(::$(T))")
-strike(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = K
+strike(option::Option) = option.strike
 
 expiry(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement expiry(::$(T))")
-expiry(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = Dates.format(E, "yyyymmdd")
+expiry(option::Option) = Dates.format(option.expiry, "yyyymmdd")
 
 function InteractiveBrokers.Contract(i::Lucky.Instrument)
     return InteractiveBrokers.Contract(

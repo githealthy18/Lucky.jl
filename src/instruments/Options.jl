@@ -21,6 +21,6 @@ end
 
 Option(stock::Stock, right::OPTION_RIGHT, strike::Float64, expiry::Dates.Date) = Option(stock, right, strike, expiry, Greeks(NaN, NaN, NaN, NaN, NaN, NaN))
 
-Units.symbol(option::Option) = symbol(option.underlying)
+Units.symbol(option::Option) = Units.symbol(option.underlying)
 
 Units.currency(option::Option) = Units.currency(option.underlying)

@@ -120,6 +120,7 @@ function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
 
     obs.connection = InteractiveBrokers.connect(; params...)
     InteractiveBrokers.start_reader(obs.connection, wrapper(obs), DataFrame)
+    sleep(1) # Wait for the connection to be established
     # Send pending commands
     while !isempty(obs.pendingCmds)
         cmd = pop!(obs.pendingCmds)

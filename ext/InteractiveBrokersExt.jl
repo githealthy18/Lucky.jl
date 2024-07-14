@@ -318,7 +318,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
 
     complete!(client.mergedCallbacks[Pair(instr, :expirations)])
     complete!(client.mergedCallbacks[Pair(instr, :strikes)])
-    
+
     Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
     Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :expirations))
     Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :strikes))
@@ -369,7 +369,7 @@ function wrapper(client::InteractiveBrokersObservable)
     setproperty!(wrap, :historicalData, historicalData)
     setproperty!(wrap, :securityDefinitionOptionalParameter, securityDefinitionOptionalParameter)
     setproperty!(wrap, :tickOptionComputation, tickOptionComputation)
-
+    
     return wrap
 end
 

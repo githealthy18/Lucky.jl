@@ -139,7 +139,7 @@ function accountSummary(ib::InteractiveBrokersObservable, reqId::Int, account::S
     end
 end
 
-function tickOptionComputation(ib::InteractiveBrokersObservable, reqId::Int, tickType::String, tickAttrib::Int, impliedVol::Union{Float64,Nothing}, delta::Union{Float64,Nothing}, optPrice::Union{Float64,Nothing}, pvDividend::Union{Float64,Nothing}, gamma::Union{Float64,Nothing}, vega::Union{Float64,Nothing}, theta::Union{Float64,Nothing}, undPrice::Union{Float64,Nothing}) end
+function tickOptionComputation(ib::InteractiveBrokersObservable, reqId::Int, tickType::InteractiveBrokers.TickTypes.TICK_TYPES, tickAttrib::Int, impliedVol::Union{Float64,Nothing}, delta::Union{Float64,Nothing}, optPrice::Union{Float64,Nothing}, pvDividend::Union{Float64,Nothing}, gamma::Union{Float64,Nothing}, vega::Union{Float64,Nothing}, theta::Union{Float64,Nothing}, undPrice::Union{Float64,Nothing}) end
 
 function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, reqId::Int, exchange::String, underlyingConId::Int, tradingClass::String, multiplier::String, expirations::Vector{String}, strikes::Vector{Float64})
     exp_key = CallbackKey(reqId, :expirations, nothing)

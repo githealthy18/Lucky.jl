@@ -80,7 +80,7 @@ function marketDataType(ib::InteractiveBrokersObservable, reqId::Int, marketData
     end
 end
 
-function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick::Float64, bboExchange::String, snapshotPermissions::Int)
+function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick::Union{Nothing, Float64}, bboExchange::String, snapshotPermissions::Int)
     key = CallbackKey(tickerId, :tickReqParams, InteractiveBrokers.TickTypes.LAST)
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]

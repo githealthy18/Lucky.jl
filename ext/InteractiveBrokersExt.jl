@@ -160,6 +160,14 @@ function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Inst
     return filter(((k,v),) -> k.callbackSymbol in requestTypes && v.instrument==instr, pairs(dict))
 end
 
+function getRequestsById(dict::Dictionary, id::Int)
+    return filter(((k,v),) -> k.requestId==id, pairs(dict))
+end
+
+function getCallbacksByInstrument(dict::Dictionary, instr::Instrument)
+    return filter(((k,v),) -> first(k)==instr, pairs(dict))
+end
+
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
     requestId = nextRequestId(client)
     # TODO options

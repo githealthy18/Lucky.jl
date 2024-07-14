@@ -1,11 +1,11 @@
 export Stock
 
-struct Stock{S,C} <: Instrument end
+struct Stock{S,C<:Currency} <: Instrument 
+    symbol::S
+    currency::C
+end
 
-Stock(S::Symbol, C::Type{<:Units.Currency}) = Stock{S,C}()
-Stock(S::Symbol, C::Union{Symbol, AbstractString}) = Stock{S,Units.CurrencyType(C)}()
+Stock(symbol::Symbol, currency::Union{AbstractString, Symbol}) = Stock(symbol, Currency(currency))
 
-Units.symbol(::T) where {S,C,T<:Stock{S,C}} = String(S)
-Units.symbol(::Type{<:Stock{S,C}}) where {S,C} = String(S)
-
-Units.currency(::Stock{S,C}) where {S,C} = Units.CurrencyType(C)
+Units.symbol(stock::T) where {S,C,T<:Stock{S,C}} = String(stock.symbol)
+Units.currency(stock::Stock{S,C}) where {S,C} = String(stock.currency)

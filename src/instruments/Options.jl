@@ -1,10 +1,26 @@
 export Option
 
-struct Option{S,R,K,E} <: Instrument end
+struct Greeks
+    impliedVolatility::Float64
+    delta::Float64
+    gamma::Float64
+    vega::Float64
+    theta::Float64
+    rho::Float64
+end
 
 
-Option(S::Stock, R::OPTION_RIGHT, K::Float64, E::Dates.Date) = Option{InstrumentType(S),R,K,E}()
+struct Option{S,R,K,E} <: Instrument 
+    underlying::S
+    right::R
+    strike::K
+    expiry::E
+    greeks::Greeks
+end
 
-Units.symbol(::T) where {S,R,K,E,T<:Option{S,R,K,E}} = symbol(S)
 
-Units.currency(::Option{I,R,K,E}) where {S,C,R,K,E,I<:Stock{S,C}} = Units.CurrencyType(C)
+Option(stock::Stock, right::OPTION_RIGHT, strike::Float64, expiry::Dates.Date) = Option(stock, right, strike, expiry, Greeks(NaN, NaN, NaN, NaN, NaN, NaN))
+
+Units.symbol(option::Option) = symbol(option.underlying)
+
+Units.currency(option::Option) = Units.currency(option.underlying)

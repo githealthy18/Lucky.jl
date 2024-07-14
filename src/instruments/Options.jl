@@ -10,7 +10,7 @@ struct Greeks
 end
 
 
-struct Option{S,R,K,E} <: Instrument 
+struct Option{S<:Stock,R,K,E} <: Instrument 
     underlying::S
     right::R
     strike::K

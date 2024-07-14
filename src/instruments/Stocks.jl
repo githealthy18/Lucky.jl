@@ -1,6 +1,6 @@
 export Stock
 
-struct Stock{S,C<:Currency} <: Instrument 
+struct Stock{S,C<:Units.Currency} <: Instrument 
     symbol::S
     currency::C
 end

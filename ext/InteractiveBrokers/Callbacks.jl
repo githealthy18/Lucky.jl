@@ -48,7 +48,6 @@ function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErr
             Lucky.end_feed(ib, instr, Val(k.second))
         end
     end
-    println("error! $(err)")
     #Rocket.error!(ib, err)
 end
 
@@ -68,7 +67,6 @@ function tickGeneric(ib::InteractiveBrokersObservable, tickerId::Int, tickType::
     key = CallbackKey(tickerId, :tickGeneric, tickType)
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]
-        println("tickGeneric: $(val.instrument) $tickType $value")
     end
 end
 
@@ -76,7 +74,6 @@ function marketDataType(ib::InteractiveBrokersObservable, reqId::Int, marketData
     key = CallbackKey(reqId, :marketDataType, InteractiveBrokers.TickTypes.LAST)
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]
-        println("marketDataType: $(val.instrument) $marketDataType")
     end
 end
 
@@ -84,7 +81,6 @@ function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick:
     key = CallbackKey(tickerId, :tickReqParams, InteractiveBrokers.TickTypes.LAST)
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]
-        println("tickReqParams: $(val.instrument) $minTick $bboExchange $snapshotPermissions")
     end
 end
 

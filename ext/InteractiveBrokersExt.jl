@@ -251,6 +251,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     end
 
     setTimeout(timeout) do 
+        println("Timing out: ", instr)
         Lucky.end_feed(client, instr, Val(:livedata))
     end
 

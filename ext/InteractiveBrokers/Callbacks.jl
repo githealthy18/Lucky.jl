@@ -101,7 +101,11 @@ function tickPrice(ib::InteractiveBrokersObservable, tickerId::Int, field::Inter
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]
         qte = Lucky.Quote(val.instrument, dispatch(field), price, size, Dates.now())
-        next!(val.subject, qte)
+        try
+            next!(val.subject, qte)
+        catch InvalidStateException
+            @warn "Subject Closed"
+        end
     end
 end
 

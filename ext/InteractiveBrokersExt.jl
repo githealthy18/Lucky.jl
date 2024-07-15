@@ -251,7 +251,6 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     end
 
     setTimeout(timeout) do 
-        println("Timing out: ", instr)
         Lucky.end_feed(client, instr, Val(:livedata))
     end
 
@@ -261,7 +260,10 @@ end
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})
     lock(client.callbackLock) do
         if haskey(client.mergedCallbacks, Pair(instr, :livedata))
-            complete!(client.mergedCallbacks[Pair(instr, :livedata)])
+            subject = client.mergedCallbacks[Pair(instr, :livedata)]
+            if Rocket.isactive(subject)
+                Rocket.complete!(subject)
+            end
             Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :livedata))
         end
     end
@@ -298,7 +300,10 @@ end
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:historicaldata})
     lock(client.callbackLock) do
         if haskey(client.mergedCallbacks, Pair(instr, :historicaldata))
-            complete!(client.mergedCallbacks[Pair(instr, :historicaldata)])
+            subject = client.mergedCallbacks[Pair(instr, :historicaldata)]
+            if Rocket.isactive(subject)
+                Rocket.complete!(subject)
+            end
             Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :historicaldata))
         end
     end
@@ -338,8 +343,14 @@ end
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
     lock(client.callbackLock) do
         if (haskey(client.mergedCallbacks, Pair(instr, :expirations))) || (haskey(client.mergedCallbacks, Pair(instr, :strikes)))
-            complete!(client.mergedCallbacks[Pair(instr, :expirations)])
-            complete!(client.mergedCallbacks[Pair(instr, :strikes)])
+            expirationSubject = client.mergedCallbacks[Pair(instr, :expirations)]
+            strikeSubject = client.mergedCallbacks[Pair(instr, :strikes)]
+            if Rocket.isactive(expirationSubject)
+                Rocket.complete!(expirationSubject)
+            end
+            if Rocket.isactive(strikeSubject)
+                Rocket.complete!(strikeSubject)
+            end
             Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :expirations))
             Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :strikes))
         end
@@ -369,7 +380,10 @@ end
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})
     lock(client.callbackLock) do
         if haskey(client.mergedCallbacks, Pair(instr, :contractDetails))
-            complete!(client.mergedCallbacks[Pair(instr, :contractDetails)])
+            subject = client.mergedCallbacks[Pair(instr, :contractDetails)]
+            if Rocket.isactive(subject)
+                Rocket.complete!(subject)
+            end
             Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :contractDetails))
         end
     end

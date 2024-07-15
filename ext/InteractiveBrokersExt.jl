@@ -223,6 +223,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
         insert!(client.requestMappings, CallbackKey(requestId, :tickReqParams, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickReqParams, nothing, instr))
     end
 
+    println("Done Inserting")
+
     # TODO default subject type depending on callback    
     merge = (tup::Tuple{Lucky.PriceQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].price, tup[1].size, tup[2])
     last = lastPriceSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.PriceQuote, merge)
@@ -245,6 +247,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
         lastSize,
         tickStringSubject
     )
+
+    println("need to lock callbacks")
 
     lock(client.callbackLock) do 
         insert!(client.mergedCallbacks, Pair(instr, :livedata), output)

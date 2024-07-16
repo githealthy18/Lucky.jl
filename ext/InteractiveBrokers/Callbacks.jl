@@ -55,7 +55,7 @@ function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErr
                 end
             end
         catch E
-            @error "Error: $(E)"
+            @warn "Warning: $(E)"
         end
     end
     #Rocket.error!(ib, err)

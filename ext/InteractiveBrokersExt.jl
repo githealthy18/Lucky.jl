@@ -262,6 +262,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :livedata))
 
         InteractiveBrokers.cancelMktData(client, requestId)
+    end
 end
 
 function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=60000)
@@ -331,6 +332,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
         Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :expirations))
         Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :strikes))
+    end
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})

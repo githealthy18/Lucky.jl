@@ -255,13 +255,14 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         if Rocket.isactive(subject)
             Rocket.complete!(subject)
         end
-        ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
-        requestId = first(keys(ongoingRequests)).requestId
-
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
         Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :livedata))
 
-        InteractiveBrokers.cancelMktData(client, requestId)
+        ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
+        if !isempty(ongoingRequests)
+            requestId = first(keys(ongoingRequests)).requestId
+            Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+            InteractiveBrokers.cancelMktData(client, requestId)
+        end
     end
 end
 

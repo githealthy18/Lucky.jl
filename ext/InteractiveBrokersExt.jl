@@ -177,23 +177,23 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     # TODO callbacks depending on requested data
 
-    lastPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=ThreadsScheduler()))
+    lastPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
 
-    bidPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=ThreadsScheduler()))
-    askPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=ThreadsScheduler()))
-    markPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=ThreadsScheduler()))
+    bidPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
+    askPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
+    markPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
 
-    highPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=ThreadsScheduler()))
-    lowPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=ThreadsScheduler()))
-    openPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=ThreadsScheduler()))
-    closePriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=ThreadsScheduler()))
+    highPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
+    lowPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
+    openPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
+    closePriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
 
-    volumeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=ThreadsScheduler()))
-    askSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=ThreadsScheduler()))
-    bidSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=ThreadsScheduler()))
-    lastSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=ThreadsScheduler()))
+    volumeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=Rocket.ThreadsScheduler()))
+    askSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=Rocket.ThreadsScheduler()))
+    bidSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=Rocket.ThreadsScheduler()))
+    lastSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=Rocket.ThreadsScheduler()))
 
-    tickStringSubject = RecentSubject(DateTime, Subject(DateTime; scheduler=ThreadsScheduler()))
+    tickStringSubject = RecentSubject(DateTime, Subject(DateTime; scheduler=Rocket.ThreadsScheduler()))
 
     insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickPrice, lastPriceSubject, instr))
 
@@ -268,7 +268,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
 
     InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
-    historicalDataSubject = RecentSubject(DataFrame, Subject(DataFrame; scheduler=ThreadsScheduler()))
+    historicalDataSubject = RecentSubject(DataFrame, Subject(DataFrame; scheduler=Rocket.ThreadsScheduler()))
     insert!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr))
     insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
@@ -331,7 +331,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     InteractiveBrokers.reqContractDetails(client, requestId, instr)
 
-    contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails, Subject(InteractiveBrokers.ContractDetails; scheduler=ThreadsScheduler()))
+    contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails, Subject(InteractiveBrokers.ContractDetails; scheduler=Rocket.ThreadsScheduler()))
     insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr))
     insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 

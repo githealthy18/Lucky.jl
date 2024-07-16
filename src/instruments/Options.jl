@@ -16,14 +16,6 @@ setVega!(g::Greeks, vega::Float64) = g.vega = vega
 setTheta!(g::Greeks, theta::Float64) = g.theta = theta
 setRho!(g::Greeks, rho::Float64) = g.rho = rho
 
-setImpliedVolatility!(o::Option, impliedVolatility::Float64) = setImpliedVolatility!(o.greeks, impliedVolatility)
-setDelta!(o::Option, delta::Float64) = setDelta!(o.greeks, delta)
-setGamma!(o::Option, gamma::Float64) = setGamma!(o.greeks, gamma)
-setVega!(o::Option, vega::Float64) = setVega!(o.greeks, vega)
-setTheta!(o::Option, theta::Float64) = setTheta!(o.greeks, theta)
-setRho!(o::Option, rho::Float64) = setRho!(o.greeks, rho)
-
-
 struct Option{S<:Stock,R,K,E} <: Instrument 
     underlying::S
     right::R
@@ -31,6 +23,13 @@ struct Option{S<:Stock,R,K,E} <: Instrument
     expiry::E
     greeks::Greeks
 end
+
+setImpliedVolatility!(o::Option, impliedVolatility::Float64) = setImpliedVolatility!(o.greeks, impliedVolatility)
+setDelta!(o::Option, delta::Float64) = setDelta!(o.greeks, delta)
+setGamma!(o::Option, gamma::Float64) = setGamma!(o.greeks, gamma)
+setVega!(o::Option, vega::Float64) = setVega!(o.greeks, vega)
+setTheta!(o::Option, theta::Float64) = setTheta!(o.greeks, theta)
+setRho!(o::Option, rho::Float64) = setRho!(o.greeks, rho)
 
 
 Option(stock::Stock, right::OPTION_RIGHT, strike::Float64, expiry::Dates.Date) = Option(stock, right, strike, expiry, Greeks(NaN, NaN, NaN, NaN, NaN, NaN))

@@ -177,23 +177,23 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     # TODO callbacks depending on requested data
 
-    lastPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
+    lastPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote))
 
-    bidPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
-    askPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
-    markPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
+    bidPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote))
+    askPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote))
+    markPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote))
 
-    highPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
-    lowPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
-    openPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
-    closePriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote; scheduler=Rocket.ThreadsScheduler()))
+    highPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote))
+    lowPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote))
+    openPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote))
+    closePriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote))
 
-    volumeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=Rocket.ThreadsScheduler()))
-    askSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=Rocket.ThreadsScheduler()))
-    bidSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=Rocket.ThreadsScheduler()))
-    lastSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote, scheduler=Rocket.ThreadsScheduler()))
+    volumeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
+    askSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
+    bidSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
+    lastSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
 
-    tickStringSubject = RecentSubject(DateTime, Subject(DateTime; scheduler=Rocket.ThreadsScheduler()))
+    tickStringSubject = RecentSubject(DateTime, Subject(DateTime))
 
     insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickPrice, lastPriceSubject, instr))
 
@@ -271,7 +271,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
 
     InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
-    historicalDataSubject = RecentSubject(DataFrame, Subject(DataFrame; scheduler=Rocket.ThreadsScheduler()))
+    historicalDataSubject = RecentSubject(DataFrame, Subject(DataFrame))
     insert!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr))
     insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
@@ -341,7 +341,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     InteractiveBrokers.reqContractDetails(client, requestId, instr)
 
-    contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails, Subject(InteractiveBrokers.ContractDetails; scheduler=Rocket.ThreadsScheduler()))
+    contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails, Subject(InteractiveBrokers.ContractDetails))
     insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr))
     insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 

@@ -9,12 +9,19 @@ mutable struct Greeks
     rho::Float64
 end
 
-setImpliedVolatility!(g::Greeks, impliedVolatility::Float64) = (g.impliedVolatility = impliedVolatility; g)
-setDelta!(g::Greeks, delta::Float64) = (g.delta = delta; g)
-setGamma!(g::Greeks, gamma::Float64) = (g.gamma = gamma; g)
-setVega!(g::Greeks, vega::Float64) = (g.vega = vega; g)
-setTheta!(g::Greeks, theta::Float64) = (g.theta = theta; g)
-setRho!(g::Greeks, rho::Float64) = (g.rho = rho; g)
+setImpliedVolatility!(g::Greeks, impliedVolatility::Float64) = g.impliedVolatility = impliedVolatility
+setDelta!(g::Greeks, delta::Float64) = g.delta = delta
+setGamma!(g::Greeks, gamma::Float64) = g.gamma = gamma
+setVega!(g::Greeks, vega::Float64) = g.vega = vega
+setTheta!(g::Greeks, theta::Float64) = g.theta = theta
+setRho!(g::Greeks, rho::Float64) = g.rho = rho
+
+setImpliedVolatility!(o::Option, impliedVolatility::Float64) = setImpliedVolatility!(o.greeks, impliedVolatility)
+setDelta!(o::Option, delta::Float64) = setDelta!(o.greeks, delta)
+setGamma!(o::Option, gamma::Float64) = setGamma!(o.greeks, gamma)
+setVega!(o::Option, vega::Float64) = setVega!(o.greeks, vega)
+setTheta!(o::Option, theta::Float64) = setTheta!(o.greeks, theta)
+setRho!(o::Option, rho::Float64) = setRho!(o.greeks, rho)
 
 
 struct Option{S<:Stock,R,K,E} <: Instrument 

@@ -65,9 +65,6 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
     mergedCallbacks::Dictionary{Pair{Instrument, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeeds}}
 
-    requestLock::ReentrantLock
-    callbackLock::ReentrantLock
-
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}
 
@@ -88,8 +85,6 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
         ib = new(
             CallbackMapping(),
             Dictionary{Symbol,Rocket.Subscribable}(),
-            ReentrantLock(),
-            ReentrantLock(),
             host,
             port,
             clientId,
@@ -200,28 +195,26 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     tickStringSubject = RecentSubject(DateTime, Subject(DateTime; scheduler=AsyncScheduler()))
 
-    lock(client.requestLock) do 
-        insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickPrice, lastPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickPrice, lastPriceSubject, instr))
 
-        insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.BID), CallbackValue(tickPrice, bidPriceSubject, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.ASK), CallbackValue(tickPrice, askPriceSubject, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.MARK_PRICE), CallbackValue(tickPrice, markPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.BID), CallbackValue(tickPrice, bidPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.ASK), CallbackValue(tickPrice, askPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.MARK_PRICE), CallbackValue(tickPrice, markPriceSubject, instr))
 
-        insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.HIGH), CallbackValue(tickPrice, highPriceSubject, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LOW), CallbackValue(tickPrice, lowPriceSubject, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.OPEN), CallbackValue(tickPrice, openPriceSubject, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.CLOSE), CallbackValue(tickPrice, closePriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.HIGH), CallbackValue(tickPrice, highPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.LOW), CallbackValue(tickPrice, lowPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.OPEN), CallbackValue(tickPrice, openPriceSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickPrice, InteractiveBrokers.TickTypes.CLOSE), CallbackValue(tickPrice, closePriceSubject, instr))
 
-        insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.VOLUME), CallbackValue(tickSize, volumeSubject, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.ASK_SIZE), CallbackValue(tickSize, askSizeSubject, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.BID_SIZE), CallbackValue(tickSize, bidSizeSubject, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.LAST_SIZE), CallbackValue(tickSize, lastSizeSubject, instr))
-        
-        insert!(client.requestMappings, CallbackKey(requestId, :tickString, InteractiveBrokers.TickTypes.LAST_TIMESTAMP), CallbackValue(tickString, tickStringSubject, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :tickGeneric, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickGeneric, nothing, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :marketDataType, InteractiveBrokers.TickTypes.LAST), CallbackValue(marketDataType, nothing, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :tickReqParams, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickReqParams, nothing, instr))
-    end
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.VOLUME), CallbackValue(tickSize, volumeSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.ASK_SIZE), CallbackValue(tickSize, askSizeSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.BID_SIZE), CallbackValue(tickSize, bidSizeSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.LAST_SIZE), CallbackValue(tickSize, lastSizeSubject, instr))
+    
+    insert!(client.requestMappings, CallbackKey(requestId, :tickString, InteractiveBrokers.TickTypes.LAST_TIMESTAMP), CallbackValue(tickString, tickStringSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickGeneric, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickGeneric, nothing, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :marketDataType, InteractiveBrokers.TickTypes.LAST), CallbackValue(marketDataType, nothing, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :tickReqParams, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickReqParams, nothing, instr))
 
     println("Done Inserting")
 
@@ -248,36 +241,28 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
         tickStringSubject
     )
 
-    println("need to lock callbacks")
-
-    lock(client.callbackLock) do 
-        insert!(client.mergedCallbacks, Pair(instr, :livedata), output)
-    end
+    # Output callback
+    insert!(client.mergedCallbacks, Pair(instr, :livedata), output)
 
     setTimeout(timeout) do 
-        Lucky.end_feed(client, instr, Val(:livedata))
+        if haskey(client.mergedCallbacks, Pair(instr, :livedata)) || Rocket.isactive(output)
+            Lucky.end_feed(client, instr, Val(:livedata))
+        end
     end
 
     return output
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata})
-    lock(client.callbackLock) do
-        if haskey(client.mergedCallbacks, Pair(instr, :livedata))
-            subject = client.mergedCallbacks[Pair(instr, :livedata)]
-            if Rocket.isactive(subject)
-                Rocket.complete!(subject)
-            end
-            Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :livedata))
-        end
-    end
-    lock(client.requestLock) do
-        ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
-        requestId = first(keys(ongoingRequests)).requestId
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-        InteractiveBrokers.cancelMktData(client, requestId)
-    end
+    ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
+    requestId = first(keys(ongoingRequests)).requestId
 
+    complete!(client.mergedCallbacks[Pair(instr, :livedata)])
+
+    Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+    Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :livedata))
+
+    InteractiveBrokers.cancelMktData(client, requestId)
 end
 
 function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=60000)
@@ -286,37 +271,28 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
     InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
     historicalDataSubject = RecentSubject(DataFrame, Subject(DataFrame; scheduler=AsyncScheduler()))
-
-    lock(client.requestLock) do
-        insert!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr))
-    end
-    lock(client.callbackLock) do
-        insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
-    end
+    insert!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr))
+    insert!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
 
     setTimeout(timeout) do 
-        Lucky.end_feed(client, instr, Val(:historicaldata))
+        if haskey(client.mergedCallbacks, Pair(instr, :historicaldata)) || Rocket.isactive(historicalDataSubject)
+            Lucky.end_feed(client, instr, Val(:historicaldata))
+        end
     end
 
     return historicalDataSubject
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:historicaldata})
-    lock(client.callbackLock) do
-        if haskey(client.mergedCallbacks, Pair(instr, :historicaldata))
-            subject = client.mergedCallbacks[Pair(instr, :historicaldata)]
-            if Rocket.isactive(subject)
-                Rocket.complete!(subject)
-            end
-            Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :historicaldata))
-        end
-    end
-    lock(client.requestLock) do
-        ongoingRequests = getRequests(client.requestMappings, [:historicalData], instr)
-        requestId = first(keys(ongoingRequests)).requestId
-        InteractiveBrokers.cancelHistoricalData(client, requestId)
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-    end
+    ongoingRequests = getRequests(client.requestMappings, [:historicalData], instr)
+    requestId = first(keys(ongoingRequests)).requestId
+
+    complete!(client.mergedCallbacks[Pair(instr, :historicaldata)])
+
+    Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+    Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :historicaldata))
+
+    InteractiveBrokers.cancelHistoricalData(client, requestId)
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
@@ -328,41 +304,28 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     expirationSubject = RecentSubject(Date)
     strikeSubject = RecentSubject(Float64)
-
-    lock(client.requestLock) do 
-        insert!(client.requestMappings, CallbackKey(requestId, :expirations, nothing), CallbackValue(securityDefinitionOptionalParameter, expirationSubject, instr))
-        insert!(client.requestMappings, CallbackKey(requestId, :strikes, nothing), CallbackValue(securityDefinitionOptionalParameter, strikeSubject, instr))
-    end
-    lock(client.callbackLock) do
-        insert!(client.mergedCallbacks, Pair(instr, :expirations), expirationSubject)
-        insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
-    end
+    insert!(client.requestMappings, CallbackKey(requestId, :expirations, nothing), CallbackValue(securityDefinitionOptionalParameter, expirationSubject, instr))
+    insert!(client.requestMappings, CallbackKey(requestId, :strikes, nothing), CallbackValue(securityDefinitionOptionalParameter, strikeSubject, instr))
+    insert!(client.mergedCallbacks, Pair(instr, :expirations), expirationSubject)
+    insert!(client.mergedCallbacks, Pair(instr, :strikes), strikeSubject)
 
     setTimeout(30000) do 
-        Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
+        if (haskey(client.mergedCallbacks, Pair(instr, :expirations)) || Rocket.isactive(expirationSubject)) || (haskey(client.mergedCallbacks, Pair(instr, :strikes)) || Rocket.isactive(strikeSubject))
+            Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
+        end
     end
     return expirationSubject, strikeSubject
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
-    lock(client.callbackLock) do
-        if (haskey(client.mergedCallbacks, Pair(instr, :expirations))) || (haskey(client.mergedCallbacks, Pair(instr, :strikes)))
-            expirationSubject = client.mergedCallbacks[Pair(instr, :expirations)]
-            strikeSubject = client.mergedCallbacks[Pair(instr, :strikes)]
-            if Rocket.isactive(expirationSubject)
-                Rocket.complete!(expirationSubject)
-            end
-            if Rocket.isactive(strikeSubject)
-                Rocket.complete!(strikeSubject)
-            end
-            Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :expirations))
-            Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :strikes))
-        end
-    end
-    lock(client.requestLock) do
-        ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-    end
+    ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
+
+    complete!(client.mergedCallbacks[Pair(instr, :expirations)])
+    complete!(client.mergedCallbacks[Pair(instr, :strikes)])
+
+    Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+    Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :expirations))
+    Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :strikes))
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})
@@ -371,30 +334,23 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     InteractiveBrokers.reqContractDetails(client, requestId, instr)
 
     contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails, Subject(InteractiveBrokers.ContractDetails; scheduler=AsyncScheduler()))
-    @lock client.requestLock insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr))
-    @lock client.callbackLock insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
+    insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr))
+    insert!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
 
     setTimeout(30000) do 
-        Lucky.end_feed(client, instr, Val(:contractDetails))
+        if haskey(client.mergedCallbacks, Pair(instr, :contractDetails)) || Rocket.isactive(contractDetailsSubject)
+            Lucky.end_feed(client, instr, Val(:contractDetails))
+        end
     end
 
     return contractDetailsSubject
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})
-    lock(client.callbackLock) do
-        if haskey(client.mergedCallbacks, Pair(instr, :contractDetails))
-            subject = client.mergedCallbacks[Pair(instr, :contractDetails)]
-            if Rocket.isactive(subject)
-                Rocket.complete!(subject)
-            end
-            Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :contractDetails))
-        end
-    end
-    lock(client.requestLock) do
-        ongoingRequests = getRequests(client.requestMappings, [:contractDetails], instr)
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-    end
+    ongoingRequests = getRequests(client.requestMappings, [:contractDetails], instr)
+    complete!(client.mergedCallbacks[Pair(instr, :contractDetails)])
+    Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+    Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :contractDetails))
 end
 
 function wrapper(client::InteractiveBrokersObservable)

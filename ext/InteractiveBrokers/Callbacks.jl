@@ -42,17 +42,12 @@ function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErr
 
     if (err.errorCode == 200) # No security definition has been found for the request
         try
-            instr = lock(ib.requestLock) do
-                requestMappings = getRequestsById(ib.requestMappings, err.id)
-                @assert !isempty(requestMappings)
-                instr = last(first(requestMappings)).instrument
-                return instr
-            end
-            lock(ib.callbackLock) do
-                callbacks = getCallbacksByInstrument(ib.mergedCallbacks, instr)
-                for (k,_) in pairs(callbacks)
-                    Lucky.end_feed(ib, instr, Val(k.second))
-                end
+            requestMappings = getRequestsById(ib.requestMappings, err.id)
+            @assert !isempty(requestMappings)
+            instr = last(first(requestMappings)).instrument
+            callbacks = getCallbacksByInstrument(ib.mergedCallbacks, instr)
+            for (k,_) in pairs(callbacks)
+                Lucky.end_feed(ib, instr, Val(k.second))
             end
         catch E
             @warn "Warning: $(E)"

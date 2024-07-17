@@ -173,7 +173,7 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
     requestId = nextRequestId(client)
     # TODO options
-    InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
+    Threads.@spawn InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
 
     # TODO callbacks depending on requested data
 
@@ -269,7 +269,7 @@ end
 function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=60000)
     requestId = nextRequestId(client)
 
-    InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
+    Threads.@spawn InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
 
     historicalDataSubject = RecentSubject(DataFrame, Subject(DataFrame))
     insert!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr))
@@ -339,7 +339,7 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})
     requestId = nextRequestId(client)
 
-    InteractiveBrokers.reqContractDetails(client, requestId, instr)
+    Threads.@spawn InteractiveBrokers.reqContractDetails(client, requestId, instr)
 
     contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails, Subject(InteractiveBrokers.ContractDetails))
     insert!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr))

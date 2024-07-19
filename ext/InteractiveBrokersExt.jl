@@ -22,48 +22,9 @@ end
 
 const CallbackMapping = Dictionary{CallbackKey,CallbackValue}
 
-struct TickQuoteFeeds <: CompletionActor{Any}
-    lastPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    bidPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    askPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    markPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    highPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    lowPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    openPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    closePrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    volume::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    askSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    bidSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    lastSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    tickString::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-end
-
-function Rocket.complete!(pwithproxy::ProxyObservable)
-    Rocket.complete!(pwithproxy.proxied_source.main)
-end
-
-function Rocket.on_complete!(feeds::T) where {T<:TickQuoteFeeds}
-    completions = [
-        Rocket.complete!(getproperty(feeds,name)) for name in fieldnames(T)
-    ]
-end
-
-function Rocket.isactive(subject::Rocket.RecentSubjectInstance)
-    return subject.subject.isactive
-end
-
-function Rocket.isactive(withproxy::ProxyObservable)
-    return Rocket.isactive(withproxy.proxied_source.main)
-end
-
-function Rocket.isactive(feeds::T) where {T<:TickQuoteFeeds}
-    isactive = [ Rocket.isactive(getproperty(feeds, name)) for name in fieldnames(T) ]
-    return any(isactive)
-end
-
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
-    mergedCallbacks::Dictionary{Pair{Instrument, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeeds}}
+    mergedCallbacks::Dictionary{Pair{Instrument, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}
@@ -223,7 +184,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     merge_lastSize = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
     lastSize = lastSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_lastSize)
 
-    output = TickQuoteFeeds(
+    output = TickQuoteFeed(
         last,
         bidPriceSubject,
         askPriceSubject,

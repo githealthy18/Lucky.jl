@@ -50,8 +50,11 @@ export AbstractIndicator, IterableIndicator, ValueIndicator, IndicatorType
 export DrawdownIndicator, EMAIndicator, HighWaterMarkIndicator, PeriodicValueIndicator, RollingIndicator, SMAIndicator
 
 include("observables/Feeders.jl")
+include("observables/TickQuoteFeeds")
 # Do not export feed (too generic name)
 using .Feeders
+using .TickQuoteFeeds
+export TickQuoteFeed
 
 include("Services.jl")
 using .Services

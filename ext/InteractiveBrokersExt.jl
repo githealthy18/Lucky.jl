@@ -325,6 +325,22 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     end
 end
 
+function Lucky.feed(client::InteractiveBrokers.InteractiveBrokersObservable, instr::Instrument, ::Val{:snapshot}; timeout=30000)
+    hist = Lucky.feed(client, instr, Val(:historicaldata))
+    feeds = Lucky.feed(client, instr, Val(:livedata))
+
+    merge = (tup::Tuple{DataFrame, Lucky.PriceQuote, Lucky.PriceQuote, Lucky.PriceQuote, Lucky.PriceQuote, Lucky.VolumeQuote}) -> begin 
+        tup[1].open[end] = tup[2].price 
+        tup[1].high[end] = tup[3].price 
+        tup[1].low[end] = tup[4].price 
+        tup[1].close[end] = tup[5].price 
+        tup[1].volume[end] = tup[6].volume
+    end
+    source = zipped(hist |> first(), feeds.openPrice |> first(), feeds.highPrice |> first(), feeds.lowPrice |> first(), feeds.markPrice |> first(), feeds.volume |> first())
+    mapped = source |> map(DataFrame, merge)
+    return mapped
+end
+
 function wrapper(client::InteractiveBrokersObservable)
     wrap = InteractiveBrokers.Wrapper(client)
 

@@ -27,7 +27,7 @@ end
 
 function Rocket.on_complete!(feeds::T) where {T<:TickQuoteFeed}
     completions = [
-        Rocket.complete!(getproperty(feeds,name)) for name in fieldnames(T)
+        Rocket.complete!(getproperty(feeds,name)) for name in fieldnames(T) if name != :instrument
     ]
 end
 
@@ -40,7 +40,7 @@ function Rocket.isactive(withproxy::ProxyObservable)
 end
 
 function Rocket.isactive(feeds::T) where {T<:TickQuoteFeed}
-    isactive = [ Rocket.isactive(getproperty(feeds, name)) for name in fieldnames(T) ]
+    isactive = [ Rocket.isactive(getproperty(feeds, name)) for name in fieldnames(T) if name != :instrument]
     return any(isactive)
 end
 

@@ -185,6 +185,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     lastSize = lastSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_lastSize)
 
     output = TickQuoteFeed(
+        instr,
         last,
         bidPriceSubject,
         askPriceSubject,

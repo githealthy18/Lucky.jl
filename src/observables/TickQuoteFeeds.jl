@@ -4,7 +4,8 @@ export TickQuoteFeed
 
 using Rocket
 
-struct TickQuoteFeed <: CompletionActor{Any}
+struct TickQuoteFeed{I} <: CompletionActor{Any}
+    instrument::I
     lastPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     bidPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     askPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}

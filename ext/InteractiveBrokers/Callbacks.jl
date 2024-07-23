@@ -50,7 +50,6 @@ function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErr
                 Lucky.end_feed(ib, instr, Val(k.second))
             end
         catch E
-            @warn "Warning: $(E)"
         end
     end
     #Rocket.error!(ib, err)
@@ -99,7 +98,6 @@ function tickPrice(ib::InteractiveBrokersObservable, tickerId::Int, field::Inter
         try
             next!(val.subject, qte)
         catch E
-            @warn E
         end
     end
 end

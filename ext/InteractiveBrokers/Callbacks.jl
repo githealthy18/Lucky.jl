@@ -43,13 +43,14 @@ function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErr
     if (err.errorCode == 200) # No security definition has been found for the request
         try
             requestMappings = getRequestsById(ib.requestMappings, err.id)
-            @assert !isempty(requestMappings)
-            instr = last(first(requestMappings)).instrument
-            callbacks = getCallbacksByInstrument(ib.mergedCallbacks, instr)
-            for (k,_) in pairs(callbacks)
-                Lucky.end_feed(ib, instr, Val(k.second))
-            end
-        catch E
+            if !isempty(requestMappings)
+                instr = last(first(requestMappings)).instrument
+                callbacks = getCallbacksByInstrument(ib.mergedCallbacks, instr)
+                for (k,_) in pairs(callbacks)
+                    Lucky.end_feed(ib, instr, Val(k.second))
+                end
+        catch e
+            @warn e
         end
     end
     #Rocket.error!(ib, err)

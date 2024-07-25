@@ -1,4 +1,5 @@
 export Option
+using AutoHashEquals
 
 mutable struct Greeks
     impliedVolatility::Float64
@@ -16,7 +17,7 @@ setVega!(g::Greeks, vega::Float64) = g.vega = vega
 setTheta!(g::Greeks, theta::Float64) = g.theta = theta
 setRho!(g::Greeks, rho::Float64) = g.rho = rho
 
-struct Option{S<:Stock,R,K,E} <: Instrument 
+@auto_hash_equals cache=true fields=(underlying,right,strike,expiry) struct Option{S<:Stock,R,K,E} <: Instrument 
     underlying::S
     right::R
     strike::K
@@ -37,6 +38,3 @@ Option(stock::Stock, right::OPTION_RIGHT, strike::Float64, expiry::Dates.Date) =
 Units.symbol(option::Option) = Units.symbol(option.underlying)
 
 Units.currency(option::Option) = Units.currency(option.underlying)
-
-Base.:(==)(a::Option, b::Option) = a.underlying == b.underlying && a.right == b.right && a.strike == b.strike && a.expiry == b.expiry
-Base.hash(a::Option) = UInt(1)

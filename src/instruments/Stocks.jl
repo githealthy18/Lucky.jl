@@ -1,6 +1,8 @@
 export Stock
 
-struct Stock{S,C<:Units.Currency} <: Instrument 
+using AutoHashEquals
+
+@auto_hash_equals cache=true struct Stock{S,C<:Units.Currency} <: Instrument 
     symbol::S
     currency::C
 end

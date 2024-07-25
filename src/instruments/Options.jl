@@ -37,3 +37,5 @@ Option(stock::Stock, right::OPTION_RIGHT, strike::Float64, expiry::Dates.Date) =
 Units.symbol(option::Option) = Units.symbol(option.underlying)
 
 Units.currency(option::Option) = Units.currency(option.underlying)
+
+Base.:(==)(a::Option, b::Option) = a.underlying == b.underlying && a.right == b.right && a.strike == b.strike && a.expiry == b.expiry

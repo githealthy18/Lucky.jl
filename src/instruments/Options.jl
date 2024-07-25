@@ -39,3 +39,4 @@ Units.symbol(option::Option) = Units.symbol(option.underlying)
 Units.currency(option::Option) = Units.currency(option.underlying)
 
 Base.:(==)(a::Option, b::Option) = a.underlying == b.underlying && a.right == b.right && a.strike == b.strike && a.expiry == b.expiry
+Base.hash(a::Option) = UInt(1)

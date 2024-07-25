@@ -49,6 +49,7 @@ function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErr
                 for (k,_) in pairs(callbacks)
                     Lucky.end_feed(ib, instr, Val(k.second))
                 end
+            end
         catch e
             @warn e
         end

@@ -7,14 +7,15 @@ using Dates
 using Dictionaries
 using DataFrames
 import Lucky.Units as Units
+using AutoHashEquals
 
-struct CallbackKey
+@auto_hash_equals cache=true struct CallbackKey
     requestId::Int
     callbackSymbol::Symbol
     tickType::Union{InteractiveBrokers.TickTypes.TICK_TYPES, Nothing}
 end
 
-struct CallbackValue
+@auto_hash_equals cache=true struct CallbackValue
     callbackFunction::Function
     subject::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance, Nothing}
     instrument::Lucky.Instrument

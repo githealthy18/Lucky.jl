@@ -219,13 +219,13 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
             Rocket.complete!(subject)
         end
         Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :livedata))
+    end
 
-        ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
-        if !isempty(ongoingRequests)
-            requestId = first(keys(ongoingRequests)).requestId
-            Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-            InteractiveBrokers.cancelMktData(client, requestId)
-        end
+    ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
+    if !isempty(ongoingRequests)
+        requestId = first(keys(ongoingRequests)).requestId
+        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+        InteractiveBrokers.cancelMktData(client, requestId)
     end
 end
 
@@ -246,17 +246,17 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:historicaldata})
-    if haskey(client.mergedCallbacks, Pair(instr, :historicaldata)) || Rocket.isactive(historicalDataSubject)
+    if haskey(client.mergedCallbacks, Pair(instr, :historicaldata))
         subject = client.mergedCallbacks[Pair(instr, :historicaldata)]
         if Rocket.isactive(subject)
             Rocket.complete!(subject)
         end
-        ongoingRequests = getRequests(client.requestMappings, [:historicalData], instr)
-        requestId = first(keys(ongoingRequests)).requestId
-
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
         Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :historicaldata))
-
+    end
+    ongoingRequests = getRequests(client.requestMappings, [:historicalData], instr)
+    if !isempty(ongoingRequests)
+        requestId = first(keys(ongoingRequests)).requestId
+        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
         InteractiveBrokers.cancelHistoricalData(client, requestId)
     end
 end
@@ -279,20 +279,24 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 end
 
 function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
-    if haskey(client.mergedCallbacks, Pair(instr, :expirations)) || haskey(client.mergedCallbacks, Pair(instr, :strikes))
+    if haskey(client.mergedCallbacks, Pair(instr, :expirations))
         expirationSubject = client.mergedCallbacks[Pair(instr, :expirations)]
-        strikeSubject = client.mergedCallbacks[Pair(instr, :strikes)]
         if Rocket.isactive(expirationSubject)
             Rocket.complete!(expirationSubject)
         end
+        Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :expirations))
+    end
+
+    if haskey(client.mergedCallbacks, Pair(instr, :strikes))
+        strikeSubject = client.mergedCallbacks[Pair(instr, :strikes)]
         if Rocket.isactive(strikeSubject)
             Rocket.complete!(strikeSubject)
         end
-        ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
-
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-        Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :expirations))
         Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :strikes))
+    end
+    ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
+    if !isempty(ongoingRequests)
+        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
     end
 end
 
@@ -318,9 +322,11 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         if Rocket.isactive(subject)
             Rocket.complete!(subject)
         end
-        ongoingRequests = getRequests(client.requestMappings, [:contractDetails], instr)
+        Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :contractDetails))  
+    end
+    ongoingRequests = getRequests(client.requestMappings, [:contractDetails], instr)
+    if !isempty(ongoingRequests)
         Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
-        Lucky.Utils.delete!(client.mergedCallbacks, Pair(instr, :contractDetails))
     end
 end
 

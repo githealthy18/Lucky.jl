@@ -158,7 +158,6 @@ function securityDefinitionOptionalParameter(ib::InteractiveBrokersObservable, r
                 next!(strike_val.subject, str)
             end
         end
-        Lucky.end_feed(ib, exp_val.instrument, Val(:securityDefinitionOptionalParameter))
     end
 end
 

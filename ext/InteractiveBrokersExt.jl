@@ -218,7 +218,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         if Rocket.isactive(subject)
             Rocket.complete!(subject)
         end
-        delete!(client.mergedCallbacks, Pair(instr, :livedata))
+        unset!(client.mergedCallbacks, Pair(instr, :livedata))
     end
 
     ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
@@ -251,7 +251,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         if Rocket.isactive(subject)
             Rocket.complete!(subject)
         end
-        delete!(client.mergedCallbacks, Pair(instr, :historicaldata))
+        unset!(client.mergedCallbacks, Pair(instr, :historicaldata))
     end
     ongoingRequests = getRequests(client.requestMappings, [:historicalData], instr)
     if !isempty(ongoingRequests)
@@ -288,7 +288,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         if Rocket.isactive(expirationSubject)
             Rocket.complete!(expirationSubject)
         end
-        delete!(client.mergedCallbacks, Pair(instr, :expirations))
+        unset!(client.mergedCallbacks, Pair(instr, :expirations))
     end
 
     if haskey(client.mergedCallbacks, Pair(instr, :strikes))
@@ -296,7 +296,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         if Rocket.isactive(strikeSubject)
             Rocket.complete!(strikeSubject)
         end
-        delete!(client.mergedCallbacks, Pair(instr, :strikes))
+        unset!(client.mergedCallbacks, Pair(instr, :strikes))
     end
 
     ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
@@ -327,7 +327,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         if Rocket.isactive(subject)
             Rocket.complete!(subject)
         end
-        delete!(client.mergedCallbacks, Pair(instr, :contractDetails))  
+        unset!(client.mergedCallbacks, Pair(instr, :contractDetails))  
     end
     ongoingRequests = getRequests(client.requestMappings, [:contractDetails], instr)
     if !isempty(ongoingRequests)

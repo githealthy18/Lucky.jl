@@ -3,8 +3,9 @@ module TickQuoteFeeds
 export TickQuoteFeed
 
 using Rocket
+using AutoHashEquals
 
-struct TickQuoteFeed{I} <: CompletionActor{Any}
+@auto_hash_equals cache=true struct TickQuoteFeed{I} <: CompletionActor{Any}
     instrument::I
     lastPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     bidPrice::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}

@@ -14,7 +14,7 @@ end
 
 function deletefrom!(dict::Dictionary, inds::Indices)
     for i in inds
-        unset!(dict, i)
+        Dictionaries.unset!(dict, i)
     end
 end
 

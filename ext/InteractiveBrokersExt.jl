@@ -24,6 +24,14 @@ end
 const CallbackMapping = Dictionary{CallbackKey,CallbackValue}
 const DATA_LINES = 100
 
+isfull(ch::Channel) = begin
+    if ch.sz_max===0
+        isready(ch)
+    else
+        length(ch.data) ≥ ch.sz_max
+    end
+end
+
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
     mergedCallbacks::Dictionary{Pair{Instrument, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}
@@ -70,7 +78,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
         task = Threads.@spawn begin
             while true
                 try
-                    if !isempty(ib.data_reqs)
+                    if !isempty(ib.data_reqs) && !isfull(ib.data_lines)
                         instrument, cmd = take!(ib.data_reqs)
                         put!(ib.data_lines, instrument)
                         cmd()

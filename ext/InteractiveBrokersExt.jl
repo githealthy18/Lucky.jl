@@ -37,6 +37,10 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     connectOptions::Union{Nothing,String}
     optionalCapabilities::Union{Nothing,String}
 
+    subscription_limit::Int
+    data_reqs::Set{Pair{Instrument,Function}}
+    data_lines::Set{Instrument}
+
     connectable::Union{Nothing,Rocket.ConnectableObservable}
     obs::Union{Nothing,Rocket.Subscribable}
 
@@ -46,7 +50,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     function InteractiveBrokersObservable(host=nothing, port::Union{Nothing,Int}=nothing, clientId::Union{Nothing,Int}=nothing, connectOptions::Union{Nothing,String}=nothing, optionalCapabilities::Union{Nothing,String}=nothing)
         ib = new(
             CallbackMapping(),
-            Dictionary{Symbol,Rocket.Subscribable}(),
+            Dictionary{Pair{Instrument, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}(),
             host,
             port,
             clientId,
@@ -54,11 +58,27 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             missing,
             connectOptions,
             optionalCapabilities,
+            100,
+            Set{Pair{Instrument,Function}}(),
+            Set{Instrument}(),
             nothing,
             nothing,
             nothing,
             Vector{Function}()
         )
+        @async begin
+            while true
+                try
+                    if !isempty(ib.data_reqs) && length(ib.data_lines) <= 100
+                        instrument, cmd = popfirst!(ib.data_reqs)
+                        push!(ib.data_lines, instrument)
+                        cmd()
+                    end
+                catch e
+                    @warn e
+                end
+            end
+        end
         ib.connectable = ib |> publish()
         ib.obs = ib.connectable |> ref_count()
         return ib
@@ -135,7 +155,8 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
     requestId = nextRequestId(client)
     # TODO options
-    InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
+    fn = () -> InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
+    push!(client.data_reqs, Pair(instr, fn))
 
     # TODO callbacks depending on requested data
 
@@ -226,6 +247,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         requestId = first(keys(ongoingRequests)).requestId
         Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
         InteractiveBrokers.cancelMktData(client, requestId)
+        delete!(client.data_lines, instr)
     end
 end
 

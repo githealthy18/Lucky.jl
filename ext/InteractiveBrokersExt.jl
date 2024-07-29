@@ -161,7 +161,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     requestId = nextRequestId(client)
     # TODO options
     fn = () -> InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
-    push!(client.data_reqs, Pair(instr, fn))
+    put!(client.data_reqs, Pair(instr, fn))
 
     # TODO callbacks depending on requested data
 

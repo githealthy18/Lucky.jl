@@ -78,7 +78,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
         task = Threads.@spawn begin
             while true
                 try
-                    if !isempty(ib.data_reqs) && !isfull(ib.data_lines)
+                    if isready(ib.data_reqs) && !isfull(ib.data_lines)
                         instrument, cmd = take!(ib.data_reqs)
                         put!(ib.data_lines, instrument)
                         cmd()
@@ -260,7 +260,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         requestId = first(keys(ongoingRequests)).requestId
         Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
         InteractiveBrokers.cancelMktData(client, requestId)
-        take!(client.data_lines, instr)
+        take!(client.data_lines)
     end
     return nothing
 end

@@ -75,18 +75,19 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             nothing,
             Vector{Function}()
         )
-        task = Threads.@spawn begin
+        task = Threads.@spawn :interactive begin
             while true
                 try
                     if isready(ib.data_reqs) && !isfull(ib.data_lines)
                         instrument, cmd = take!(ib.data_reqs)
+                        @info "Sending request for $instrument"
                         put!(ib.data_lines, instrument)
                         cmd()
                     end
                 catch e
                     @warn e
                 else
-                    sleep(0.1)
+                    yield()
                 end
             end
         end

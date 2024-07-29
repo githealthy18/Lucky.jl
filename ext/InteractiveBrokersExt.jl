@@ -85,8 +85,6 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
                     end
                 catch e
                     @warn e
-                else
-                    yield()
                 end
             end
         end

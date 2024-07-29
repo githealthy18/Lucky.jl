@@ -22,6 +22,7 @@ end
 end
 
 const CallbackMapping = Dictionary{CallbackKey,CallbackValue}
+const DATA_LINES = 100
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
@@ -38,8 +39,8 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     optionalCapabilities::Union{Nothing,String}
 
     subscription_limit::Int
-    data_reqs::Set{Pair{Instrument,Function}}
-    data_lines::Set{Instrument}
+    data_reqs::Channel{Pair{Instrument,Function}}
+    data_lines::Channel{Instrument}
 
     connectable::Union{Nothing,Rocket.ConnectableObservable}
     obs::Union{Nothing,Rocket.Subscribable}
@@ -58,20 +59,20 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             missing,
             connectOptions,
             optionalCapabilities,
-            100,
-            Set{Pair{Instrument,Function}}(),
-            Set{Instrument}(),
+            DATA_LINES,
+            Channel{Pair{Instrument,Function}}(Inf),
+            Channel{Instrument}(DATA_LINES),
             nothing,
             nothing,
             nothing,
             Vector{Function}()
         )
-        @async begin
+        task = Threads.@spawn begin
             while true
                 try
-                    if !isempty(ib.data_reqs) && length(ib.data_lines) <= 100
-                        instrument, cmd = popfirst!(ib.data_reqs)
-                        push!(ib.data_lines, instrument)
+                    if !isempty(ib.data_reqs)
+                        instrument, cmd = take!(ib.data_reqs)
+                        put!(ib.data_lines, instrument)
                         cmd()
                     end
                 catch e
@@ -81,6 +82,8 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
                 end
             end
         end
+        bind(ib.data_reqs, task)
+        bind(ib.data_lines, task)
         ib.connectable = ib |> publish()
         ib.obs = ib.connectable |> ref_count()
         return ib

@@ -75,21 +75,23 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             nothing,
             Vector{Function}()
         )
-        task = Threads.@spawn begin
-            while true
-                try
-                    if !isempty(ib.data_reqs) && !isfull(ib.data_lines)
-                        instrument, cmd = take!(ib.data_reqs)
-                        put!(ib.data_lines, instrument)
-                        cmd()
+        task = errormonitor(
+            Threads.@spawn begin
+                while true
+                    try
+                        if !isempty(ib.data_reqs) && !isfull(ib.data_lines)
+                            instrument, cmd = take!(ib.data_reqs)
+                            put!(ib.data_lines, instrument)
+                            cmd()
+                        end
+                    catch e
+                        @warn e
+                    else
+                        yield()
                     end
-                catch e
-                    @warn e
-                else
-                    yield()
                 end
-            end
         end
+        )
         bind(ib.data_reqs, task)
         bind(ib.data_lines, task)
         ib.connectable = ib |> publish()

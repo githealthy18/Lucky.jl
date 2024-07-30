@@ -172,6 +172,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
                     @warn e
                 else
                     sleep(0.1)
+                end
             end
         end
         bind(client.data_reqs, task)

@@ -159,7 +159,7 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
     if !@atomic client.running
         @atomicswap client.running = true
-        task = Threads.@spawn begin
+        task = Threads.@spawn :interactive begin
             while @atomic client.running
                 try
                     if isready(client.data_reqs) && !isfull(client.data_lines)

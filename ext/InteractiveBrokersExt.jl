@@ -9,6 +9,8 @@ using DataFrames
 import Lucky.Units as Units
 using AutoHashEquals
 
+import Base: close
+
 @auto_hash_equals cache=true struct CallbackKey
     requestId::Int
     callbackSymbol::Symbol
@@ -49,6 +51,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     subscription_limit::Int
     data_reqs::Channel{Pair{Instrument,Function}}
     data_lines::Channel{Instrument}
+    @atomic running::Bool
 
     connectable::Union{Nothing,Rocket.ConnectableObservable}
     obs::Union{Nothing,Rocket.Subscribable}
@@ -70,29 +73,12 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             DATA_LINES,
             Channel{Pair{Instrument,Function}}(Inf),
             Channel{Instrument}(DATA_LINES),
+            Threads.Atomic{Bool}(false),
             nothing,
             nothing,
             nothing,
             Vector{Function}()
         )
-        task = Threads.@spawn :interactive begin
-            while true
-                try
-                    if isready(ib.data_reqs) && !isfull(ib.data_lines)
-                        instrument, cmd = take!(ib.data_reqs)
-                        @info "Sending request for $instrument"
-                        put!(ib.data_lines, instrument)
-                        cmd()
-                    end
-                catch e
-                    @warn e
-                else
-                    yield()
-                end
-            end
-        end
-        bind(ib.data_reqs, task)
-        bind(ib.data_lines, task)
         ib.connectable = ib |> publish()
         ib.obs = ib.connectable |> ref_count()
         return ib
@@ -122,7 +108,6 @@ function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
         cmd = pop!(obs.pendingCmds)
         cmd(obs.connection)
     end
-
     return InteractiveBrokersObservableSubscription(obs.connection)
 end
 
@@ -130,6 +115,11 @@ Rocket.as_teardown(::Type{<:InteractiveBrokersObservableSubscription}) = Unsubsc
 
 function Rocket.on_unsubscribe!(subscription::InteractiveBrokersObservableSubscription)
     disconnect(subscription.connection)
+end
+
+function close(ib::InteractiveBrokersObservable, ::Val{:livedataserver})
+    @atomicswap ib.running = false
+    return nothing
 end
 
 include("InteractiveBrokers/Requests.jl")
@@ -167,6 +157,25 @@ function getCallbacksByInstrument(dict::Dictionary, instr::Instrument)
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
+    if !@atomic client.running
+        @atomicswap client.running = true
+        task = Threads.@spawn begin
+            while @atomic client.running
+                try
+                    if isready(client.data_reqs) && !isfull(client.data_lines)
+                        instrument, cmd = take!(client.data_reqs)
+                        @info "Sending request for $instrument"
+                        put!(client.data_lines, instrument)
+                        cmd()
+                    end
+                catch e
+                    @warn e
+                end
+            end
+        end
+        bind(client.data_reqs, task)
+        bind(client.data_lines, task)
+    end
     requestId = nextRequestId(client)
     # TODO options
     fn = () -> InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)

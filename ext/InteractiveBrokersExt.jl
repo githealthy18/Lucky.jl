@@ -114,7 +114,11 @@ end
 Rocket.as_teardown(::Type{<:InteractiveBrokersObservableSubscription}) = UnsubscribableTeardownLogic()
 
 function Rocket.on_unsubscribe!(subscription::InteractiveBrokersObservableSubscription)
-    disconnect(subscription.connection)
+    InteractiveBrokers.disconnect(subscription.connection)
+    try 
+        close(ib, Val(:livedataserver}))
+    catch e
+    end
 end
 
 function close(ib::InteractiveBrokersObservable, ::Val{:livedataserver})
@@ -164,7 +168,6 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
                 try
                     if isready(client.data_reqs) && !isfull(client.data_lines)
                         instrument, cmd = take!(client.data_reqs)
-                        @info "Sending request for $instrument"
                         put!(client.data_lines, instrument)
                         cmd()
                     end
@@ -250,11 +253,6 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     # Output callback
     Dictionaries.set!(client.mergedCallbacks, Pair(instr, :livedata), output)
-
-    setTimeout(timeout) do 
-        Lucky.end_feed(client, instr, Val(:livedata))
-    end
-
     return output
 end
 

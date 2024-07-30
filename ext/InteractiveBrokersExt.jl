@@ -116,7 +116,7 @@ Rocket.as_teardown(::Type{<:InteractiveBrokersObservableSubscription}) = Unsubsc
 function Rocket.on_unsubscribe!(subscription::InteractiveBrokersObservableSubscription)
     InteractiveBrokers.disconnect(subscription.connection)
     try 
-        close(ib, Val(:livedataserver}))
+        close(ib, Val(:livedataserver))
     catch e
     end
 end

@@ -73,7 +73,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             DATA_LINES,
             Channel{Pair{Instrument,Function}}(Inf),
             Channel{Instrument}(DATA_LINES),
-            Threads.Atomic{Bool}(false),
+            false,
             nothing,
             nothing,
             nothing,

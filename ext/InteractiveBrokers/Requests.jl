@@ -12,7 +12,6 @@ function InteractiveBrokers.reqMktData(ib::InteractiveBrokersObservable, reqId::
     f = (connection) -> begin
         InteractiveBrokers.reqMktData(connection, reqId, InteractiveBrokers.Contract(instr), genericTicks, snapshot, regulatorySnaphsot, mktDataOptions)
         setTimeout(5000) do 
-            @info "Ending feed for $instr"
             Lucky.end_feed(ib, instr, Val(:livedata))
         end
     end

@@ -148,8 +148,12 @@ function nextValidId(ib::InteractiveBrokersObservable)
     return ib.nextValidId
 end
 
-function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Union{Nothing,Instrument})
+function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Instrument)
     return filter(((k,v),) -> k.callbackSymbol in requestTypes && v.instrument==instr, pairs(dict))
+end
+
+function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Nothing)
+    return filter(((k,v),) -> k.callbackSymbol in requestTypes, pairs(dict))
 end
 
 function getRequestsById(dict::Dictionary, id::Int)

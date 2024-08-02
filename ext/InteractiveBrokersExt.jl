@@ -148,7 +148,7 @@ function nextValidId(ib::InteractiveBrokersObservable)
     return ib.nextValidId
 end
 
-function getRequests(dict::Dictionary, requestTypes::Vector{Union{Nothing,Symbol}}, instr::Union{Nothing,Instrument})
+function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Union{Nothing,Instrument})
     return filter(((k,v),) -> k.callbackSymbol in requestTypes && v.instrument==instr, pairs(dict))
 end
 

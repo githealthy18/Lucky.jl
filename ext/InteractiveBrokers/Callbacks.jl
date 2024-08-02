@@ -138,8 +138,7 @@ function accountSummary(ib::InteractiveBrokersObservable, reqId::Int, account::S
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]
         if tag == "TotalCashValue"
-            value = parse(Float64, value)
-            next!(val.subject, value)
+            next!(val.subject, parse(Float64, value))
         end
     end
 end

@@ -134,9 +134,9 @@ function historicalData(ib::InteractiveBrokersObservable, reqId::Int, bar::DataF
 end
 
 function accountSummary(ib::InteractiveBrokersObservable, reqId::Int, account::String, tag::String, value::String, currency::String)
-    @info tag
     key = CallbackKey(reqId, :accountSummary, nothing)
     if haskey(ib.requestMappings, key)
+        @info "Account Summary"
         val = ib.requestMappings[key]
         if tag == "TotalCashValue"
             next!(val.subject, parse(Float64, value))

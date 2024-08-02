@@ -152,7 +152,7 @@ function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Inst
     return filter(((k,v),) -> k.callbackSymbol in requestTypes && v.instrument==instr, pairs(dict))
 end
 
-function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Nothing)
+function getRequests(dict::Dictionary, requestTypes::Vector{Symbol})
     return filter(((k,v),) -> k.callbackSymbol in requestTypes, pairs(dict))
 end
 
@@ -409,7 +409,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, ::Val{:accountSumm
         end
         Dictionaries.unset!(client.mergedCallbacks, Pair(nothing, :accountSummary))  
     end
-    ongoingRequests = getRequests(client.requestMappings, [:accountSummary], nothing)
+    ongoingRequests = getRequests(client.requestMappings, [:accountSummary])
     if !isempty(ongoingRequests)
         Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
     end

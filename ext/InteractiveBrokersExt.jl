@@ -386,7 +386,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, ::Val{:accountSummary}
     requestId = nextRequestId(client)
 
     accountSummarySubject = RecentSubject(Float64)
-    Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :accountSumamry, nothing), CallbackValue(accountSummary, accountSummarySubject, nothing))
+    Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :accountSummary, nothing), CallbackValue(accountSummary, accountSummarySubject, nothing))
     Dictionaries.set!(client.mergedCallbacks, Pair(nothing, :accountSummary), accountSummarySubject)
 
     setTimeout(30000) do 

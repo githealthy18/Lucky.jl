@@ -165,31 +165,7 @@ function getCallbacksByInstrument(dict::Dictionary, instr::Union{Nothing, Instru
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
-    if !@atomic client.running
-        @atomicswap client.running = true
-        task = Threads.@spawn :interactive begin
-            while @atomic client.running
-                try
-                    if isready(client.data_reqs) && !isfull(client.data_lines)
-                        instrument, cmd = take!(client.data_reqs)
-                        put!(client.data_lines, instrument)
-                        cmd()
-                    end
-                catch e
-                    @warn e
-                else
-                    sleep(0.1)
-                end
-            end
-        end
-        bind(client.data_reqs, task)
-        bind(client.data_lines, task)
-    end
     requestId = nextRequestId(client)
-    # TODO options
-    fn = () -> InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
-    put!(client.data_reqs, Pair(instr, fn))
-
     # TODO callbacks depending on requested data
 
     lastPriceSubject = RecentSubject(Lucky.PriceQuote, Subject(Lucky.PriceQuote))
@@ -257,6 +233,30 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     # Output callback
     Dictionaries.set!(client.mergedCallbacks, Pair(instr, :livedata), output)
+
+    if !@atomic client.running
+        @atomicswap client.running = true
+        task = Threads.@spawn :interactive begin
+            while @atomic client.running
+                try
+                    if isready(client.data_reqs) && !isfull(client.data_lines)
+                        instrument, cmd = take!(client.data_reqs)
+                        put!(client.data_lines, instrument)
+                        cmd()
+                    end
+                catch e
+                    @warn e
+                else
+                    sleep(0.1)
+                end
+            end
+        end
+        bind(client.data_reqs, task)
+        bind(client.data_lines, task)
+    end
+    # TODO options
+    fn = () -> InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
+    put!(client.data_reqs, Pair(instr, fn))
     return output
 end
 
@@ -282,8 +282,6 @@ end
 function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=60000)
     requestId = nextRequestId(client)
 
-    InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
-
     historicalDataSubject = RecentSubject(DataFrame, Subject(DataFrame))
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :historicalData, nothing), CallbackValue(historicalData, historicalDataSubject, instr))
     Dictionaries.set!(client.mergedCallbacks, Pair(instr, :historicaldata), historicalDataSubject)
@@ -292,6 +290,7 @@ function Lucky.feed(client, instr::Instrument, ::Val{:historicaldata}; timeout=6
         Lucky.end_feed(client, instr, Val(:historicaldata))
     end
 
+    InteractiveBrokers.reqHistoricalData(client, requestId, instr, "", "3 Y", "1 day", "TRADES" ,false, 1, false)
     return historicalDataSubject
 end
 
@@ -314,10 +313,6 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:securityDefinitionOptionalParameter})
     requestId = nextRequestId(client)
 
-    conId = Lucky.feed(client, instr, Val(:contractDetails)) |> Rocket.first()
-
-    subscribe!(conId, lambda(InteractiveBrokers.ContractDetails; on_next=(d)-> InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "", d.contract.conId)))
-
     expirationSubject = RecentSubject(Date)
     strikeSubject = RecentSubject(Float64)
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :expirations, nothing), CallbackValue(securityDefinitionOptionalParameter, expirationSubject, instr))
@@ -328,6 +323,10 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     setTimeout(30000) do 
         Lucky.end_feed(client, instr, Val(:securityDefinitionOptionalParameter))
     end
+
+    conId = Lucky.feed(client, instr, Val(:contractDetails)) |> Rocket.first()
+
+    subscribe!(conId, lambda(InteractiveBrokers.ContractDetails; on_next=(d)-> InteractiveBrokers.reqSecDefOptParams(client, requestId, instr, "", d.contract.conId)))
 
     return expirationSubject, strikeSubject
 end
@@ -358,8 +357,6 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:contractDetails})
     requestId = nextRequestId(client)
 
-    InteractiveBrokers.reqContractDetails(client, requestId, instr)
-
     contractDetailsSubject = RecentSubject(InteractiveBrokers.ContractDetails, Subject(InteractiveBrokers.ContractDetails))
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :contractDetails, nothing), CallbackValue(contractDetails, contractDetailsSubject, instr))
     Dictionaries.set!(client.mergedCallbacks, Pair(instr, :contractDetails), contractDetailsSubject)
@@ -367,7 +364,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     setTimeout(30000) do 
         Lucky.end_feed(client, instr, Val(:contractDetails))
     end
-
+    InteractiveBrokers.reqContractDetails(client, requestId, instr)
     return contractDetailsSubject
 end
 
@@ -388,8 +385,6 @@ end
 function Lucky.feed(client::InteractiveBrokersObservable, ::Val{:accountSummary})
     requestId = nextRequestId(client)
 
-    InteractiveBrokers.reqAccountSummary(client, requestId, "All", "TotalCashValue")
-
     accountSummarySubject = RecentSubject(Float64)
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :accountSumamry, nothing), CallbackValue(accountSummary, accountSummarySubject, nothing))
     Dictionaries.set!(client.mergedCallbacks, Pair(nothing, :accountSummary), accountSummarySubject)
@@ -398,6 +393,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, ::Val{:accountSummary}
         Lucky.end_feed(client, Val(:accountSummary))
     end
 
+    InteractiveBrokers.reqAccountSummary(client, requestId, "All", "TotalCashValue")
     return accountSummarySubject
 end
 

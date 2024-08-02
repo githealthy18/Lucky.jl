@@ -136,6 +136,7 @@ end
 function accountSummary(ib::InteractiveBrokersObservable, reqId::Int, account::String, tag::String, value::String, currency::String)
     key = CallbackKey(reqId, :accountSummary, nothing)
     @info haskey(ib.requestMappings, key)
+    @info ib.requestMappings
     if haskey(ib.requestMappings, key)
         @info "Account Summary"
         val = ib.requestMappings[key]

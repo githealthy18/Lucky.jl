@@ -134,6 +134,7 @@ function historicalData(ib::InteractiveBrokersObservable, reqId::Int, bar::DataF
 end
 
 function accountSummary(ib::InteractiveBrokersObservable, reqId::Int, account::String, tag::String, value::String, currency::String)
+    @info value
     key = CallbackKey(reqId, :accountSummary, nothing)
     if haskey(ib.requestMappings, key)
         val = ib.requestMappings[key]

@@ -148,7 +148,7 @@ function nextValidId(ib::InteractiveBrokersObservable)
     return ib.nextValidId
 end
 
-function getRequests(dict::Dictionary, requestTypes::Vector{Symbol}, instr::Instrument)
+function getRequests(dict::Dictionary, requestTypes::Vector{Union{Nothing,Symbol}}, instr::Union{Nothing,Instrument})
     return filter(((k,v),) -> k.callbackSymbol in requestTypes && v.instrument==instr, pairs(dict))
 end
 
@@ -156,7 +156,7 @@ function getRequestsById(dict::Dictionary, id::Int)
     return filter(((k,v),) -> k.requestId==id, pairs(dict))
 end
 
-function getCallbacksByInstrument(dict::Dictionary, instr::Instrument)
+function getCallbacksByInstrument(dict::Dictionary, instr::Union{Nothing, Instrument})
     return filter(((k,v),) -> first(k)==instr, pairs(dict))
 end
 
@@ -386,7 +386,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, ::Val{:accountSummary}
 
     InteractiveBrokers.reqAccountSummary(client, requestId, "All", "TotalCashValue")
 
-    accountSummarySubject = RecentSubject(Float64, Subject(Float64))
+    accountSummarySubject = RecentSubject(Float64)
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :accountSumamry, nothing), CallbackValue(accountSummary, accountSummarySubject, nothing))
     Dictionaries.set!(client.mergedCallbacks, Pair(nothing, :accountSummary), accountSummarySubject)
 

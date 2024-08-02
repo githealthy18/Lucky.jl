@@ -20,7 +20,7 @@ end
 @auto_hash_equals cache=true struct CallbackValue
     callbackFunction::Function
     subject::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance, Nothing}
-    instrument::Lucky.Instrument
+    instrument::Union{Lucky.Instrument,Nothing}
 end
 
 const CallbackMapping = Dictionary{CallbackKey,CallbackValue}
@@ -36,7 +36,7 @@ end
 
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
-    mergedCallbacks::Dictionary{Pair{Instrument, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}
+    mergedCallbacks::Dictionary{Pair{Union{Nothing,Instrument}, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}
@@ -376,6 +376,36 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         Dictionaries.unset!(client.mergedCallbacks, Pair(instr, :contractDetails))  
     end
     ongoingRequests = getRequests(client.requestMappings, [:contractDetails], instr)
+    if !isempty(ongoingRequests)
+        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+    end
+end
+
+function Lucky.feed(client::InteractiveBrokersObservable, ::Val{:accountSummary})
+    requestId = nextRequestId(client)
+
+    InteractiveBrokers.reqAccountSummary(client, requestId, "All", "TotalCashValue")
+
+    accountSummarySubject = RecentSubject(Float64, Subject(Float64))
+    Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :accountSumamry, nothing), CallbackValue(accountSummary, accountSummarySubject, nothing))
+    Dictionaries.set!(client.mergedCallbacks, Pair(nothing, :accountSummary), accountSummarySubject)
+
+    setTimeout(30000) do 
+        Lucky.end_feed(client, Val(:accountSummary))
+    end
+
+    return accountSummarySubject
+end
+
+function Lucky.end_feed(client::InteractiveBrokersObservable, ::Val{:accountSummary})
+    if haskey(client.mergedCallbacks, Pair(nothing, :accountSummary))
+        subject = client.mergedCallbacks[Pair(nothing, :accountSummary)]
+        if Rocket.isactive(subject)
+            Rocket.complete!(subject)
+        end
+        Dictionaries.unset!(client.mergedCallbacks, Pair(nothing, :accountSummary))  
+    end
+    ongoingRequests = getRequests(client.requestMappings, [:accountSummary], nothing)
     if !isempty(ongoingRequests)
         Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
     end

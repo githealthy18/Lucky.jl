@@ -235,7 +235,6 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         requestId = first(keys(ongoingRequests)).requestId
         Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
         InteractiveBrokers.cancelMktData(client, requestId)
-        take!(client.data_lines)
     end
     return nothing
 end

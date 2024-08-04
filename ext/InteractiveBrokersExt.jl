@@ -48,11 +48,6 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     connectOptions::Union{Nothing,String}
     optionalCapabilities::Union{Nothing,String}
 
-    subscription_limit::Int
-    data_reqs::Channel{Pair{Instrument,Function}}
-    data_lines::Channel{Instrument}
-    @atomic running::Bool
-
     connectable::Union{Nothing,Rocket.ConnectableObservable}
     obs::Union{Nothing,Rocket.Subscribable}
 
@@ -69,11 +64,6 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             0,
             missing,
             connectOptions,
-            optionalCapabilities,
-            DATA_LINES,
-            Channel{Pair{Instrument,Function}}(Inf),
-            Channel{Instrument}(DATA_LINES),
-            false,
             nothing,
             nothing,
             nothing,
@@ -115,15 +105,6 @@ Rocket.as_teardown(::Type{<:InteractiveBrokersObservableSubscription}) = Unsubsc
 
 function Rocket.on_unsubscribe!(subscription::InteractiveBrokersObservableSubscription)
     InteractiveBrokers.disconnect(subscription.connection)
-    try 
-        close(ib, Val(:livedataserver))
-    catch e
-    end
-end
-
-function close(ib::InteractiveBrokersObservable, ::Val{:livedataserver})
-    @atomicswap ib.running = false
-    return nothing
 end
 
 include("InteractiveBrokers/Requests.jl")
@@ -234,29 +215,6 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     # Output callback
     Dictionaries.set!(client.mergedCallbacks, Pair(instr, :livedata), output)
 
-    if !@atomic client.running
-        @atomicswap client.running = true
-        task = Threads.@spawn :interactive begin
-            while @atomic client.running
-                try
-                    if isready(client.data_reqs) && !isfull(client.data_lines)
-                        instrument, cmd = take!(client.data_reqs)
-                        put!(client.data_lines, instrument)
-                        cmd()
-                    end
-                catch e
-                    @warn e
-                else
-                    sleep(0.1)
-                end
-            end
-        end
-        bind(client.data_reqs, task)
-        bind(client.data_lines, task)
-    end
-    # TODO options
-    fn = () -> InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
-    put!(client.data_reqs, Pair(instr, fn))
     return output
 end
 
@@ -274,7 +232,6 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         requestId = first(keys(ongoingRequests)).requestId
         Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
         InteractiveBrokers.cancelMktData(client, requestId)
-        take!(client.data_lines)
     end
     return nothing
 end

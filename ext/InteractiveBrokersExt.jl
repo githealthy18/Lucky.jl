@@ -216,6 +216,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     # Output callback
     Dictionaries.set!(client.mergedCallbacks, Pair(instr, :livedata), output)
 
+    # TODO options
+    InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
     return output
 end
 
@@ -233,6 +235,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
         requestId = first(keys(ongoingRequests)).requestId
         Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
         InteractiveBrokers.cancelMktData(client, requestId)
+        take!(client.data_lines)
     end
     return nothing
 end

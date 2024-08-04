@@ -64,6 +64,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             0,
             missing,
             connectOptions,
+            optionalCapabilities,
             nothing,
             nothing,
             nothing,

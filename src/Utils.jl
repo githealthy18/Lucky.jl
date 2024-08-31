@@ -1,4 +1,4 @@
-module Utils
+export percentage, deletefrom!
 
 using Dictionaries
 
@@ -16,7 +16,4 @@ function deletefrom!(dict::Dictionary, inds::Indices)
     for i in inds
         Dictionaries.unset!(dict, i)
     end
-end
-
-
 end

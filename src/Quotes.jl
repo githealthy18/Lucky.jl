@@ -1,5 +1,3 @@
-module Quotes
-
 export AbstractQuote
 export Quote, QuoteType
 export timestamp
@@ -109,5 +107,3 @@ isless(x::I, y::I) where {I<:OhlcQuote} = isless(x.ohlc, y.ohlc)
 /(x::I, y::N) where {I<:VolumeQuote,N<:Number} = I(x.instrument, x.tick, x.volume / y, timestamp(x))
 convert(T::Type{<:Number}, x::VolumeQuote) = convert(T, x.volume)
 isless(x::I, y::I) where {I<:VolumeQuote} = isless(x.volume, y.volume)
-
-end

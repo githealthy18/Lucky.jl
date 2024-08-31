@@ -34,6 +34,17 @@ function dispatch(field::InteractiveBrokers.TickTypes.TICK_TYPES)
     MAPPED_TICKS[field]()
 end
 
+@inline function dispatchPositions(func::Function, ib::InteractiveBrokersObservable, fn::Symbol)
+    key = CallbackPositionsKey(fn)
+    if haskey(ib.requestPositionsMappings, key)
+        val = ib.requestPositionsMappings[key]
+        data = func(val)
+        @debug data
+        next!(val.subject, data)
+    end
+end
+
+
 function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErrorMessage)
     if (err.id == -1)
         @info "Skipped Message: $(err)"
@@ -89,6 +100,24 @@ function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick:
         val = ib.requestMappings[key]
     end
 end
+
+function position(ib::InteractiveBrokersObservable, account::String, contract::InteractiveBrokers.Contract, position::Float64, avgCost::Float64)
+    dispatchPositions(ib, :position) do val        
+        IbKrPosition(
+            account,
+            Lucky.Instrument(contract),
+            position,
+            avgCost,
+            now() # TODO handle TimeZones
+        )
+    end
+end
+
+function positionEnd(ib::InteractiveBrokersObservable)
+    @debug "positionEnd"
+    # Do Nothing
+end
+
 
 function tickPrice(ib::InteractiveBrokersObservable, tickerId::Int, field::InteractiveBrokers.TickTypes.TICK_TYPES, price::Union{Float64,Nothing}, size::Union{Float64,Nothing}, attrib::InteractiveBrokers.TickAttrib)
     # TODO use attrib

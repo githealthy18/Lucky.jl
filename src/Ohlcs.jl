@@ -1,5 +1,3 @@
-module Ohlcs
-
 export Ohlc
 
 export OHLC_PART, body, top, bottom
@@ -89,5 +87,3 @@ isless(x::I, y::I) where {I<:Volume} = isless(x.volume, y.volume)
 Rocket.scalarness(::Type{<:Ohlc{T}}) where {T} = Rocket.Scalar()
 Rocket.scalarness(::Type{<:Volume{T}}) where {T} = Rocket.Scalar()
 Rocket.scalarness(::Type{<:Bar{T}}) where {T} = Rocket.Scalar()
-
-end

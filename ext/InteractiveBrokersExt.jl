@@ -24,6 +24,18 @@ end
 end
 
 const CallbackMapping = Dictionary{CallbackKey,CallbackValue}
+
+@auto_hash_equals cache=true struct CallbackPositionsKey
+    callbackSymbol::Symbol
+end
+
+@auto_hash_equals cache=true struct CallbackPositionsValue
+    callbackFunction::Function
+    subject::Rocket.Subject
+end
+
+const CallbackPositionsMapping = Dict{CallbackPositionsKey,CallbackPositionsValue}
+
 const DATA_LINES = 100
 
 isfull(ch::Channel) = begin
@@ -37,6 +49,8 @@ end
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
     mergedCallbacks::Dictionary{Pair{Union{Nothing,Instrument}, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}
+
+    requestPositionsMappings::CallbackPositionsMapping
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}
@@ -58,6 +72,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
         ib = new(
             CallbackMapping(),
             Dictionary{Pair{Union{Nothing,Instrument}, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}(),
+            CallbackPositionsMapping(),
             host,
             port,
             clientId,
@@ -144,6 +159,22 @@ end
 
 function getCallbacksByInstrument(dict::Dictionary, instr::Union{Nothing, Instrument})
     return filter(((k,v),) -> first(k)==instr, pairs(dict))
+end
+
+struct IbKrPosition{I<:Instrument} <: Lucky.AbstractPosition
+    account::String
+    instrument::I
+    size::Float64
+    avgCost::Float64
+    timestamp::DateTime
+end
+
+function Lucky.positions(client::InteractiveBrokersObservable)
+    InteractiveBrokers.reqPositions(client)
+
+    posSubject = Subject(IbKrPosition)
+    client.requestPositionsMappings[CallbackPositionsKey(:position)] = CallbackPositionsValue(position, posSubject)
+    return posSubject
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
@@ -378,6 +409,7 @@ function wrapper(client::InteractiveBrokersObservable)
     setproperty!(wrap, :error, error)
     setproperty!(wrap, :managedAccounts, managedAccounts)
     setproperty!(wrap, :nextValidId, nextValidId)
+    setproperty!(wrap, :positionEnd, positionEnd)
 
     # Optional callbacks
     setproperty!(wrap, :accountSummary, accountSummary)
@@ -391,6 +423,7 @@ function wrapper(client::InteractiveBrokersObservable)
     setproperty!(wrap, :historicalData, historicalData)
     setproperty!(wrap, :securityDefinitionOptionalParameter, securityDefinitionOptionalParameter)
     setproperty!(wrap, :tickOptionComputation, tickOptionComputation)
+    setproperty!(wrap, :position, position)
 
     return wrap
 end

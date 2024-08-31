@@ -1,5 +1,3 @@
-module TickQuoteFeeds
-
 export TickQuoteFeed
 
 using Rocket
@@ -45,6 +43,4 @@ function Rocket.isactive(feeds::T) where {T<:TickQuoteFeed}
         Rocket.isactive(getproperty(feeds, name)) for name in filter(!in((:instrument, :_cached_hash)), fieldnames(typeof(feeds)))
         ]
     return any(isactive)
-end
-
 end

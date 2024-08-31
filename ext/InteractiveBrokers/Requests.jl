@@ -62,3 +62,8 @@ function InteractiveBrokers.reqIds(ib::InteractiveBrokersObservable)
     f = (connection) -> InteractiveBrokers.reqIds(connection)
     delayedReq(f, ib)
 end
+
+function InteractiveBrokers.reqPositions(ib::InteractiveBrokersObservable)
+    f = (connection) -> InteractiveBrokers.reqPositions(connection)
+    delayedReq(f, ib)
+end

@@ -67,3 +67,8 @@ function InteractiveBrokers.reqPositions(ib::InteractiveBrokersObservable)
     f = (connection) -> InteractiveBrokers.reqPositions(connection)
     delayedReq(f, ib)
 end
+
+function InteractiveBrokers.placeOrder(ib::InteractiveBrokersObservable, orderId::Int, instr::Instrument, order::InteractiveBrokers.Order)
+    f = (connection) -> InteractiveBrokers.placeOrder(connection, orderId, InteractiveBrokers.Contract(instr), order)
+    delayedReq(f, ib)
+end

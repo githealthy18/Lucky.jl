@@ -137,11 +137,8 @@ end
 
 function nextValidId(ib::InteractiveBrokersObservable)
     isnothing(ib.connection) && return nothing
-
-    if ismissing(ib.nextValidId)
-        InteractiveBrokers.reqIds(ib)
-    end
-
+    
+    InteractiveBrokers.reqIds(ib)
     return ib.nextValidId
 end
 

@@ -1,4 +1,4 @@
-export blotter
+export blotter, positions
 
 function blotter end
 

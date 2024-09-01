@@ -25,6 +25,7 @@ include("instruments/Bonds.jl")
 include("instruments/Cash.jl")
 include("instruments/Futures.jl")
 include("instruments/Stocks.jl")
+include("instruments/Options.jl")
 
 # ==== Other Data Types
 include("Quotes.jl")

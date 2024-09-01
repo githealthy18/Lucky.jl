@@ -1,7 +1,6 @@
 export Ohlc
 
 export OHLC_PART, body, top, bottom
-export GAP, up, down
 export gap, ohlcpart
 
 struct Ohlc{T<:Dates.AbstractTime}
@@ -27,8 +26,7 @@ end
 @inline ohlcpart(ohlc::Ohlc, ::Val{bottom}) = [ohlc.low, min(ohlc.open, ohlc.close)]
 @inline ohlcpart(ohlc::Ohlc, part::OHLC_PART) = ohlcpart(ohlc, Val(part))
 
-#Base.:[]
-@enum GAP up down
+
 @inline function gap(ohlc::Ohlc, ref::Ohlc)
     ohlc.low > ref.high && return (up, [ref.high, ohlc.low])
     ohlc.high < ref.low && return (down, [ohlc.high, ref.low])

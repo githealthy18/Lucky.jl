@@ -1,4 +1,4 @@
-export exchange, placeorder
+export AbstractExchange, exchange, placeorder
 
 @inline exchange(s::Symbol, params...) = exchange(Val(s), params...)
 

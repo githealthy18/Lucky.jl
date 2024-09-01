@@ -14,8 +14,8 @@ end
 
 Base.show(io::IO, ohlc::Ohlc{T}) where {T<:Dates.AbstractTime} = show(io, "Ohlc @ $(ohlc.time): O:$(ohlc.open) H:$(ohlc.high) L:$(ohlc.low) C:$(ohlc.close)")
 
-Units.TimestampType(::Type{Ohlc{T}}) where {T} = T
-Units.TimestampType(o::Ohlc{T}) where {T} = T
+TimestampType(::Type{Ohlc{T}}) where {T} = T
+TimestampType(o::Ohlc{T}) where {T} = T
 
 @enum OHLC_PART body top bottom
 @inline function ohlcpart(ohlc::Ohlc, ::Val{body})
@@ -41,8 +41,8 @@ struct Volume{T<:Dates.AbstractTime}
 end
 
 Base.show(io::IO, volume::Volume{T}) where {T<:Dates.AbstractTime} = show(io, "Volume @ $(volume.time): $(volume.volume)")
-Units.TimestampType(::Type{Volume{T}}) where {T} = T
-Units.TimestampType(v::Volume{T}) where {T} = T
+TimestampType(::Type{Volume{T}}) where {T} = T
+TimestampType(v::Volume{T}) where {T} = T
 
 struct Bar{T<:Dates.AbstractTime}
     ohlc::Ohlc{T}
@@ -50,8 +50,8 @@ struct Bar{T<:Dates.AbstractTime}
 end
 
 Base.show(io::IO, bar::Bar{T}) where {T<:Dates.AbstractTime} = show(io, "Bar @ $(bar.ohlc.time): $(bar.ohlc) $(bar.volume)")
-Units.TimestampType(::Type{Bar{T}}) where {T} = T
-Units.TimestampType(b::Bar{T}) where {T} = T
+TimestampType(::Type{Bar{T}}) where {T} = T
+TimestampType(b::Bar{T}) where {T} = T
 
 struct HistoricalData{T<:Dates.AbstractTime}
     bar::DataFrame

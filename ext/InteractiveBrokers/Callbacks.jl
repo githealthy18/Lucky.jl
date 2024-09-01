@@ -196,3 +196,10 @@ function contractDetails(ib::InteractiveBrokersObservable, reqId::Int, contractD
         next!(val.subject, contractDetails)
     end
 end
+
+function execDetails(ib::InteractiveBrokersObservable, reqId::Int, contract::InteractiveBrokers.Contract, execution::InteractiveBrokers.Execution)
+    if haskey(ib.requestMappings, key)
+        val = ib.requestMappings[key]
+        next!(val.subject, execution)
+    end
+end

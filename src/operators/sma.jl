@@ -1,7 +1,5 @@
 export sma
 
-using Statistics
-
 sma(n::Int) = rolling(n) |> SmaOperator(n)
 
 struct SmaOperator <: InferableOperator

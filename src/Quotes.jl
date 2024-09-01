@@ -3,13 +3,6 @@ export Quote, QuoteType
 export timestamp
 export PriceQuote, OhlcQuote, VolumeQuote
 
-using Lucky.Instruments
-using Lucky.Ohlcs
-import Lucky.Units as Units
-
-using Dates
-using Statistics
-
 abstract type AbstractQuote end
 
 QuoteType(I::Type{<:Instrument}, params...) = error("You probably forgot to implement QuoteType(::$(I), $(params...))")

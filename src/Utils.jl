@@ -1,7 +1,5 @@
 export percentage, deletefrom!
 
-using Dictionaries
-
 function percentage(num::Number; rounded::Union{Nothing,Int}=nothing, humanreadable::Bool=false)
     if (humanreadable)
         isnothing(rounded) && return "$(num * 100)%"        

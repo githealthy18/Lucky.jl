@@ -2,6 +2,9 @@ module Lucky
 using Dates
 using Rocket
 using UUIDs
+using DataFrames
+using Dictionaries
+using Statistics
 
 # ==== Units
 include("Constants.jl")

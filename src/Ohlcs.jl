@@ -4,12 +4,6 @@ export OHLC_PART, body, top, bottom
 export GAP, up, down
 export gap, ohlcpart
 
-import Lucky.Units as Units
-
-using Rocket
-using Dates
-using DataFrames
-
 struct Ohlc{T<:Dates.AbstractTime}
     open::Float64
     high::Float64

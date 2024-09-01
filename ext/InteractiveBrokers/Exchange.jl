@@ -1,6 +1,6 @@
 struct InteractiveBrokersExchange <: AbstractExchange
     client::InteractiveBrokersObservable
-    orderbook::InMemoryOrderBook
+    orderbook::Lucky.InMemoryOrderBook
     next::AbstractSubject
 end
 

@@ -1,4 +1,4 @@
-mutable struct Order <: AbstractOrder
+mutable struct InteractiveBrokers.Order <: AbstractOrder
     orderId::Int
     clientId::Int
     permId::Int

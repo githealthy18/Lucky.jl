@@ -444,7 +444,7 @@ function InteractiveBrokers.Contract(i::Lucky.Instrument)
         symbol=symbol(i),
         secType=secType(i),
         exchange=exchange(i),
-        currency=Lucky.Units.currency(i)
+        currency=Lucky.currency(i)
     )
 end
 
@@ -453,7 +453,7 @@ function InteractiveBrokers.Contract(i::Lucky.Option)
         symbol=symbol(i),
         secType=secType(i),
         exchange=exchange(i),
-        currency=Lucky.Units.currency(i)
+        currency=Lucky.currency(i)
     )
     contract.right = right(i)
     contract.lastTradeDateOrContractMonth = expiry(i)

@@ -7,7 +7,7 @@ abstract type AbstractQuote end
 
 QuoteType(I::Type{<:Instrument}, params...) = error("You probably forgot to implement QuoteType(::$(I), $(params...))")
 QuoteType(Q::Type{<:AbstractQuote}) = Q
-Units.TimestampType(Q::Type{<:AbstractQuote}) = error("You probably forgot to implement TimestampType(::$(Q))")
+TimestampType(Q::Type{<:AbstractQuote}) = error("You probably forgot to implement TimestampType(::$(Q))")
 
 abstract type AbstractTick end
 
@@ -64,12 +64,12 @@ TickType(::VolumeQuote{I,T,V,D}) where {I,T,V,D} = T
 TickType(::Type{<:PriceQuote{I,T,P,S,D}}) where {I,T,P,S,D} = T
 TickType(::Type{<:VolumeQuote{I,T,V,D}}) where {I,T,V,D} = T
 
-Units.currency(q::AbstractQuote) = Units.currency(q.instrument)
+currency(q::AbstractQuote) = currency(q.instrument)
 timestamp(q::OhlcQuote) = q.ohlc.timestamp
 timestamp(q::PriceQuote) = q.timestamp
 
-Units.TimestampType(::Type{<:OhlcQuote{I,O}}) where {I,O} = Units.TimestampType(O)
-Units.TimestampType(::Type{<:PriceQuote{I,T,P,S,D}}) where {I,T,P,S,D} = D
+TimestampType(::Type{<:OhlcQuote{I,O}}) where {I,O} = TimestampType(O)
+TimestampType(::Type{<:PriceQuote{I,T,P,S,D}}) where {I,T,P,S,D} = D
 
 import Base: +, -, *, /, convert, isless
 # https://github.com/JuliaLang/julia/blob/0a8916446b782eae1a09681b2b47c1be26fab7f3/base/missing.jl#L119

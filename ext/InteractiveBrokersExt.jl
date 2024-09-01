@@ -36,21 +36,12 @@ end
 
 const CallbackPositionsMapping = Dict{CallbackPositionsKey,CallbackPositionsValue}
 
-const DATA_LINES = 100
-
-isfull(ch::Channel) = begin
-    if ch.sz_max===0
-        isready(ch)
-    else
-        length(ch.data) ≥ ch.sz_max
-    end
-end
-
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
     mergedCallbacks::Dictionary{Pair{Union{Nothing,Instrument}, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}
 
     requestPositionsMappings::CallbackPositionsMapping
+    fills::Union{Nothing, Rocket.Subject}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}
@@ -73,6 +64,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             CallbackMapping(),
             Dictionary{Pair{Union{Nothing,Instrument}, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}(),
             CallbackPositionsMapping(),
+            nothing,
             host,
             port,
             clientId,
@@ -125,6 +117,7 @@ end
 
 include("InteractiveBrokers/Requests.jl")
 include("InteractiveBrokers/Callbacks.jl")
+include("InteractiveBrokers/Exchange.jl")
 
 function Lucky.service(::Val{:interactivebrokers}; host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
     return InteractiveBrokersObservable(host, port, clientId, connectOptions, optionalCapabilities)
@@ -137,7 +130,7 @@ end
 
 function nextValidId(ib::InteractiveBrokersObservable)
     isnothing(ib.connection) && return nothing
-    
+
     InteractiveBrokers.reqIds(ib)
     return ib.nextValidId
 end

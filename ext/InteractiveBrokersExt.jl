@@ -406,6 +406,7 @@ function wrapper(client::InteractiveBrokersObservable)
     setproperty!(wrap, :securityDefinitionOptionalParameter, securityDefinitionOptionalParameter)
     setproperty!(wrap, :tickOptionComputation, tickOptionComputation)
     setproperty!(wrap, :position, position)
+    setproperty!(wrap, :execDetails, execDetails)
 
     return wrap
 end

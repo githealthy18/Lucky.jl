@@ -5,6 +5,7 @@ using UUIDs
 using DataFrames
 using Dictionaries
 using Statistics
+using AutoHashEquals
 
 # ==== Units
 include("Constants.jl")

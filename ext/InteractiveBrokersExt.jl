@@ -24,22 +24,11 @@ end
 
 const CallbackMapping = Dictionary{CallbackKey,CallbackValue}
 
-@auto_hash_equals cache=true struct CallbackPositionsKey
-    callbackSymbol::Symbol
-end
-
-@auto_hash_equals cache=true struct CallbackPositionsValue
-    callbackFunction::Function
-    subject::Rocket.Subject
-end
-
-const CallbackPositionsMapping = Dict{CallbackPositionsKey,CallbackPositionsValue}
-
 mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     requestMappings::CallbackMapping
     mergedCallbacks::Dictionary{Pair{Union{Nothing,Instrument}, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}
 
-    requestPositionsMappings::CallbackPositionsMapping
+    positions::Union{Nothing, Rocket.Subject}
     fills::Union{Nothing, Rocket.Subject}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
@@ -58,11 +47,11 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     connection::Union{Nothing,InteractiveBrokers.Connection}
     pendingCmds::Vector{Function}
 
-    function InteractiveBrokersObservable(fills=nothing, host=nothing, port::Union{Nothing,Int}=nothing, clientId::Union{Nothing,Int}=nothing, connectOptions::Union{Nothing,String}=nothing, optionalCapabilities::Union{Nothing,String}=nothing)
+    function InteractiveBrokersObservable(positions=nothing, fills=nothing, host=nothing, port::Union{Nothing,Int}=nothing, clientId::Union{Nothing,Int}=nothing, connectOptions::Union{Nothing,String}=nothing, optionalCapabilities::Union{Nothing,String}=nothing)
         ib = new(
             CallbackMapping(),
             Dictionary{Pair{Union{Nothing,Instrument}, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}(),
-            CallbackPositionsMapping(),
+            positions,
             fills,
             host,
             port,
@@ -118,8 +107,8 @@ include("InteractiveBrokers/Requests.jl")
 include("InteractiveBrokers/Callbacks.jl")
 include("InteractiveBrokers/Exchange.jl")
 
-function Lucky.service(::Val{:interactivebrokers}; fills=nothing, host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
-    return InteractiveBrokersObservable(fills, host, port, clientId, connectOptions, optionalCapabilities)
+function Lucky.service(::Val{:interactivebrokers}; positions=nothing, fills=nothing, host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
+    return InteractiveBrokersObservable(positions, fills, host, port, clientId, connectOptions, optionalCapabilities)
 end
 
 function nextRequestId(client::InteractiveBrokersObservable)
@@ -158,12 +147,16 @@ struct IbKrPosition{I<:Instrument} <: Lucky.AbstractPosition
     timestamp::DateTime
 end
 
+struct IbKrFill{I<:Instrument} <: Lucky.AbstractFill
+    id::Int
+    instrument::I
+    avgPrice::Float64
+    size::Float64
+    timestamp::DateTime
+end
+
 function Lucky.positions(client::InteractiveBrokersObservable)
     InteractiveBrokers.reqPositions(client)
-
-    posSubject = Subject(IbKrPosition)
-    client.requestPositionsMappings[CallbackPositionsKey(:position)] = CallbackPositionsValue(position, posSubject)
-    return posSubject
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    
@@ -460,6 +453,16 @@ function InteractiveBrokers.Contract(i::Lucky.Option)
     contract.strike = strike(i)
     contract.multiplier = "100"
     return contract
+end
+
+function instrument(i::InteractiveBrokers.Contract)
+    if i.secType == "CASH"
+        return Lucky.Cash(Lucky.CurrencyType(Symbol(i.currency)))
+    elseif i.secType == "STK"
+        return Lucky.Stock(i.symbol, Lucky.Currency(Symbol(i.currency)))
+    elseif i.secType == "OPT"
+        return Lucky.Option(Lucky.Stock(i.symbol, Lucky.Currency(Symbol(i.currency))), convert(OPTION_RIGHT, i.right), i.strike, Date(i.lastTradeDateOrContractMonth, "yyyymmdd"))
+    end
 end
 
 end

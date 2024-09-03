@@ -11,3 +11,5 @@ export up, down, flat
 import Base: String, convert
 String(R::OPTION_RIGHT) = R == CALL ? "C" : "P"
 convert(T::Type{Bool}, R::OPTION_RIGHT) = R == CALL ? true : false
+convert(T::Type{OPTION_RIGHT}, b::Bool) = b ? CALL : PUT
+convert(T::Type{OPTION_RIGHT}, s::String) = s == "C" ? CALL : PUT

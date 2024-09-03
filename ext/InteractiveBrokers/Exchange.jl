@@ -14,6 +14,7 @@ function Lucky.placeorder(client::InteractiveBrokersObservable, order::MarketOrd
     iborder.action = order.action == BUY_SIDE ? "BUY" : "SELL"
     iborder.totalQuantity = order.size
     iborder.orderType = "MKT"
+    push!(exchange.orderbook.pendingOrders[instr], order)
     InteractiveBrokers.placeOrder(client, iborder.orderid, order.instrument, iborder)
 end
 
@@ -24,6 +25,7 @@ function Lucky.placeorder(client::InteractiveBrokersObservable, order::LimitOrde
     iborder.totalQuantity = order.size
     iborder.orderType = "LMT"
     iborder.lmtPrice = order.limit
+    push!(exchange.orderbook.pendingOrders[instr], order)
     InteractiveBrokers.placeOrder(client, iborder.orderid, order.instrument, iborder)
 end
 
@@ -34,6 +36,7 @@ function Lucky.placeorder(client::InteractiveBrokersObservable, order::Algorithm
     iborder.totalQuantity = order.size
     iborder.orderType = "MKT"
     iborder.algoStrategy = order.algorithm
+    push!(exchange.orderbook.pendingOrders[instr], order)
     InteractiveBrokers.placeOrder(client, iborder.orderid, order.instrument, iborder)
 end
 
@@ -45,6 +48,8 @@ function Lucky.placeorder(client::InteractiveBrokersObservable, order::Algorithm
     iborder.orderType = "LMT"
     iborder.lmtPrice = order.limit
     iborder.algoStrategy = order.algorithm
+    order.id = iborder.orderid
+    push!(exchange.orderbook.pendingOrders[instr], order)
     InteractiveBrokers.placeOrder(client, iborder.orderid, order.instrument, iborder)
 end
 
@@ -56,10 +61,24 @@ function Rocket.on_next!(exchange::InteractiveBrokersExchange, order::O) where {
     if !haskey(exchange.orderbook.pendingOrders, instr)
         exchange.orderbook.pendingOrders[instr] = Vector{AbstractOrder}()
     end
-    push!(exchange.orderbook.pendingOrders[instr], order)
     Lucky.placeorder(exchange.client, order)
 end
 
 function Rocket.on_next!(exchange::InteractiveBrokersExchange, orders::Vector{O}) where {O<:AbstractOrder}
     foreach(order -> on_next!(exchange, order), orders)
 end
+
+function Rocket.on_next!(exchange::InteractiveBrokersExchange, fill::F) where {F<:AbstractFill}
+    instr = typeof(fill.order.instrument)
+    todel = nothing
+    for (idx, order) in enumerate(exchange.orderbook.pendingOrders[instr])
+        if isnothing(todel)
+            todel = Vector{Int}()
+        end
+        if order.id == fill.order.id
+            push!(todel, idx)
+        end
+    end
+    isnothing(todel) || deleteat!(exchange.orderbook.pendingOrders[instr], todel)
+end
+

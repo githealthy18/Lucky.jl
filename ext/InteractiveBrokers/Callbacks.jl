@@ -100,16 +100,15 @@ function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick:
     end
 end
 
-function position(ib::InteractiveBrokersObservable, account::String, contract::InteractiveBrokers.Contract, position::Float64, avgCost::Float64)
-    dispatchPositions(ib, :position) do val        
-        IbKrPosition(
-            account,
-            Lucky.Instrument(contract),
-            position,
-            avgCost,
-            now() # TODO handle TimeZones
-        )
-    end
+function position(ib::InteractiveBrokersObservable, account::String, contract::InteractiveBrokers.Contract, position::Float64, avgCost::Float64) 
+    position = IbKrPosition(
+        account,
+        Lucky.Instrument(contract),
+        position,
+        avgCost,
+        now() # TODO handle TimeZones
+    )
+    next!(ib.positions, position) 
 end
 
 function positionEnd(ib::InteractiveBrokersObservable)
@@ -197,8 +196,12 @@ function contractDetails(ib::InteractiveBrokersObservable, reqId::Int, contractD
 end
 
 function execDetails(ib::InteractiveBrokersObservable, reqId::Int, contract::InteractiveBrokers.Contract, execution::InteractiveBrokers.Execution)
-    if haskey(ib.requestMappings, key)
-        val = ib.requestMappings[key]
-        next!(val.subject, execution)
-    end
+    ibkrFill = IbKrFill(
+        reqId,
+        instrument(contract),
+        execution.shares,
+        execution.avgPrice,
+        execution.time
+    )
+    next!(ib.fills, ibkrFill)
 end

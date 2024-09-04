@@ -66,3 +66,8 @@ currency(::MarketOrder{I,S}) where {I<:Instrument,S<:Number} = currency(I)
 currency(::LimitOrder{I,S}) where {I<:Instrument,S<:Number} = currency(I)
 currency(::Type{<:MarketOrder{I,S}}) where {I<:Instrument,S<:Number} = currency(I)
 currency(::Type{<:LimitOrder{I,S}}) where {I<:Instrument,S<:Number} = currency(I)
+
+Order(instrument::Instrument, action::A, size::S, stamp::D) where {A,S,D} = MarketOrder(missing, instrument, action, size, stamp)
+Order(instrument::Instrument, action::A, size::S, limit::Float64, stamp::D) where {A,S,D} = LimitOrder(missing, instrument, action, size, limit, stamp)
+Order(instrument::Instrument, action::A, size::S, algorithm::String, stamp::D) where {A,S,D} = AlgorithmicMarketOrder(missing, instrument, action, size, algorithm, stamp)
+Order(instrument::Instrument, action::A, size::S, limit::Float64, algorithm::String, stamp::D) where {A,S,D} = AlgorithmicLimitOrder(missing, instrument, action, size, limit, algorithm, stamp)

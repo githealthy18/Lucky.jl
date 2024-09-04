@@ -17,7 +17,7 @@ FillType(::F) where {F<:AbstractFill} = F
 Standard fill.
 """
 struct Fill{O,S,D} <: AbstractFill
-    id::String
+    id::Int
     order::O
     price::Float64
     size::S
@@ -28,4 +28,4 @@ end
 currency(::Fill{O,S,D}) where {O<:AbstractOrder,S,D} = currency(O)
 
 import Base: -
--(order::O, fill::F) where {O<:AbstractOrder,F<:AbstractFill} = order.size - fill.size
+-(order::O, fill::F) where {O<:MarketOrder,F<:Fill{O}} = MarketOrder(order.id, order.instrument, order.action, order.size - fill.size, order.timestamp)

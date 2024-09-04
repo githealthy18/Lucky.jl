@@ -26,3 +26,6 @@ struct Fill{O,S,D} <: AbstractFill
 end
 
 currency(::Fill{O,S,D}) where {O<:AbstractOrder,S,D} = currency(O)
+
+import Base: -
+-(order::O, fill::F) where {O<:AbstractOrder,F<:AbstractFill} = order.size - fill.size

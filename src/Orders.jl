@@ -15,7 +15,7 @@ Standard Data Type carrying inforamtion for a market order on an instrument for 
 @auto_hash_equals fields=(id,instrument,action,timestamp) mutable struct MarketOrder{I,S,A,D} <: AbstractMarketOrder
     id::Union{Missing, Int}
     instrument::I
-    action::ORDER_SIDE
+    action::A
     size::S
     timestamp::D
 end
@@ -28,7 +28,7 @@ Standard Data Type carrying inforamtion for a limit order on an instrument for a
 @auto_hash_equals fields=(id,instrument,action,timestamp) mutable struct LimitOrder{I,S,A,D} <: AbstractOrder
     id::Union{Missing, Int}
     instrument::I
-    action::ORDER_SIDE
+    action::A
     size::S
     limit::Float64
     timestamp::D
@@ -42,9 +42,9 @@ Standard Data Type carrying inforamtion for an algorithmic order on an instrumen
 @auto_hash_equals fields=(id,instrument,action,timestamp) mutable struct AlgorithmicMarketOrder{I,S,A,D} <: AbstractOrder
     id::Union{Missing, Int}
     instrument::I
-    action::ORDER_SIDE
+    action::A
     size::S
-    algorithm::A
+    algorithm::String
     timestamp::D
 end
 
@@ -55,10 +55,10 @@ Standard Data Type carrying inforamtion for an algorithmic limit order on an ins
 @auto_hash_equals fields=(id,instrument,action,timestamp) mutable struct AlgorithmicLimitOrder{I,S,A,D} <: AbstractOrder
     id::Union{Missing, Int}
     instrument::I
-    action::ORDER_SIDE
+    action::A
     size::S
     limit::Float64
-    algorithm::A
+    algorithm::String
     timestamp::D
 end
 

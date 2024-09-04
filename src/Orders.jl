@@ -1,6 +1,6 @@
 export AbstractOrder
 export LimitOrder, MarketOrder, AlgorithmicMarketOrder, AlgorithmicLimitOrder
-export OrderType
+export Order, OrderType
 
 abstract type AbstractOrder end
 abstract type AbstractMarketOrder <: AbstractOrder end

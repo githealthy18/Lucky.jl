@@ -101,11 +101,9 @@ function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick:
 end
 
 function position(ib::InteractiveBrokersObservable, account::String, contract::InteractiveBrokers.Contract, position::Float64, avgCost::Float64) 
-    position = IbKrPosition(
-        account,
+    position = Position(
         Lucky.Instrument(contract),
         position,
-        avgCost,
         now() # TODO handle TimeZones
     )
     next!(ib.positions, position) 
@@ -196,12 +194,20 @@ function contractDetails(ib::InteractiveBrokersObservable, reqId::Int, contractD
 end
 
 function execDetails(ib::InteractiveBrokersObservable, reqId::Int, contract::InteractiveBrokers.Contract, execution::InteractiveBrokers.Execution)
-    ibkrFill = IbKrFill(
+    ibkrExec = IbKrExec(
         reqId,
         instrument(contract),
         execution.shares,
         execution.avgPrice,
         execution.time
     )
-    next!(ib.fills, ibkrFill)
+    next!(ib.fills, ibkrExec)
+end
+
+function commissionReport(ib::InteractiveBrokersObservable, commissionReport::InteractiveBrokers.CommissionReport)
+    ibkrComm = IbKrCommission(
+        commissionReport.execId,
+        commissionReport.commission
+    )
+    next!(ib.commissions, ibkrComm)
 end

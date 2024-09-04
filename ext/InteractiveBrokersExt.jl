@@ -139,15 +139,7 @@ function getCallbacksByInstrument(dict::Dictionary, instr::Union{Nothing, Instru
     return filter(((k,v),) -> first(k)==instr, pairs(dict))
 end
 
-struct IbKrPosition{I<:Instrument} <: Lucky.AbstractPosition
-    account::String
-    instrument::I
-    size::Float64
-    avgCost::Float64
-    timestamp::DateTime
-end
-
-struct IbKrFill{I<:Instrument} <: Lucky.AbstractFill
+struct IbKrExec{I<:Instrument} <: Lucky.AbstractFill
     id::Int
     instrument::I
     avgPrice::Float64
@@ -155,8 +147,33 @@ struct IbKrFill{I<:Instrument} <: Lucky.AbstractFill
     timestamp::DateTime
 end
 
+struct IbKrCommission{I<:Instrument} <: Lucky.AbstractFill
+    id::Int
+    commission::Float64
+end
+
+struct IbKrFill{I<:Instrument} <: Lucky.AbstractFill
+    id::Int
+    instrument::I
+    avgPrice::Float64
+    size::Float64
+    fee::Float64
+    timestamp::DateTime
+end
+
 function Lucky.positions(client::InteractiveBrokersObservable)
     InteractiveBrokers.reqPositions(client)
+end
+
+function Lucky.fills(client::InteractiveBrokersObservable)
+    executionSubject = RecentSubject(IbKrExec, Subject(IbKrExec))
+    commissionSubject = RecentSubject(Float64, Subject(Float64))
+    merge = (tup::Tuple{IbKrFill, Float64}) -> IbKrFill(tup[1].id, tup[1].instrument, tup[1].avgPrice, tup[1].size, tup[2], tup[1].timestamp)
+    source = zipped(executionSubject, commissionSubject) |> Rocket.map(IbKrFill, merge)
+
+    Dictionaries.set!(client.requestMappings, CallbackKey(nextRequestId(client), :execDetails, nothing), CallbackValue(execDetails, executionSubject, nothing))
+    Dictionaries.set!(client.mergedCallbacks, Pair(nothing, :fills), source)
+    return source
 end
 
 function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::Val{:livedata}; timeout=30000) #, callback::Union{Nothing,Function}=nothing, outputType::Type=Any)    

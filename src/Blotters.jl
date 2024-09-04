@@ -1,4 +1,4 @@
-export blotter, positions
+export blotter, positions, fills
 
 function blotter end
 
@@ -7,3 +7,5 @@ function blotter end
 abstract type AbstractBlotter <: Actor{Any} end
 
 function positions end
+
+function fills end

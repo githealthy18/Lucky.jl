@@ -29,3 +29,6 @@ currency(::Fill{O,S,D}) where {O<:AbstractOrder,S,D} = currency(O)
 
 import Base: -
 -(order::O, fill::F) where {O<:MarketOrder,F<:Fill{O}} = MarketOrder(order.id, order.instrument, order.action, order.size - fill.size, order.timestamp)
+-(order::O, fill::F) where {O<:LimitOrder,F<:Fill{O}} = LimitOrder(order.id, order.instrument, order.action, order.size - fill.size, order.limit, order.timestamp)
+-(order::O, fill::F) where {O<:AlgorithmicMarketOrder,F<:Fill{O}} = AlgorithmicMarketOrder(order.id, order.instrument, order.action, order.size - fill.size, order.algorithm, order.timestamp)
+-(order::O, fill::F) where {O<:AlgorithmicLimitOrder,F<:Fill{O}} = AlgorithmicLimitOrder(order.id, order.instrument, order.action, order.size - fill.size, order.limit, order.algorithm, order.timestamp)

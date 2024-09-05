@@ -32,3 +32,5 @@ import Base: -
 -(order::O, fill::F) where {O<:LimitOrder,F<:Fill{O}} = LimitOrder(order.id, order.instrument, order.action, order.size - fill.size, order.limit, order.timestamp)
 -(order::O, fill::F) where {O<:AlgorithmicMarketOrder,F<:Fill{O}} = AlgorithmicMarketOrder(order.id, order.instrument, order.action, order.size - fill.size, order.algorithm, order.timestamp)
 -(order::O, fill::F) where {O<:AlgorithmicLimitOrder,F<:Fill{O}} = AlgorithmicLimitOrder(order.id, order.instrument, order.action, order.size - fill.size, order.limit, order.algorithm, order.timestamp)
+
++(x::F, y::F) where {F<:Fill} = Fill(x.id, x.order, x.price + y.price, x.size + y.size, x.fee + y.fee, x.timestamp)

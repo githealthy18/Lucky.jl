@@ -202,7 +202,7 @@ function execDetails(ib::InteractiveBrokersObservable, reqId::Int, contract::Int
         instrument(contract),
         execution.shares,
         execution.avgPrice,
-        execution.time
+        Dates.now()
     )
     next!(val.subject, ibkrExec)
 end

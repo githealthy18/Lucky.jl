@@ -101,10 +101,6 @@ function Rocket.on_unsubscribe!(subscription::InteractiveBrokersObservableSubscr
     InteractiveBrokers.disconnect(subscription.connection)
 end
 
-include("InteractiveBrokers/Requests.jl")
-include("InteractiveBrokers/Callbacks.jl")
-include("InteractiveBrokers/Exchange.jl")
-
 function Lucky.service(::Val{:interactivebrokers}; positions=nothing, fills=nothing, host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
     return InteractiveBrokersObservable(positions, fills, host, port, clientId, connectOptions, optionalCapabilities)
 end
@@ -159,6 +155,11 @@ struct IbKrFill{I<:Instrument} <: Lucky.AbstractFill
     fee::Float64
     timestamp::DateTime
 end
+
+include("InteractiveBrokers/Requests.jl")
+include("InteractiveBrokers/Callbacks.jl")
+include("InteractiveBrokers/Exchange.jl")
+
 
 function Lucky.positions(client::InteractiveBrokersObservable)
     InteractiveBrokers.reqPositions(client)
@@ -424,6 +425,7 @@ function wrapper(client::InteractiveBrokersObservable)
     setproperty!(wrap, :tickOptionComputation, tickOptionComputation)
     setproperty!(wrap, :position, position)
     setproperty!(wrap, :execDetails, execDetails)
+    setproperty!(wrap, :commissionReport, commissionReport)
 
     return wrap
 end

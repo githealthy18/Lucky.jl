@@ -1,12 +1,13 @@
 struct InteractiveBrokersExchange <: AbstractExchange
     client::InteractiveBrokersObservable
     orderbook::Lucky.InMemoryOrderBook
-    next::AbstractSubject
+    fills::AbstractSubject
+    positions::AbstractSubject
 end
 
-@inline InteractiveBrokersExchange(client::InteractiveBrokersObservable, subject::Subject) = InteractiveBrokersExchange(client, orderbook(:inmemory), subject)
+@inline InteractiveBrokersExchange(client::InteractiveBrokersObservable, fills::Subject, positions::Subject) = InteractiveBrokersExchange(client, orderbook(:inmemory), fills, positions)
 
-Lucky.exchange(::Val{:ib}, client::InteractiveBrokersObservable, subject::Subject) = InteractiveBrokersExchange(client, subject)
+Lucky.exchange(::Val{:ib}, client::InteractiveBrokersObservable, fills::Subject, positions::Subject) = InteractiveBrokersExchange(client, fills, positions)
 
 function Lucky.placeorder(client::InteractiveBrokersObservable, order::MarketOrder)
     iborder = InteractiveBrokers.Order()
@@ -68,17 +69,23 @@ function Rocket.on_next!(exchange::InteractiveBrokersExchange, orders::Vector{O}
     foreach(order -> on_next!(exchange, order), orders)
 end
 
-function Rocket.on_next!(exchange::InteractiveBrokersExchange, fill::F) where {F<:AbstractFill}
+function Rocket.on_next!(exchange::InteractiveBrokersExchange, fill::F) where {F<:IbKrFill}
     instr = typeof(fill.order.instrument)
     todel = nothing
     for (idx, order) in enumerate(exchange.orderbook.pendingOrders[instr])
         if isnothing(todel)
             todel = Vector{Int}()
         end
-        if order.id == fill.order.id
-            push!(todel, idx)
+        if order.id == fill.id
+            luckyFill = Fill(fill.id, order, fill.price, fill.size, fill.fee, fill.timestamp)
+            next!(exchange.fills, luckyFill)
+            resultingOrder = order - luckyFill
+            if resultingOrder.size == 0
+                push!(todel, idx)
+            else
+                exchange.orderbook.pendingOrders[instr][idx] = resultingOrder
+            end
         end
     end
     isnothing(todel) || deleteat!(exchange.orderbook.pendingOrders[instr], todel)
 end
-

@@ -29,11 +29,15 @@ Currency(s::AbstractString) = Currency(Symbol(s))
 
 # Interfaces
 
-CurrencyType(C::Type{<:Currency}) = C
-CurrencyType(s::Symbol) = CurrencyType(Currency{s})
+Base.convert(::String, ::C) where {S,C<:Currency{S}} = String(S)
+
 CurrencyType(s::AbstractString) = CurrencyType(Symbol(s))
 
-symbol(::Type{Currency{S}}) where {S} = S    
+symbol(::Currency{S}) where {S} = S
+currency(::Currency{S}) where {S} = String(S)
+
+Base.show(io::IO, ::Type{Currency{S}}) where {S} = print(io, "$(S)")
+Base.String(::Currency{S}) where {S} = String(S)
 
 """
     currency
@@ -42,7 +46,3 @@ symbol(::Type{Currency{S}}) where {S} = S
 """
 currency(o::Any) = error("You probably forgot to implement currency(::$(o)")
 currency(::Type{C}) where {C<:Currency} = C
-
-Base.show(io::IO, ::Type{Currency{S}}) where {S} = print(io, "$(S)")
-
-Base.convert(::Type{String}, ::Type{C}) where {S,C<:Currency{S}} = String(S)

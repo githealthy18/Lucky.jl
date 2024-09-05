@@ -194,20 +194,25 @@ function contractDetails(ib::InteractiveBrokersObservable, reqId::Int, contractD
 end
 
 function execDetails(ib::InteractiveBrokersObservable, reqId::Int, contract::InteractiveBrokers.Contract, execution::InteractiveBrokers.Execution)
+    key = CallbackKey(0, :execDetails, nothing)
+    val = ib.requestMappings[key]
     ibkrExec = IbKrExec(
-        reqId,
+        execution.orderId,
+        execution.execId,
         instrument(contract),
         execution.shares,
         execution.avgPrice,
         execution.time
     )
-    next!(ib.fills, ibkrExec)
+    next!(val.subject, ibkrExec)
 end
 
 function commissionReport(ib::InteractiveBrokersObservable, commissionReport::InteractiveBrokers.CommissionReport)
+    key = CallbackKey(0, :commissionReport, nothing)
+    val = ib.requestMappings[key]
     ibkrComm = IbKrCommission(
         commissionReport.execId,
         commissionReport.commission
     )
-    next!(ib.commissions, ibkrComm)
+    next!(val.subject, ibkrComm)
 end

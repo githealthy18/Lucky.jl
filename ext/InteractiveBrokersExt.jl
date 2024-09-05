@@ -29,7 +29,6 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     mergedCallbacks::Dictionary{Pair{Union{Nothing,Instrument}, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}
 
     positions::Union{Nothing, Rocket.Subject}
-    fills::Union{Nothing, Rocket.Subject}
 
     host::Union{Nothing,Any} # IPAddr (not typed to avoid having to add Sockets to Project.toml 1.10)
     port::Union{Nothing,Int}
@@ -52,7 +51,6 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
             CallbackMapping(),
             Dictionary{Pair{Union{Nothing,Instrument}, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}(),
             positions,
-            fills,
             host,
             port,
             clientId,
@@ -141,6 +139,7 @@ end
 
 struct IbKrExec{I<:Instrument} <: Lucky.AbstractFill
     id::Int
+    execId::String
     instrument::I
     avgPrice::Float64
     size::Float64
@@ -148,7 +147,7 @@ struct IbKrExec{I<:Instrument} <: Lucky.AbstractFill
 end
 
 struct IbKrCommission{I<:Instrument} <: Lucky.AbstractFill
-    id::Int
+    id::String
     commission::Float64
 end
 
@@ -167,11 +166,12 @@ end
 
 function Lucky.fills(client::InteractiveBrokersObservable)
     executionSubject = RecentSubject(IbKrExec, Subject(IbKrExec))
-    commissionSubject = RecentSubject(Float64, Subject(Float64))
-    merge = (tup::Tuple{IbKrFill, Float64}) -> IbKrFill(tup[1].id, tup[1].instrument, tup[1].avgPrice, tup[1].size, tup[2], tup[1].timestamp)
-    source = zipped(executionSubject, commissionSubject) |> Rocket.map(IbKrFill, merge)
+    commissionSubject = RecentSubject(IbKrCommission, Subject(IbKrCommission))
+    merge = (tup::Tuple{IbKrFill, IbKrCommission}) -> IbKrFill(tup[1].id, tup[1].instrument, tup[1].avgPrice, tup[1].size, tup[2].commission, tup[1].timestamp)
+    source = zipped(executionSubject, commissionSubject) |> filter((s)->s[1].execId==s[2].execId) |> Rocket.map(IbKrFill, merge)
 
-    Dictionaries.set!(client.requestMappings, CallbackKey(nextRequestId(client), :execDetails, nothing), CallbackValue(execDetails, executionSubject, nothing))
+    Dictionaries.set!(client.requestMappings, CallbackKey(0, :execDetails, nothing), CallbackValue(execDetails, executionSubject, nothing))
+    Dictionaries.set!(client.requestMappings, CallbackKey(0, :commissionReport, nothing), CallbackValue(commissionReport, commissionSubject, nothing))
     Dictionaries.set!(client.mergedCallbacks, Pair(nothing, :fills), source)
     return source
 end

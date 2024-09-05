@@ -264,7 +264,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     ongoingRequests = getRequests(client.requestMappings, [:tickSize,:tickPrice,:tickGeneric,:tickReqParams,:tickString,:marketDataType], instr)
     if !isempty(ongoingRequests)
         requestId = first(keys(ongoingRequests)).requestId
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+        deletefrom!(client.requestMappings, keys(ongoingRequests))
         InteractiveBrokers.cancelMktData(client, requestId)
     end
     return nothing
@@ -296,7 +296,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     ongoingRequests = getRequests(client.requestMappings, [:historicalData], instr)
     if !isempty(ongoingRequests)
         requestId = first(keys(ongoingRequests)).requestId
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+        deletefrom!(client.requestMappings, keys(ongoingRequests))
         InteractiveBrokers.cancelHistoricalData(client, requestId)
     end
 end
@@ -341,7 +341,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
 
     ongoingRequests = getRequests(client.requestMappings, [:expirations,:strikes], instr)
     if !isempty(ongoingRequests)
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+        deletefrom!(client.requestMappings, keys(ongoingRequests))
     end
 end
 
@@ -369,7 +369,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     end
     ongoingRequests = getRequests(client.requestMappings, [:contractDetails], instr)
     if !isempty(ongoingRequests)
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+        deletefrom!(client.requestMappings, keys(ongoingRequests))
     end
 end
 
@@ -398,7 +398,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, ::Val{:accountSumm
     end
     ongoingRequests = getRequests(client.requestMappings, [:accountSummary])
     if !isempty(ongoingRequests)
-        Lucky.Utils.deletefrom!(client.requestMappings, keys(ongoingRequests))
+        deletefrom!(client.requestMappings, keys(ongoingRequests))
     end
 end
 

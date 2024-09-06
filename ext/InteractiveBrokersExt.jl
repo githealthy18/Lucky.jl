@@ -92,6 +92,7 @@ function Rocket.on_subscribe!(obs::InteractiveBrokersObservable, actor)
         cmd = pop!(obs.pendingCmds)
         cmd(obs.connection)
     end
+    nextValidId(obs)
     return InteractiveBrokersObservableSubscription(obs.connection)
 end
 

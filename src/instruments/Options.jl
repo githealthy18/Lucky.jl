@@ -1,4 +1,5 @@
 export Option
+export setImpliedVolatility!, setDelta!, setGamma!, setVega!, setTheta!, setRho!
 using AutoHashEquals
 
 mutable struct Greeks

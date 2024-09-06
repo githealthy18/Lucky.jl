@@ -16,8 +16,9 @@ function Lucky.placeorder(client::InteractiveBrokersObservable, order::MarketOrd
     iborder.action = order.action == BUY_SIDE ? "BUY" : "SELL"
     iborder.totalQuantity = order.size
     iborder.orderType = "MKT"
+    order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
-    InteractiveBrokers.placeOrder(client, iborder.orderId, order.instrument, iborder)
+    InteractiveBrokers.placeOrder(client, iborder.orderId, instr, iborder)
 end
 
 function Lucky.placeorder(client::InteractiveBrokersObservable, order::LimitOrder)
@@ -28,8 +29,9 @@ function Lucky.placeorder(client::InteractiveBrokersObservable, order::LimitOrde
     iborder.totalQuantity = order.size
     iborder.orderType = "LMT"
     iborder.lmtPrice = order.limit
+    order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
-    InteractiveBrokers.placeOrder(client, iborder.orderId, order.instrument, iborder)
+    InteractiveBrokers.placeOrder(client, iborder.orderId, instr, iborder)
 end
 
 function Lucky.placeorder(client::InteractiveBrokersObservable, order::AlgorithmicMarketOrder)
@@ -40,8 +42,9 @@ function Lucky.placeorder(client::InteractiveBrokersObservable, order::Algorithm
     iborder.totalQuantity = order.size
     iborder.orderType = "MKT"
     iborder.algoStrategy = order.algorithm
+    order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
-    InteractiveBrokers.placeOrder(client, iborder.orderId, order.instrument, iborder)
+    InteractiveBrokers.placeOrder(client, iborder.orderId, instr, iborder)
 end
 
 function Lucky.placeorder(client::InteractiveBrokersObservable, order::AlgorithmicLimitOrder)
@@ -55,7 +58,7 @@ function Lucky.placeorder(client::InteractiveBrokersObservable, order::Algorithm
     iborder.algoStrategy = order.algorithm
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
-    InteractiveBrokers.placeOrder(client, iborder.orderId, order.instrument, iborder)
+    InteractiveBrokers.placeOrder(client, iborder.orderId, instr, iborder)
 end
 
 Rocket.on_error!(actor::InteractiveBrokersExchange, error) = error!(actor.next, error)
@@ -64,7 +67,7 @@ Rocket.on_complete!(actor::InteractiveBrokersExchange) = complete!(actor.next)
 function Rocket.on_next!(exchange::InteractiveBrokersExchange, order::O) where {O<:AbstractOrder}
     instr = order.instrument
     if !haskey(exchange.orderbook.pendingOrders, instr)
-        exchange.orderbook.pendingOrders[instr] = Vector{AbstractOrder}()
+        insert!(exchange.orderbook.pendingOrders, instr, Vector{AbstractOrder}())
     end
     Lucky.placeorder(exchange.client, order)
 end

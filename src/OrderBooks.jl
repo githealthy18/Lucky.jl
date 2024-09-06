@@ -7,10 +7,10 @@ abstract type AbstractOrderBook end
 @inline orderbook(s::Symbol) = orderbook(Val(s))
 
 struct InMemoryOrderBook <: AbstractOrderBook
-    pendingOrders::Dict{Instrument,Vector{AbstractOrder}}
+    pendingOrders::Dictionary{Instrument,Vector{AbstractOrder}}
 end
 
-orderbook(::Val{:inmemory}) = InMemoryOrderBook(Dict{Instrument,Vector{AbstractOrder}}())
+orderbook(::Val{:inmemory}) = InMemoryOrderBook(Dictionary{Instrument,Vector{AbstractOrder}}())
 
 @inline match(ord::MarketOrder, qte::PriceQuote) = fillPriceQuote(ord, qte)
 function match(ord::LimitOrder, qte::PriceQuote)

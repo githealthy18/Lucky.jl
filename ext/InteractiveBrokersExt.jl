@@ -111,7 +111,7 @@ function nextRequestId(client::InteractiveBrokersObservable)
     return client.requestId
 end
 
-function nextValidId(ib::InteractiveBrokersObservable)
+function Lucky.nextValidId(ib::InteractiveBrokersObservable)
     isnothing(ib.connection) && return nothing
 
     InteractiveBrokers.reqIds(ib)

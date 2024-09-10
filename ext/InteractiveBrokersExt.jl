@@ -114,7 +114,9 @@ end
 function Lucky.nextValidId(ib::InteractiveBrokersObservable)
     isnothing(ib.connection) && return nothing
 
-    InteractiveBrokers.reqIds(ib)
+    ismissing(ib.nextValidId) && InteractiveBrokers.reqIds(ib)
+
+    ib.nextValidId += 1
     return ib.nextValidId
 end
 

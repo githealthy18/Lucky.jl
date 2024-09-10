@@ -61,8 +61,8 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::Algorithm
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
 end
 
-Rocket.on_error!(actor::InteractiveBrokersExchange, error) = error!(actor.next, error)
-Rocket.on_complete!(actor::InteractiveBrokersExchange) = complete!(actor.next)
+Rocket.on_error!(actor::InteractiveBrokersExchange, error) = @warn error
+Rocket.on_complete!(actor::InteractiveBrokersExchange) = @info "Orders Placed"
 
 function Rocket.on_next!(exchange::InteractiveBrokersExchange, order::O) where {O<:AbstractOrder}
     instr = order.instrument

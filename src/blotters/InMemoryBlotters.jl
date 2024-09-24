@@ -14,7 +14,7 @@ function Rocket.on_next!(actor::InMemoryBlotter, fill::Fill)
         actor.fills[key] = Vector{Fill}()
     end
     push!(actor.fills[key], fill)
-    aggSize = sum(f -> f.size, actor.fills[key])
+    aggSize = sum(f -> Int(f.order.action)*f.size, actor.fills[key])
     position = Position(fill.order.instrument, aggSize, fill.timestamp)
     next!(actor.next, position)
 end

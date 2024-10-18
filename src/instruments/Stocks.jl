@@ -11,3 +11,6 @@ Stock(symbol::Symbol, currency::Union{AbstractString, Symbol}) = Stock(symbol, C
 
 symbol(stock::T) where {S,C,T<:Stock{S,C}} = String(stock.symbol)
 currency(stock::Stock{S,C}) where {S,C} = String(stock.currency)
+
+import Base: Symbol
+Symbol(stock::T) where {S,C,T<:Stock{S,C}} = Symbol(stock.symbol)

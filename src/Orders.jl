@@ -12,11 +12,12 @@ OrderType(::O) where {O<:AbstractOrder} = O
 
 Standard Data Type carrying inforamtion for a market order on an instrument for a given size.
 """
-@auto_hash_equals fields=(id,instrument,action,timestamp) mutable struct MarketOrder{I,S,A,D} <: AbstractMarketOrder
+@auto_hash_equals fields=(id,instrument,action,side,timestamp) mutable struct MarketOrder{I,S,V,D} <: AbstractMarketOrder
     id::Union{Missing, Int}
     instrument::I
-    action::A
-    size::S
+    action::ACTION
+    side::S
+    size::V
     timestamp::D
 end
 
@@ -25,11 +26,12 @@ end
 
 Standard Data Type carrying inforamtion for a limit order on an instrument for a given size.
 """
-@auto_hash_equals fields=(id,instrument,action,timestamp) mutable struct LimitOrder{I,S,A,D} <: AbstractOrder
+@auto_hash_equals fields=(id,instrument,action,side,timestamp) mutable struct LimitOrder{I,S,V,D} <: AbstractOrder
     id::Union{Missing, Int}
     instrument::I
-    action::A
-    size::S
+    action::ACTION
+    side::S
+    size::V
     limit::Float64
     timestamp::D
 end
@@ -39,11 +41,12 @@ end
 
 Standard Data Type carrying inforamtion for an algorithmic order on an instrument for a given size.
 """
-@auto_hash_equals fields=(id,instrument,action,timestamp) mutable struct AlgorithmicMarketOrder{I,S,A,D} <: AbstractOrder
+@auto_hash_equals fields=(id,instrument,action,side,timestamp) mutable struct AlgorithmicMarketOrder{I,S,V,D} <: AbstractOrder
     id::Union{Missing, Int}
     instrument::I
-    action::A
-    size::S
+    action::ACTION
+    side::S
+    size::V
     algorithm::String
     timestamp::D
 end
@@ -52,11 +55,12 @@ end
     AlgorithmicLimitOrder
 Standard Data Type carrying inforamtion for an algorithmic limit order on an instrument for a given size.
 """
-@auto_hash_equals fields=(id,instrument,action,timestamp) mutable struct AlgorithmicLimitOrder{I,S,A,D} <: AbstractOrder
+@auto_hash_equals fields=(id,instrument,action,side,timestamp) mutable struct AlgorithmicLimitOrder{I,S,V,D} <: AbstractOrder
     id::Union{Missing, Int}
     instrument::I
-    action::A
-    size::S
+    action::ACTION
+    side::S
+    size::V
     limit::Float64
     algorithm::String
     timestamp::D
@@ -67,7 +71,7 @@ currency(::LimitOrder{I,S}) where {I<:Instrument,S<:Number} = currency(I)
 currency(::Type{<:MarketOrder{I,S}}) where {I<:Instrument,S<:Number} = currency(I)
 currency(::Type{<:LimitOrder{I,S}}) where {I<:Instrument,S<:Number} = currency(I)
 
-Order(instrument::Instrument, action::A, size::S, stamp::D) where {A,S,D} = MarketOrder(missing, instrument, action, size, stamp)
-Order(instrument::Instrument, action::A, size::S, limit::Float64, stamp::D) where {A,S,D} = LimitOrder(missing, instrument, action, size, limit, stamp)
-Order(instrument::Instrument, action::A, size::S, algorithm::String, stamp::D) where {A,S,D} = AlgorithmicMarketOrder(missing, instrument, action, size, algorithm, stamp)
-Order(instrument::Instrument, action::A, size::S, limit::Float64, algorithm::String, stamp::D) where {A,S,D} = AlgorithmicLimitOrder(missing, instrument, action, size, limit, algorithm, stamp)
+Order(instrument::Instrument, action::A, side::S, size::V, stamp::D) where {A,S,V,D} = MarketOrder(missing, instrument, action, side, size, stamp)
+Order(instrument::Instrument, action::A, side::S, size::V, limit::Float64, stamp::D) where {A,S,V,D} = LimitOrder(missing, instrument, action, side, size, limit, stamp)
+Order(instrument::Instrument, action::A, side::S, size::V, algorithm::String, stamp::D) where {A,S,V,D} = AlgorithmicMarketOrder(missing, instrument, action, side, size, algorithm, stamp)
+Order(instrument::Instrument, action::A, side::S, size::V, limit::Float64, algorithm::String, stamp::D) where {A,S,V,D} = AlgorithmicLimitOrder(missing, instrument, action, side, size, limit, algorithm, stamp)

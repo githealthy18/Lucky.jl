@@ -2,18 +2,17 @@ struct InteractiveBrokersExchange <: AbstractExchange
     client::InteractiveBrokersObservable
     orderbook::Lucky.InMemoryOrderBook
     fills::AbstractSubject
-    positions::AbstractSubject
 end
 
-@inline InteractiveBrokersExchange(client::InteractiveBrokersObservable, fills::Subject, positions::Subject) = InteractiveBrokersExchange(client, orderbook(:inmemory), fills, positions)
+@inline InteractiveBrokersExchange(client::InteractiveBrokersObservable, fills::Subject) = InteractiveBrokersExchange(client, orderbook(:inmemory), fills)
 
-Lucky.exchange(::Val{:ib}, client::InteractiveBrokersObservable, fills::Subject, positions::Subject) = InteractiveBrokersExchange(client, fills, positions)
+Lucky.exchange(::Val{:ib}, client::InteractiveBrokersObservable, fills::Subject) = InteractiveBrokersExchange(client, fills)
 
 function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::MarketOrder)
     instr = order.instrument
     iborder = InteractiveBrokers.Order()
     iborder.orderId = Lucky.nextValidId(exchange.client)
-    iborder.action = order.action == BUY_SIDE ? "BUY" : "SELL"
+    iborder.action = order.side == BUY_SIDE ? "BUY" : "SELL"
     iborder.totalQuantity = order.size
     iborder.orderType = "MKT"
     order.id = iborder.orderId
@@ -25,7 +24,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::LimitOrde
     instr = order.instrument
     iborder = InteractiveBrokers.Order()
     iborder.orderId = Lucky.nextValidId(exchange.client)
-    iborder.action = order.action == BUY_SIDE ? "BUY" : "SELL"
+    iborder.action = order.side == BUY_SIDE ? "BUY" : "SELL"
     iborder.totalQuantity = order.size
     iborder.orderType = "LMT"
     iborder.lmtPrice = order.limit
@@ -38,7 +37,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::Algorithm
     instr = order.instrument
     iborder = InteractiveBrokers.Order()
     iborder.orderId = Lucky.nextValidId(exchange.client)
-    iborder.action = order.action == BUY_SIDE ? "BUY" : "SELL"
+    iborder.action = order.side == BUY_SIDE ? "BUY" : "SELL"
     iborder.totalQuantity = order.size
     iborder.orderType = "MKT"
     iborder.algoStrategy = order.algorithm
@@ -51,7 +50,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::Algorithm
     instr = order.instrument
     iborder = InteractiveBrokers.Order()
     iborder.orderId = Lucky.nextValidId(exchange.client)
-    iborder.action = order.action == BUY_SIDE ? "BUY" : "SELL"
+    iborder.action = order.side == BUY_SIDE ? "BUY" : "SELL"
     iborder.totalQuantity = order.size
     iborder.orderType = "LMT"
     iborder.lmtPrice = order.limit

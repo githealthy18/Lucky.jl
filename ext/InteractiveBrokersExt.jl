@@ -46,7 +46,7 @@ mutable struct InteractiveBrokersObservable <: Subscribable{Nothing}
     connection::Union{Nothing,InteractiveBrokers.Connection}
     pendingCmds::Vector{Function}
 
-    function InteractiveBrokersObservable(positions=nothing, fills=nothing, host=nothing, port::Union{Nothing,Int}=nothing, clientId::Union{Nothing,Int}=nothing, connectOptions::Union{Nothing,String}=nothing, optionalCapabilities::Union{Nothing,String}=nothing)
+    function InteractiveBrokersObservable(positions=nothing, host=nothing, port::Union{Nothing,Int}=nothing, clientId::Union{Nothing,Int}=nothing, connectOptions::Union{Nothing,String}=nothing, optionalCapabilities::Union{Nothing,String}=nothing)
         ib = new(
             CallbackMapping(),
             Dictionary{Pair{Union{Nothing,Instrument}, Symbol},Union{Rocket.Subscribable,Rocket.RecentSubjectInstance,TickQuoteFeed}}(),
@@ -102,8 +102,8 @@ function Rocket.on_unsubscribe!(subscription::InteractiveBrokersObservableSubscr
     InteractiveBrokers.disconnect(subscription.connection)
 end
 
-function Lucky.service(::Val{:interactivebrokers}; positions=nothing, fills=nothing, host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
-    return InteractiveBrokersObservable(positions, fills, host, port, clientId, connectOptions, optionalCapabilities)
+function Lucky.service(::Val{:interactivebrokers}; positions=nothing, host=nothing, port::Int=7497, clientId::Int=1, connectOptions::String="", optionalCapabilities::String="")
+    return InteractiveBrokersObservable(positions, host, port, clientId, connectOptions, optionalCapabilities)
 end
 
 function nextRequestId(client::InteractiveBrokersObservable)

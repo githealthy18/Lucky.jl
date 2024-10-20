@@ -4,7 +4,7 @@ struct InMemoryBlotter <: AbstractBlotter
     fills::Dictionary{Instrument, Vector{Fill}} # TODO Optimize
     next::AbstractSubject
 end
-@inline InMemoryBlotter(subject::Subject) = InMemoryBlotter(Dict{Instrument, Vector{Fill}}(), subject)
+@inline InMemoryBlotter(subject::Subject) = InMemoryBlotter(Dictionary{Instrument, Vector{Fill}}(), subject)
 
 blotter(::Val{:inmemory}, subject::Subject) = InMemoryBlotter(subject)
 

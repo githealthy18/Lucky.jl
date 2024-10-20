@@ -72,3 +72,8 @@ function InteractiveBrokers.placeOrder(ib::InteractiveBrokersObservable, orderId
     f = (connection) -> InteractiveBrokers.placeOrder(connection, orderId, InteractiveBrokers.Contract(instr), order)
     delayedReq(f, ib)
 end
+
+function InteractiveBrokers.reqGlobalCancel(ib::InteractiveBrokersObservable)
+    f = (connection) -> InteractiveBrokers.reqGlobalCancel(connection)
+    delayedReq(f, ib)
+end

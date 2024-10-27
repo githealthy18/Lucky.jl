@@ -31,9 +31,12 @@ Currency(s::AbstractString) = Currency(Symbol(s))
 
 Base.convert(::String, ::C) where {S,C<:Currency{S}} = String(S)
 
+CurrencyType(C::Type{<:Currency}) = C
+CurrencyType(s::Symbol) = CurrencyType(Currency{s})
 CurrencyType(s::AbstractString) = CurrencyType(Symbol(s))
 
 symbol(::Currency{S}) where {S} = S
+symbol(::Type{Currency{S}}) where {S} = S 
 currency(::Currency{S}) where {S} = String(S)
 
 Base.show(io::IO, ::Type{Currency{S}}) where {S} = print(io, "$(S)")

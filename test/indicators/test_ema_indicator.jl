@@ -11,14 +11,14 @@
         @test IndicatorType(ind) == EMAIndicator{3,Union{Missing,Float64},Float64}
 
         instr = Cash(:USD)
-        quoteType = QuoteType(instr, Float64, Date)
+        quoteType = QuoteType(instr, Ask, Float64, Float64, Date)
         indicType = IndicatorType(EMAIndicator, 5, quoteType)
         @test indicType == EMAIndicator{5,Union{Missing,quoteType},quoteType}
 
         indic = indicType(missing)
         @test indic isa EMAIndicator{5,Union{Missing,quoteType},quoteType}
         @test indic.value === missing
-        @test Lucky.Indicators.period(indic) == 5
+        @test period(indic) == 5
     end
     @testset "Operators" begin
         ind = EMAIndicator(3, 57.4)

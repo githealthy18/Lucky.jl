@@ -1,8 +1,8 @@
 @testset "In Memory Blotters" begin
     fills = Subject(Fill)
     instr = Cash(:USD)
-    order = MarketOrder(instr, 1.0)
-    fill = Fill("id", order, 12.45, 1.0, 0.0, Dates.now(Dates.UTC))
+    order = MarketOrder(instr, OPEN, BUY_SIDE, 1.0, Dates.now(Dates.UTC))
+    fill = Fill(9999, order, 12.45, 1.0, 0.0, Dates.now(Dates.UTC))
 
     lastPosition = nothing
     function testNextPosition(position::Position)

@@ -7,7 +7,7 @@
         @test IndicatorType(ind) === RollingIndicator{Val(3), Vector{Int}, Int}
 
         instr = Cash(:USD)
-        quoteType = QuoteType(instr, Float64, Date)
+        quoteType = QuoteType(instr, Bid, Float64, Float64, Date)
         indicType = IndicatorType(RollingIndicator, 5, quoteType)
         @test indicType == RollingIndicator{Val(5),Vector{Union{Missing,quoteType}},quoteType}
 

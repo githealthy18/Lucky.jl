@@ -4,6 +4,7 @@ function Random.rand(rng::Random.AbstractRNG, ::Type{Ohlc{DateTime}})
         rand(rng, 110:0.1:150),
         rand(rng, 80:0.1:100),
         rand(rng, 80:0.1:150),
+        rand(rng, 1500:1:2500),
         rand(rng, DateTime(2000, 1, 1):Second(1):DateTime(2010, 12, 31))
     )
 end
@@ -14,6 +15,7 @@ function Random.rand(rng::Random.AbstractRNG, ::Type{Ohlc{Date}})
         rand(rng, 110:0.1:150),
         rand(rng, 80:0.1:100),
         rand(rng, 80:0.1:150),
+        rand(rng, 1500:1:2500),
         rand(rng, Date(2000, 1, 1):Day(1):Date(2010, 12, 31))
     )
 end
@@ -22,12 +24,14 @@ function Random.rand(rng::AbstractRNG, previous::Ohlc{T}, period::Dates.Period) 
     open = previous.close + rand(rng, -2.00:0.01:2.00)
     high = open + rand(rng, 0.00:0.01:2.00)
     low  = open + rand(rng, -2.00:0.01:0.00)
+    volume = previous.volume + rand(rng, -500:1:500)
     maxrng = high - low
     return Ohlc{T}(
         open,
         high,
         low,
         open + rand(rng, -maxrng:0.01:maxrng), # close
+        volume,
         previous.timestamp + period
     )
 end

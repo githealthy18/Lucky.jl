@@ -1,5 +1,5 @@
 @testset "DydxV3Ext" begin
-    using Lucky.Operators
+    using Lucky
 
     using DydxV3
     using Rocket

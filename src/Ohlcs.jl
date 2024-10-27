@@ -1,5 +1,5 @@
 export Ohlc
-export gap, ohlcpart
+export gap, ohlcpart, OHLC_PART, top, bottom, body
 
 """
     Ohlc(open::Float64, high::Float64, low::Float64, close::Float64, timestamp::T) where {T}
@@ -12,6 +12,7 @@ struct Ohlc{T<:Dates.AbstractTime}
     high::Float64
     low::Float64
     close::Float64
+    volume::Float64
     timestamp::T
 end
 
@@ -39,9 +40,9 @@ end
 # Operators
 
 import Base: +, -, *, /, convert, isless
-+(x::I, y::I) where {I<:Ohlc} = I(x.open, max(x.high, y.high), min(x.low, y.low), y.close, max(x.timestamp, y.timestamp))
-*(x::I, y::N) where {I<:Ohlc,N<:Number} = I(x.open * y, x.high * y, x.low * y, x.close * y, x.timestamp)
-/(x::I, y::N) where {I<:Ohlc,N<:Number} = I(x.open / y, x.high / y, x.low / y, x.close / y, x.timestamp)
++(x::I, y::I) where {I<:Ohlc} = I(x.open, max(x.high, y.high), min(x.low, y.low), y.close, y.volume, max(x.timestamp, y.timestamp))
+*(x::I, y::N) where {I<:Ohlc,N<:Number} = I(x.open * y, x.high * y, x.low * y, x.close * y, x.volume, x.timestamp)
+/(x::I, y::N) where {I<:Ohlc,N<:Number} = I(x.open / y, x.high / y, x.low / y, x.close / y, x.volume, x.timestamp)
 
 # Convert on close
 convert(T::Type{<:Number}, x::Ohlc) = convert(T, x.close)

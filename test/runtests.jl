@@ -5,6 +5,8 @@ using Rocket
 
 using Dates
 using Random
+using Dictionaries
+using Statistics
 
 using InteractiveBrokers
 
@@ -16,12 +18,12 @@ using InteractiveBrokers
 include("test_units.jl")
 include("test_utils.jl")
 include("test_currencies.jl")
-# include("test_instruments.jl")
-# include("test_quotes.jl")
-# include("test_positions.jl")
-# include("test_orders.jl")
-# include("test_fills.jl")
-# include("test_indicators.jl")
+include("test_instruments.jl")
+include("test_quotes.jl")
+include("test_positions.jl")
+include("test_orders.jl")
+include("test_fills.jl")
+include("test_indicators.jl")
 
 include("test_ohlcs.jl")
 include("samplers/test_ohlc_samplers.jl")

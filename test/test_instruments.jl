@@ -9,3 +9,6 @@ end
 
 include("instruments/test_cash.jl")
 include("instruments/test_stocks.jl")
+include("instruments/test_bonds.jl")
+include("instruments/test_futures.jl")
+include("instruments/test_options.jl")

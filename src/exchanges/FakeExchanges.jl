@@ -11,9 +11,9 @@ Rocket.on_error!(actor::FakeExchange, error) = error!(actor.next, error)
 Rocket.on_complete!(actor::FakeExchange) = complete!(actor.next)
 
 function Rocket.on_next!(exchange::FakeExchange, order::O) where {O<:AbstractOrder}
-    instr = typeof(order.instrument)
+    instr = order.instrument
     if !haskey(exchange.orderbook.pendingOrders, instr)
-        exchange.orderbook.pendingOrders[instr] = Vector{AbstractOrder}()
+        Dictionaries.set!(exchange.orderbook.pendingOrders, instr, Vector{AbstractOrder}())
     end
     push!(exchange.orderbook.pendingOrders[instr], order)
 end
@@ -23,7 +23,7 @@ end
 
 # === Quotes handling
 function Rocket.on_next!(exchange::FakeExchange, qte::AbstractQuote)
-    instr = typeof(qte.instrument)
+    instr = qte.instrument
     haskey(exchange.orderbook.pendingOrders, instr) || return
 
     todel = nothing

@@ -6,6 +6,8 @@ export Bid, Ask, Mark, Last, Open, High, Low, Close, Volume, BidSize, AskSize, L
 
 abstract type AbstractQuote end
 
+function quotes end
+
 QuoteType(I::Type{<:Instrument}, params...) = error("You probably forgot to implement QuoteType(::$(I), $(params...))")
 QuoteType(Q::Type{<:AbstractQuote}) = Q
 TimestampType(Q::Type{<:AbstractQuote}) = error("You probably forgot to implement TimestampType(::$(Q))")
@@ -36,8 +38,9 @@ struct PriceQuote{I,T,Q,S,D} <: AbstractQuote
     timestamp::D
 end
 
-struct OhlcQuote{I,Q} <: AbstractQuote
+struct OhlcQuote{I,T,Q} <: AbstractQuote
     instrument::I
+    tick::T
     ohlc::Q
 end
 
@@ -49,14 +52,14 @@ struct VolumeQuote{I,T,Q,D} <: AbstractQuote
 end
 
 # Interfaces
-Quote(instrument::Instrument, tick::T, price::Q, size::S, stamp::D) where {T<:AbstractTick,Q<:Union{Nothing,Number},S<:Union{Nothing,Number},D<:Dates.AbstractTime} = PriceQuote(instrument, tick, price, size, stamp)
-Quote(instrument::Instrument, ohlc::Q) where {Q<:Ohlc} = OhlcQuote(instrument, ohlc)
+Quote(instrument::Instrument, tick::T, price::Q, size::S, stamp::D) where {T<:AbstractTick,Q<:Union{Nothing,Number},S<:Number,D<:Dates.AbstractTime} = PriceQuote(instrument, tick, price, size, stamp)
+Quote(instrument::Instrument, tick::T, ohlc::Q) where {T<:AbstractTick, Q<:Ohlc} = OhlcQuote(instrument, tick, ohlc)
 Quote(instrument::Instrument, tick::T, volume::Q, stamp::D) where {T<:AbstractTick,Q<:Number,D<:Dates.AbstractTime} = VolumeQuote(instrument, tick, volume, stamp)
 
-QuoteType(I::Type{<:Instrument}, Q::Type{<:Ohlc}) = OhlcQuote{I,Q}
+QuoteType(I::Type{<:Instrument}, T::Type{<:AbstractTick}, Q::Type{<:Ohlc}) = OhlcQuote{I,T,Q}
 QuoteType(I::Type{<:Instrument}, T::Type{<:AbstractTick}, S::Type{<:Number}, P::Type{<:Number}, D::Type{<:Dates.AbstractTime}=Dates.DateTime) = PriceQuote{I,T,P,S,D}
 QuoteType(I::Type{<:Instrument}, T::Type{<:AbstractTick}, V::Type{<:Number}, D::Type{<:Dates.AbstractTime}=Dates.DateTime) = VolumeQuote{I,T,V,D}
-QuoteType(i::Instrument, Q::Type{<:Ohlc}) = QuoteType(InstrumentType(i), Q)
+QuoteType(i::Instrument, T::Type{<:AbstractTick}, Q::Type{<:Ohlc}) = QuoteType(InstrumentType(i), T, Q)
 QuoteType(i::Instrument, T::Type{<:AbstractTick}, S::Type{<:Number}, P::Type{<:Number}, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), T, P, S, D)
 QuoteType(i::Instrument, T::Type{<:AbstractTick}, V::Type{<:Number}, D::Type{<:Dates.AbstractTime}=DateTime) = QuoteType(InstrumentType(i), T, V, D)
 
@@ -68,9 +71,11 @@ TickType(::Type{<:VolumeQuote{I,T,V,D}}) where {I,T,V,D} = T
 currency(q::AbstractQuote) = currency(q.instrument)
 timestamp(q::OhlcQuote) = q.ohlc.timestamp
 timestamp(q::PriceQuote) = q.timestamp
+timestamp(q::VolumeQuote) = q.timestamp
 
-TimestampType(::Type{<:OhlcQuote{I,O}}) where {I,O} = TimestampType(O)
+TimestampType(::Type{<:OhlcQuote{I,T,O}}) where {I,T,O} = TimestampType(O)
 TimestampType(::Type{<:PriceQuote{I,T,P,S,D}}) where {I,T,P,S,D} = D
+TimestampType(::Type{<:VolumeQuote{I,T,V,D}}) where {I,T,V,D} = D
 
 import Base: +, -, *, /, convert, isless
 # https://github.com/JuliaLang/julia/blob/0a8916446b782eae1a09681b2b47c1be26fab7f3/base/missing.jl#L119
@@ -88,10 +93,10 @@ end
 convert(T::Type{<:Number}, x::PriceQuote) = convert(T, x.price)
 isless(x::I, y::I) where {I<:PriceQuote} = isless(x.price, y.price)
 
-+(x::I, y::I) where {I<:OhlcQuote} = I(x.instrument, x.ohlc + y.ohlc)
--(x::I, y::I) where {I<:OhlcQuote} = I(x.instrument, x.ohlc - y.ohlc)
-*(x::I, y::N) where {I<:OhlcQuote,N<:Number} = I(x.instrument, x.ohlc * y)
-/(x::I, y::N) where {I<:OhlcQuote,N<:Number} = I(x.instrument, x.ohlc / y)
++(x::I, y::I) where {I<:OhlcQuote} = I(x.instrument, x.tick, x.ohlc + y.ohlc)
+-(x::I, y::I) where {I<:OhlcQuote} = I(x.instrument, x.tick, x.ohlc - y.ohlc)
+*(x::I, y::N) where {I<:OhlcQuote,N<:Number} = I(x.instrument, x.tick, x.ohlc * y)
+/(x::I, y::N) where {I<:OhlcQuote,N<:Number} = I(x.instrument, x.tick, x.ohlc / y)
 convert(T::Type{<:Number}, x::OhlcQuote) = convert(T, x.ohlc)
 isless(x::I, y::I) where {I<:OhlcQuote} = isless(x.ohlc, y.ohlc)
 

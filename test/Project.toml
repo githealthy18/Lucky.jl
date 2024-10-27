@@ -1,0 +1,10 @@
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Dictionaries = "85a47980-9c8c-11e8-2b9f-f7ca1fa99fb4"
+DydxV3 = "81fc79e4-7aed-40c1-9951-444e465e3245"
+InteractiveBrokers = "f310f2d2-a263-11e8-3998-47bd686f18f7"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Rocket = "df971d30-c9d6-4b37-b8ff-e965b2cb3a40"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"

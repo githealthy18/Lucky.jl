@@ -20,12 +20,12 @@ function match(ord::LimitOrder, qte::PriceQuote)
 end
 
 # OHLC handling
-@inline match(ord::MarketOrder, qte::OhlcQuote) = match(ord, Quote(qte.instrument, qte.tick, qte.ohlc.open, timestamp(qte)))
+@inline match(ord::MarketOrder, qte::OhlcQuote) = match(ord, Quote(qte.instrument, qte.tick, qte.ohlc.open, qte.ohlc.volume, timestamp(qte)))
 function match(ord::LimitOrder, qte::OhlcQuote)
-    ord.limit >= qte.ohlc.low && ord.limit <= qte.ohlc.high && return Fill(fillUUID(), ord, ord.limit, ord.size, fee(ord, ord.limit), timestamp(qte))
+    ord.limit >= qte.ohlc.low && ord.limit <= qte.ohlc.high && return Fill(rand(Int, 1)[1], ord, ord.limit, ord.size, fee(ord, ord.limit), timestamp(qte))
     return nothing
 end
 
-@inline fillPriceQuote(ord, qte) = Fill(fillUUID(), ord, qte.price, ord.size, fee(ord, qte.price), timestamp(qte))
+@inline fillPriceQuote(ord, qte) = Fill(rand(Int, 1)[1], ord, qte.price, ord.size, fee(ord, qte.price), timestamp(qte))
 
 fillUUID() = string(uuid5(uuid4(), "FakeExchange"))

@@ -2,7 +2,7 @@ export Option
 export setImpliedVolatility!, setDelta!, setGamma!, setVega!, setTheta!, setRho!
 using AutoHashEquals
 
-mutable struct Greeks
+@auto_hash_equals fields=(impliedVolatility, delta, gamma, vega, theta, rho) mutable struct Greeks
     impliedVolatility::Float64
     delta::Float64
     gamma::Float64

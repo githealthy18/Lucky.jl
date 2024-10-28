@@ -437,6 +437,11 @@ secType(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to im
 secType(::T) where {T<:Lucky.Cash} = "CASH"
 secType(::T) where {T<:Lucky.Stock} = "STK"
 secType(::T) where {T<:Lucky.Option} = "OPT"
+secType(::T) where {T<:Lucky.Future} = "FUT"
+secType(::T) where {T<:Lucky.Bond} = "BOND"
+
+symbol(::T) where {S,C,T<:Lucky.Bond{S,C}} = String(S)
+symbol(::T) where {S,C,T<:Lucky.Future{S,C}} = String(S)
 
 conId(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement conId(::$(T))")
 conId(::T) where {C,T<:Lucky.Cash{C}} = nothing
@@ -445,6 +450,8 @@ exchange(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to i
 exchange(::T) where {C,T<:Lucky.Cash{C}} = "IDEALPRO" # TODO: Support Virtual Forex
 exchange(::T) where {S,C,T<:Lucky.Stock{S,C}} = "SMART"
 exchange(::T) where {S,R,K,E,T<:Lucky.Option{S,R,K,E}} = "SMART"
+exchange(::T) where {S,C,T<:Lucky.Bond{S,C}} = ""
+exchange(::T) where {S,C,T<:Lucky.Future{S,C}} = ""
 
 right(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement right(::$(T))")
 right(option::Option) = String(option.right)
@@ -478,14 +485,38 @@ function InteractiveBrokers.Contract(i::Lucky.Option)
     return contract
 end
 
-function instrument(i::InteractiveBrokers.Contract)
-    if i.secType == "CASH"
-        return Lucky.Cash(Lucky.CurrencyType(Symbol(i.currency)))
-    elseif i.secType == "STK"
-        return Lucky.Stock(i.symbol, Lucky.Currency(Symbol(i.currency)))
-    elseif i.secType == "OPT"
-        return Lucky.Option(Lucky.Stock(i.symbol, Lucky.Currency(Symbol(i.currency))), convert(OPTION_RIGHT, i.right), i.strike, Date(i.lastTradeDateOrContractMonth, "yyyymmdd"))
+const expDateFormat = dateformat"yyyymmdd"
+function Lucky.Instrument(contract::InteractiveBrokers.Contract)
+    @debug contract
+    if contract.secType == "CASH"
+        return Lucky.Cash(Lucky.CurrencyType(Symbol(contract.currency)))
     end
+
+    if contract.secType == "STK"
+        return Lucky.Stock(contract.symbol, Lucky.Currency(Symbol(contract.currency)))
+    end
+
+    if contract.secType == "OPT"
+        return Lucky.Option(Lucky.Stock(contract.symbol, Lucky.Currency(Symbol(contract.currency))), convert(OPTION_RIGHT, contract.right), contract.strike, Date(contract.lastTradeDateOrContractMonth, "yyyymmdd"))
+    end
+
+    if contract.secType == "FUT"
+        return Future(
+            Symbol(contract.symbol), # Symbol
+            CurrencyType(contract.currency), # Currency
+            Date(contract.lastTradeDateOrContractMonth, expDateFormat) # Expiration
+        )
+    end
+
+    if contract.secType in ["BILL", "BOND"] # TODO Differentiate in Lucky probably
+        return Bond(
+            Symbol(contract.symbol), # Symbol
+            CurrencyType(contract.currency), # Currency
+            Date(contract.lastTradeDateOrContractMonth, expDateFormat) # Maturity
+        )
+    end
+    @error("Unimplemented Instrument constructor for InteractiveBrokers.Contract of secType $(contract.secType)")
 end
+
 
 end

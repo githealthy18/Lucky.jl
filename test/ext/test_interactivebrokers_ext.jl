@@ -57,4 +57,36 @@ using InteractiveBrokers
             @test optionI.expiry == Date("2021-09-17")
         end
     end
+    @testset "InteractiveBrokersExchange" begin
+        client = Lucky.service(:interactivebrokers)
+        fills = Subject(Fill)
+        ibkr_fills= Lucky.fills(client)
+        ex = exchange(Val(:ib), client, fills)
+        subscribe!(ibkr_fills, ex)
+
+        client.nextValidId = 1
+
+        stock = Stock(:AAPL, :USD)
+        orderM = MarketOrder(stock, OPEN, BUY_SIDE, 100, now())
+
+        insert!(ex.orderbook.pendingOrders, stock, [orderM])
+
+        # Lucky.placeorder(ex, orderM)
+        # @test ex.orderbook.pendingOrders[stock] == [orderM]
+
+        # orderL = LimitOrder(stock, CLOSE, SELL_SIDE, 100, 150.0, now())
+
+        # Lucky.placeorder(ex, orderL)
+        # @test ex.orderbook.pendingOrders[stock] == [orderM, orderL]
+
+        # orderAM = AlgorithmicMarketOrder(stock, OPEN, BUY_SIDE, 100, "TWAP", now())
+
+        # Lucky.placeorder(ex, orderAM)
+        # @test ex.orderbook.pendingOrders[stock] == [orderM, orderL, orderAM]
+
+        # orderAL = AlgorithmicLimitOrder(stock, CLOSE, SELL_SIDE, 100, 150.0, "TWAP", now())
+
+        # Lucky.placeorder(ex, orderAL)
+        # @test ex.orderbook.pendingOrders[stock] == [orderM, orderL, orderAM, orderAL]
+    end
 end

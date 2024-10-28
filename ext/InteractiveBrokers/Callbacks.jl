@@ -199,7 +199,7 @@ function execDetails(ib::InteractiveBrokersObservable, reqId::Int, contract::Int
     ibkrExec = IbKrExec(
         execution.orderId,
         execution.execId,
-        instrument(contract),
+        Instrument(contract),
         execution.shares,
         execution.avgPrice,
         Dates.now()

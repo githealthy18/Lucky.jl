@@ -171,7 +171,7 @@ end
 function Lucky.fills(client::InteractiveBrokersObservable)
     executionSubject = RecentSubject(IbKrExec, Subject(IbKrExec))
     commissionSubject = RecentSubject(IbKrCommission, Subject(IbKrCommission))
-    merge = (tup::Tuple{IbKrFill, IbKrCommission}) -> IbKrFill(tup[1].id, tup[1].instrument, tup[1].avgPrice, tup[1].size, tup[2].commission, tup[1].timestamp)
+    merge = (tup::Tuple{IbKrExec, IbKrCommission}) -> IbKrFill(tup[1].id, tup[1].instrument, tup[1].avgPrice, tup[1].size, tup[2].commission, tup[1].timestamp)
     source = zipped(executionSubject, commissionSubject) |> filter((s)->s[1].execId==s[2].execId) |> Rocket.map(IbKrFill, merge)
 
     Dictionaries.set!(client.requestMappings, CallbackKey(0, :execDetails, nothing), CallbackValue(execDetails, executionSubject, nothing))

@@ -76,7 +76,7 @@ function Rocket.on_next!(exchange::InteractiveBrokersExchange, orders::Vector{O}
 end
 
 function Rocket.on_next!(exchange::InteractiveBrokersExchange, fill::F) where {F<:IbKrFill}
-    instr = typeof(fill.order.instrument)
+    instr = fill.order.instrument
     todel = nothing
     for (idx, order) in enumerate(exchange.orderbook.pendingOrders[instr])
         if isnothing(todel)

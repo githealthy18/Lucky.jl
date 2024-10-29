@@ -8,5 +8,3 @@ struct Cash{C} <: Instrument end
 
 currency(::Cash{C}) where {C<:Currency} = C
 currency(::Type{Cash{C}}) where {C<:Currency} = C
-
-symbol(::T) where {C,T<:Cash{C}} = String(C)

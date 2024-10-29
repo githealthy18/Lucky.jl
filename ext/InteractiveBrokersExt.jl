@@ -440,8 +440,11 @@ secType(::T) where {T<:Lucky.Option} = "OPT"
 secType(::T) where {T<:Lucky.Future} = "FUT"
 secType(::T) where {T<:Lucky.Bond} = "BOND"
 
+symbol(stock::T) where {S,C,T<:Stock{S,C}} = String(stock.symbol)
+symbol(::T) where {C,T<:Cash{C}} = String(C)
 symbol(::T) where {S,C,T<:Lucky.Bond{S,C}} = String(S)
 symbol(::T) where {S,C,T<:Lucky.Future{S,C}} = String(S)
+symbol(option::Option) = symbol(option.underlying)
 
 conId(::T) where {T<:Lucky.Instrument} = Base.error("You probably forgot to implement conId(::$(T))")
 conId(::T) where {C,T<:Lucky.Cash{C}} = nothing

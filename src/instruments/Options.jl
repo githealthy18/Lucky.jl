@@ -37,3 +37,6 @@ setRho!(o::Option, rho::Float64) = setRho!(o.greeks, rho)
 Option(stock::Stock, right::OPTION_RIGHT, strike::Float64, expiry::Dates.Date) = Option(stock, right, strike, expiry, Greeks(NaN, NaN, NaN, NaN, NaN, NaN))
 
 currency(option::Option) = currency(option.underlying)
+
+import Base: Symbol
+Symbol(option::O) where {O<:Option} = Symbol(option.underlying)

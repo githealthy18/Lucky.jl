@@ -52,7 +52,7 @@ struct VolumeQuote{I,T,Q,D} <: AbstractQuote
 end
 
 # Interfaces
-Quote(instrument::Instrument, tick::T, price::Q, size::S, stamp::D) where {T<:AbstractTick,Q<:Union{Nothing,Number},S<:Number,D<:Dates.AbstractTime} = PriceQuote(instrument, tick, price, size, stamp)
+Quote(instrument::Instrument, tick::T, price::Q, size::S, stamp::D) where {T<:AbstractTick,Q<:Union{Nothing,Number},S<:Union{Nothing,Number},D<:Dates.AbstractTime} = PriceQuote(instrument, tick, price, size, stamp)
 Quote(instrument::Instrument, tick::T, ohlc::Q) where {T<:AbstractTick, Q<:Ohlc} = OhlcQuote(instrument, tick, ohlc)
 Quote(instrument::Instrument, tick::T, volume::Q, stamp::D) where {T<:AbstractTick,Q<:Number,D<:Dates.AbstractTime} = VolumeQuote(instrument, tick, volume, stamp)
 

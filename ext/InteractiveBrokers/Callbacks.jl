@@ -64,6 +64,8 @@ function error(ib::InteractiveBrokersObservable, err::InteractiveBrokers.IbkrErr
             @warn e
         end
     end
+
+    @info "Error: $(err)"
     #Rocket.error!(ib, err)
 end
 

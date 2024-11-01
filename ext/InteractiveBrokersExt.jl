@@ -145,7 +145,7 @@ struct IbKrExec{I<:Instrument} <: Lucky.AbstractFill
     timestamp::DateTime
 end
 
-struct IbKrCommission{I<:Instrument} <: Lucky.AbstractFill
+struct IbKrCommission <: Lucky.AbstractFill
     id::String
     commission::Float64
 end

@@ -108,7 +108,9 @@ function position(ib::InteractiveBrokersObservable, account::String, contract::I
         position,
         now() # TODO handle TimeZones
     )
-    next!(ib.positions, position) 
+    if position != 0
+        next!(ib.positions, position)
+    end 
 end
 
 function positionEnd(ib::InteractiveBrokersObservable)

@@ -41,6 +41,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::Algorithm
     iborder.totalQuantity = order.size
     iborder.orderType = "MKT"
     iborder.algoStrategy = order.algorithm
+    iborder.algoParams = (adaptivePriority="Urgent",)
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
@@ -55,6 +56,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::Algorithm
     iborder.orderType = "LMT"
     iborder.lmtPrice = round(order.limit)
     iborder.algoStrategy = order.algorithm
+    iborder.algoParams = (adaptivePriority="Urgent",)
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
@@ -76,7 +78,7 @@ function Rocket.on_next!(exchange::InteractiveBrokersExchange, orders::Vector{O}
 end
 
 function Rocket.on_next!(exchange::InteractiveBrokersExchange, fill::F) where {F<:IbKrFill}
-    instr = fill.order.instrument
+    instr = fill.instrument
     todel = nothing
     for (idx, order) in enumerate(exchange.orderbook.pendingOrders[instr])
         if isnothing(todel)

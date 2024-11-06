@@ -85,7 +85,7 @@ function Rocket.on_next!(exchange::InteractiveBrokersExchange, fill::F) where {F
             todel = Vector{Int}()
         end
         if order.id == fill.id
-            luckyFill = Fill(fill.id, order, fill.price, fill.size, fill.fee, fill.timestamp)
+            luckyFill = Fill(fill.id, order, fill.avgPrice, fill.size, fill.fee, fill.timestamp)
             next!(exchange.fills, luckyFill)
             resultingOrder = order - luckyFill
             if resultingOrder.size == 0

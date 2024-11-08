@@ -58,10 +58,11 @@ Standard Data Type carrying inforamtion for an algorithmic order on an instrumen
     side::S
     size::V
     algorithm::String
+    algorithmParams::NamedTuple
     timestamp::D
 end
 
-AlgorithmicMarketOrder(instrument::Instrument, action::A, side::S, size::V, algorithm::String, stamp::D) where {A,S,V,D} = AlgorithmicMarketOrder(missing, instrument, action, side, size, algorithm, stamp)
+AlgorithmicMarketOrder(instrument::Instrument, action::A, side::S, size::V, algorithm::String, algorithmParams::NamedTuple, stamp::D) where {A,S,V,D} = AlgorithmicMarketOrder(missing, instrument, action, side, size, algorithm, algorithmParams, stamp)
 
 """
     AlgorithmicLimitOrder
@@ -75,10 +76,11 @@ Standard Data Type carrying inforamtion for an algorithmic limit order on an ins
     size::V
     limit::Float64
     algorithm::String
+    algorithmParams::NamedTuple
     timestamp::D
 end
 
-AlgorithmicLimitOrder(instrument::Instrument, action::A, side::S, size::V, limit::Float64, algorithm::String, stamp::D) where {A,S,V,D} = AlgorithmicLimitOrder(missing, instrument, action, side, size, limit, algorithm, stamp)
+AlgorithmicLimitOrder(instrument::Instrument, action::A, side::S, size::V, limit::Float64, algorithm::String, algorithmParams::NamedTuple, stamp::D) where {A,S,V,D} = AlgorithmicLimitOrder(missing, instrument, action, side, size, limit, algorithm, algorithmParams, stamp)
 
 currency(m::MarketOrder{I,S,V,D}) where {I<:Instrument,S<:ORDER_SIDE,V<:Number,D<:Dates.AbstractTime} = currency(m.instrument)
 currency(::Type{MarketOrder{I,S,V,D}}) where {I<:Instrument,S<:ORDER_SIDE,V<:Number,D<:Dates.AbstractTime} = currency(I)

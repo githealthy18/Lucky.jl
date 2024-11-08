@@ -41,7 +41,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::Algorithm
     iborder.totalQuantity = order.size
     iborder.orderType = "MKT"
     iborder.algoStrategy = order.algorithm
-    iborder.algoParams = (adaptivePriority="Urgent",)
+    iborder.algoParams = order.algorithmParams
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
@@ -56,7 +56,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::Algorithm
     iborder.orderType = "LMT"
     iborder.lmtPrice = round(order.limit)
     iborder.algoStrategy = order.algorithm
-    iborder.algoParams = (adaptivePriority="Urgent",)
+    iborder.algoParams = order.algorithmParams
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)

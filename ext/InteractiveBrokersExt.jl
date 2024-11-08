@@ -496,11 +496,20 @@ function Lucky.Instrument(contract::InteractiveBrokers.Contract)
     end
 
     if contract.secType == "STK"
-        return Lucky.Stock(contract.symbol, Lucky.Currency(Symbol(contract.currency)))
+        return Lucky.Stock(Symbol(contract.symbol), Lucky.Currency(Symbol(contract.currency)))
     end
 
     if contract.secType == "OPT"
-        return Lucky.Option(Lucky.Stock(contract.symbol, Lucky.Currency(Symbol(contract.currency))), convert(OPTION_RIGHT, contract.right), contract.strike, Date(contract.lastTradeDateOrContractMonth, "yyyymmdd"))
+        return Lucky.Option(
+            Lucky.Stock(
+                Symbol(contract.symbol), 
+                Lucky.Currency(
+                    Symbol(contract.currency)
+                )
+            ), 
+            convert(OPTION_RIGHT, contract.right), 
+            contract.strike, 
+            Date(contract.lastTradeDateOrContractMonth, "yyyymmdd"))
     end
 
     if contract.secType == "FUT"

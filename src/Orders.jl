@@ -1,9 +1,15 @@
 export AbstractOrder
-export LimitOrder, MarketOrder, AlgorithmicMarketOrder, AlgorithmicLimitOrder
+export LimitOrder, MarketOrder, AlgorithmicMarketOrder, AlgorithmicLimitOrder, CancelOrder, CancelAllOrders
 export Order, OrderType
 
 abstract type AbstractOrder end
 abstract type AbstractMarketOrder <: AbstractOrder end
+
+struct CancelOrder{I} <: AbstractOrder
+    id::I
+end
+
+struct CancelAllOrders end
 
 OrderType(::O) where {O<:AbstractOrder} = O
 

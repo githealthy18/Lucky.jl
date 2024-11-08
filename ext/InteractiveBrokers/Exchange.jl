@@ -97,3 +97,10 @@ function Rocket.on_next!(exchange::InteractiveBrokersExchange, fill::F) where {F
     end
     isnothing(todel) || deleteat!(exchange.orderbook.pendingOrders[instr], todel)
 end
+
+function Rocket.on_next!(exchange::InteractiveBrokersExchange, msg::CancelAllOrders)
+    InteractiveBrokers.reqGlobalCancel(exchange.client)
+    for orders in exchange.orderbook.pendingOrders
+        empty!(orders)
+    end
+end

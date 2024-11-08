@@ -93,5 +93,5 @@ currency(::Type{AlgorithmicLimitOrder{I,S,V,D}}) where {I<:Instrument,S<:ORDER_S
 
 Order(instrument::Instrument, action::A, side::S, size::V, stamp::D) where {A,S,V,D} = MarketOrder(instrument, action, side, size, stamp)
 Order(instrument::Instrument, action::A, side::S, size::V, limit::Float64, stamp::D) where {A,S,V,D} = LimitOrder(instrument, action, side, size, limit, stamp)
-Order(instrument::Instrument, action::A, side::S, size::V, algorithm::String, stamp::D) where {A,S,V,D} = AlgorithmicMarketOrder(instrument, action, side, size, algorithm, stamp)
-Order(instrument::Instrument, action::A, side::S, size::V, limit::Float64, algorithm::String, stamp::D) where {A,S,V,D} = AlgorithmicLimitOrder(instrument, action, side, size, limit, algorithm, stamp)
+Order(instrument::Instrument, action::A, side::S, size::V, algorithm::String, algorithmParams::NamedTuple, stamp::D) where {A,S,V,D} = AlgorithmicMarketOrder(instrument, action, side, size, algorithm, algorithmParams, stamp)
+Order(instrument::Instrument, action::A, side::S, size::V, limit::Float64, algorithm::String, algorithmParams::NamedTuple,stamp::D) where {A,S,V,D} = AlgorithmicLimitOrder(instrument, action, side, size, limit, algorithm, algorithmParams, stamp)

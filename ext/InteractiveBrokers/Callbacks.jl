@@ -101,7 +101,7 @@ function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick:
 end
 
 function position(ib::InteractiveBrokersObservable, account::String, contract::InteractiveBrokers.Contract, position::Float64, avgCost::Float64) 
-    if !isnothing(contract)
+    if !isnothing(contract.secType)
         position = Position(
             Lucky.Instrument(contract),
             position,

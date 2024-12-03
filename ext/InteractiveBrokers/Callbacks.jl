@@ -207,8 +207,8 @@ function execDetails(ib::InteractiveBrokersObservable, reqId::Int, contract::Int
         execution.orderId,
         execution.execId,
         Instrument(contract),
-        execution.shares,
         execution.avgPrice,
+        execution.shares,
         Dates.now()
     )
     next!(val.subject, ibkrExec)

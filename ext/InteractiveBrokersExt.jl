@@ -200,7 +200,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     bidSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
     lastSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
     openInterestSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
-    AverageOptVolumeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
+    averageOptVolumeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
 
     tickStringSubject = RecentSubject(DateTime, Subject(DateTime))
 
@@ -253,9 +253,9 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
         askSizeSubject,
         bidSizeSubject,
         lastSize,
+        openInterestSubject,
+        averageOptVolumeSubject,
         tickStringSubject,
-        openInterest,
-        averageOptVolume
     )
 
     # Output callback

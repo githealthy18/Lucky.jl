@@ -253,8 +253,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
         askSizeSubject,
         bidSizeSubject,
         lastSize,
-        openInterestSubject,
-        averageOptVolumeSubject,
+        openInterest,
+        averageOptVolume,
         tickStringSubject,
     )
 

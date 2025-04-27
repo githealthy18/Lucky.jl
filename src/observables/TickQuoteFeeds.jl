@@ -17,7 +17,10 @@ using AutoHashEquals
     askSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     bidSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     lastSize::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
-    openInterest::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    optionCallOpenInterest::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    optionPutOpenInterest::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    optionCallVolume::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
+    optionPutVolume::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     averageOptVolume::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
     tickString::Union{Rocket.Subscribable, Rocket.RecentSubjectInstance}
 end

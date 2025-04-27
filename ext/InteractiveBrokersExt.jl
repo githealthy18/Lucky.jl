@@ -199,7 +199,11 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     askSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
     bidSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
     lastSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
-    openInterestSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
+
+    optionCallOpenInterestSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
+    optionPutOpenInterestSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
+    optionCallVolumeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
+    optionPutVolumeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
     averageOptVolumeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
 
     tickStringSubject = RecentSubject(DateTime, Subject(DateTime))
@@ -236,8 +240,21 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     merge_openInterest = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
     openInterest = openInterestSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_openInterest)
+
     merge_AverageOptVolume = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
     averageOptVolume = averageOptVolumeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_AverageOptVolume)
+
+    merge_optionCallOpenInterest = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
+    optionCallOpenInterest = optionCallOpenInterestSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_optionCallOpenInterest)
+
+    merge_optionPutOpenInterest = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
+    optionPutOpenInterest = optionPutOpenInterestSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_optionPutOpenInterest)
+
+    merge_optionCallVolume = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
+    optionCallVolume = optionCallVolumeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_optionCallVolume)
+
+    merge_optionPutVolume = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
+    optionPutVolume = optionPutVolumeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_optionPutVolume)
 
     output = TickQuoteFeed(
         instr,
@@ -253,7 +270,10 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
         askSizeSubject,
         bidSizeSubject,
         lastSize,
-        openInterest,
+        optionCallOpenInterest,
+        optionPutOpenInterest,
+        optionCallVolume,
+        optionPutVolume,
         averageOptVolume,
         tickStringSubject,
     )
@@ -262,7 +282,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     Dictionaries.set!(client.mergedCallbacks, Pair(instr, :livedata), output)
 
     # TODO options
-    InteractiveBrokers.reqMktData(client, requestId, instr, "232,105", false)
+    InteractiveBrokers.reqMktData(client, requestId, instr, "232,100,101,105", false)
     return output
 end
 

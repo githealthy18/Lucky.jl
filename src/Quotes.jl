@@ -2,7 +2,7 @@ export AbstractQuote
 export Quote, QuoteType
 export timestamp
 export PriceQuote, OhlcQuote, VolumeQuote
-export Bid, Ask, Mark, Last, Open, High, Low, Close, Volume, BidSize, AskSize, LastSize
+export Bid, Ask, Mark, Last, Open, High, Low, Close, Volume, BidSize, AskSize, LastSize, OpenInterest, AverageOptVolume
 
 abstract type AbstractQuote end
 

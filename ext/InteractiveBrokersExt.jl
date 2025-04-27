@@ -238,9 +238,6 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     merge_lastSize = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
     lastSize = lastSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_lastSize)
 
-    merge_openInterest = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
-    openInterest = openInterestSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_openInterest)
-
     merge_AverageOptVolume = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
     averageOptVolume = averageOptVolumeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_AverageOptVolume)
 

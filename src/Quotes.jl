@@ -2,7 +2,7 @@ export AbstractQuote
 export Quote, QuoteType
 export timestamp
 export PriceQuote, OhlcQuote, VolumeQuote
-export Bid, Ask, Mark, Last, Open, High, Low, Close, Volume, BidSize, AskSize, LastSize, OpenInterest, AverageOptVolume
+export Bid, Ask, Mark, Last, Open, High, Low, Close, Volume, BidSize, AskSize, LastSize, OptionCallOpenInterest, OptionPutOpenInterest, OptionCallVolume, OptionPutVolume, AverageOptVolume
 
 abstract type AbstractQuote end
 
@@ -26,7 +26,10 @@ struct Volume <: AbstractTick end
 struct BidSize <: AbstractTick end
 struct AskSize <: AbstractTick end
 struct LastSize <: AbstractTick end
-struct OpenInterest <: AbstractTick end
+struct OptionCallOpenInterest <: AbstractTick end
+struct OptionPutOpenInterest <: AbstractTick end
+struct OptionCallVolume <: AbstractTick end
+struct OptionPutVolume <: AbstractTick end
 struct AverageOptVolume <: AbstractTick end
 
 TickType(T::Type{<:AbstractTick}, params...) = error("You probably forgot to implement TickType(::$(T), $(params...))")

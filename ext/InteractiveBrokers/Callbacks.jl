@@ -12,7 +12,10 @@ const MAPPED_TICKS = Dictionary(
         InteractiveBrokers.TickTypes.ASK_SIZE,
         InteractiveBrokers.TickTypes.BID_SIZE,
         InteractiveBrokers.TickTypes.LAST_SIZE,
-        InteractiveBrokers.TickTypes.OPEN_INTEREST,
+        InteractiveBrokers.TickTypes.OPTION_CALL_OPEN_INTEREST,
+        InteractiveBrokers.TickTypes.OPTION_PUT_OPEN_INTEREST,
+        InteractiveBrokers.TickTypes.OPTION_CALL_VOLUME,
+        InteractiveBrokers.TickTypes.OPTION_PUT_VOLUME,
         InteractiveBrokers.TickTypes.AVERAGE_OPT_VOLUME
     ],
     [
@@ -28,7 +31,10 @@ const MAPPED_TICKS = Dictionary(
         AskSize,
         BidSize,
         LastSize,
-        OpenInterest,
+        OptionCallOpenInterest,
+        OptionPutOpenInterest,
+        OptionCallVolume,
+        OptionPutVolume,
         AverageOptVolume,
     ]
 )

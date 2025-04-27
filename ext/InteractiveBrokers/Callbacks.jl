@@ -11,7 +11,9 @@ const MAPPED_TICKS = Dictionary(
         InteractiveBrokers.TickTypes.VOLUME,
         InteractiveBrokers.TickTypes.ASK_SIZE,
         InteractiveBrokers.TickTypes.BID_SIZE,
-        InteractiveBrokers.TickTypes.LAST_SIZE
+        InteractiveBrokers.TickTypes.LAST_SIZE,
+        InteractiveBrokers.TickTypes.OPEN_INTEREST,
+        InteractiveBrokers.TickTypes.AVERAGE_OPT_VOLUME
     ],
     [
         Last,
@@ -25,7 +27,9 @@ const MAPPED_TICKS = Dictionary(
         Volume,
         AskSize,
         BidSize,
-        LastSize
+        LastSize,
+        OpenInterest,
+        AverageOptVolume,
     ]
 )
 

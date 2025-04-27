@@ -199,6 +199,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     askSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
     bidSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
     lastSizeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
+    openInterestSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
+    AverageOptVolumeSubject = RecentSubject(Lucky.VolumeQuote, Subject(Lucky.VolumeQuote))
 
     tickStringSubject = RecentSubject(DateTime, Subject(DateTime))
 
@@ -217,6 +219,8 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.ASK_SIZE), CallbackValue(tickSize, askSizeSubject, instr))
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.BID_SIZE), CallbackValue(tickSize, bidSizeSubject, instr))
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.LAST_SIZE), CallbackValue(tickSize, lastSizeSubject, instr))
+    Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.OPEN_INTEREST), CallbackValue(tickSize, openInterestSubject, instr))
+    Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.AVERAGE_OPT_VOLUME), CallbackValue(tickSize, AverageOptVolumeSubject, instr))
     
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickString, InteractiveBrokers.TickTypes.LAST_TIMESTAMP), CallbackValue(tickString, tickStringSubject, instr))
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickGeneric, InteractiveBrokers.TickTypes.LAST), CallbackValue(tickGeneric, nothing, instr))
@@ -229,6 +233,11 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
 
     merge_lastSize = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
     lastSize = lastSizeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_lastSize)
+
+    merge_openInterest = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
+    openInterest = openInterestSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_openInterest)
+    merge_AverageOptVolume = (tup::Tuple{Lucky.VolumeQuote, DateTime}) -> Quote(tup[1].instrument, tup[1].tick, tup[1].volume, tup[2])
+    averageOptVolume = AverageOptVolumeSubject |> with_latest(tickStringSubject) |> Rocket.map(Lucky.VolumeQuote, merge_AverageOptVolume)
 
     output = TickQuoteFeed(
         instr,
@@ -244,14 +253,16 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
         askSizeSubject,
         bidSizeSubject,
         lastSize,
-        tickStringSubject
+        tickStringSubject,
+        openInterest,
+        averageOptVolume
     )
 
     # Output callback
     Dictionaries.set!(client.mergedCallbacks, Pair(instr, :livedata), output)
 
     # TODO options
-    InteractiveBrokers.reqMktData(client, requestId, instr, "232", false)
+    InteractiveBrokers.reqMktData(client, requestId, instr, "232,105", false)
     return output
 end
 

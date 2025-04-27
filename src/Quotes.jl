@@ -26,6 +26,8 @@ struct Volume <: AbstractTick end
 struct BidSize <: AbstractTick end
 struct AskSize <: AbstractTick end
 struct LastSize <: AbstractTick end
+struct OpenInterest <: AbstractTick end
+struct AverageOptVolume <: AbstractTick end
 
 TickType(T::Type{<:AbstractTick}, params...) = error("You probably forgot to implement TickType(::$(T), $(params...))")
 TickType(::T) where {T<:AbstractTick} = T

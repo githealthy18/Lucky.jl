@@ -223,7 +223,10 @@ function Lucky.feed(client::InteractiveBrokersObservable, instr::Instrument, ::V
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.ASK_SIZE), CallbackValue(tickSize, askSizeSubject, instr))
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.BID_SIZE), CallbackValue(tickSize, bidSizeSubject, instr))
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.LAST_SIZE), CallbackValue(tickSize, lastSizeSubject, instr))
-    Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.OPEN_INTEREST), CallbackValue(tickSize, openInterestSubject, instr))
+    Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.OPTION_CALL_OPEN_INTEREST), CallbackValue(tickSize, optionCallOpenInterestSubject, instr))
+    Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.OPTION_PUT_OPEN_INTEREST), CallbackValue(tickSize, optionPutOpenInterestSubject, instr))
+    Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.OPTION_CALL_VOLUME), CallbackValue(tickSize, optionCallVolumeSubject, instr))
+    Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.OPTION_PUT_VOLUME), CallbackValue(tickSize, optionPutVolumeSubject, instr))
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickSize, InteractiveBrokers.TickTypes.AVERAGE_OPT_VOLUME), CallbackValue(tickSize, averageOptVolumeSubject, instr))
     
     Dictionaries.set!(client.requestMappings, CallbackKey(requestId, :tickString, InteractiveBrokers.TickTypes.LAST_TIMESTAMP), CallbackValue(tickString, tickStringSubject, instr))

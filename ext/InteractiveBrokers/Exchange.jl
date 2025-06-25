@@ -80,6 +80,10 @@ end
 function Rocket.on_next!(exchange::InteractiveBrokersExchange, fill::F) where {F<:IbKrFill}
     instr = fill.instrument
     todel = nothing
+    if !haskey(exchange.orderbook.pendingOrders, instr)
+        @warn "No pending orders for instrument $(instr) to match fill $(fill.id)"
+        return
+    end
     for (idx, order) in enumerate(exchange.orderbook.pendingOrders[instr])
         if isnothing(todel)
             todel = Vector{Int}()

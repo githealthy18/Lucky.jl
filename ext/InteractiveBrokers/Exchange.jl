@@ -69,7 +69,6 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::PegMidOrd
     iborder.action = order.side == BUY_SIDE ? "BUY" : "SELL"
     iborder.totalQuantity = order.size
     iborder.orderType = "PEG MID"
-    iborder.designatedLocation = "IBUSOPT"
     
     if order.limit != 0.0
         iborder.lmtPrice = round(order.limit)
@@ -78,7 +77,17 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::PegMidOrd
     iborder.midOffsetAtHalf = order.midOffsetAtHalf
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
-    InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
+    contract = InteractiveBrokers.Contract(
+        symbol=String(Symbol(instr)),
+        secType="OPT",
+        exchange="IBUSOPT",
+        currency=Lucky.currency(instr)
+    )
+    contract.right = String(instr.right)
+    contract.lastTradeDateOrContractMonth = Dates.format(instr.expiry, "yyyymmdd")
+    contract.strike = instr.strike
+    contract.multiplier = "100"
+    InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, contract, iborder)
 end
 
 function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::PegMidOrder{I}) where {I<:Stock}

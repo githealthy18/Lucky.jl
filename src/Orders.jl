@@ -89,12 +89,12 @@ AlgorithmicLimitOrder(instrument::Instrument, action::A, side::S, size::V, limit
     side::S
     size::V
     limit::Float64
-    primaryOffset::Float64
-    secondaryOffset::Float64
+    midOffsetAtWhole::Float64
+    midOffsetAtHalf::Float64
     timestamp::D
 end
 
-PegMidOrder(instrument::Instrument, action::A, side::S, size::V, stamp::D; primaryOffset::Float64=-0.01, secondaryOffset::Float64=-0.005, limit::Float64=0.0) where {A,S,V,D} = PegMidOrder(missing, instrument, action, side, size, limit, primaryOffset, secondaryOffset, stamp)
+PegMidOrder(instrument::Instrument, action::A, side::S, size::V, stamp::D; midOffsetAtWhole::Float64=-0.01, midOffsetAtHalf::Float64=-0.005, limit::Float64=0.0) where {A,S,V,D} = PegMidOrder(missing, instrument, action, side, size, limit, midOffsetAtWhole, midOffsetAtHalf, stamp)
 
 currency(m::MarketOrder{I,S,V,D}) where {I<:Instrument,S<:ORDER_SIDE,V<:Number,D<:Dates.AbstractTime} = currency(m.instrument)
 currency(::Type{MarketOrder{I,S,V,D}}) where {I<:Instrument,S<:ORDER_SIDE,V<:Number,D<:Dates.AbstractTime} = currency(I)

@@ -97,16 +97,21 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::PegMidOrd
     iborder.action = order.side == BUY_SIDE ? "BUY" : "SELL"
     iborder.totalQuantity = order.size
     iborder.orderType = "PEG MID"
-    iborder.designatedLocation = "IBKRATS"
     
     if order.limit != 0.0
         iborder.lmtPrice = round(order.limit)
     end
-    iborder.primaryOffset = order.primaryOffset
-    iborder.secondaryOffset = order.secondaryOffset
+    iborder.midOffsetAtWhole = order.midOffsetAtWhole
+    iborder.midOffsetAtHalf = order.midOffsetAtHalf
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
-    InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
+    contract = InteractiveBrokers.Contract(
+        symbol=String(Symbol(instr)),
+        secType="STK",
+        exchange="IBKRATS",
+        currency=Lucky.currency(instr)
+    )
+    InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, contract, iborder)
 end
 
 Rocket.on_error!(actor::InteractiveBrokersExchange, error) = @warn error

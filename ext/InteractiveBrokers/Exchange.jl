@@ -74,8 +74,8 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::PegMidOrd
     if order.limit != 0.0
         iborder.lmtPrice = round(order.limit)
     end
-    iborder.primaryOffset = order.primaryOffset
-    iborder.secondaryOffset = order.secondaryOffset
+    iborder.midOffsetAtWhole = order.midOffsetAtWhole
+    iborder.midOffsetAtHalf = order.midOffsetAtHalf
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)

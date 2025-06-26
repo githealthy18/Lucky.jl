@@ -73,7 +73,7 @@ function InteractiveBrokers.placeOrder(ib::InteractiveBrokersObservable, orderId
     delayedReq(f, ib)
 end
 
-function InteractiveBrokers.placeOrder(ib::InteractiveBrokersObservable, orderId::Int, instr::Contract, order::InteractiveBrokers.Order)
+function InteractiveBrokers.placeOrder(ib::InteractiveBrokersObservable, orderId::Int, instr::InteractiveBrokers.Contract, order::InteractiveBrokers.Order)
     f = (connection) -> InteractiveBrokers.placeOrder(connection, orderId, instr, order)
     delayedReq(f, ib)
 end

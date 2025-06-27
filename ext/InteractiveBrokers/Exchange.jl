@@ -104,6 +104,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::PegMidOrd
     iborder.midOffsetAtWhole = order.midOffsetAtWhole
     iborder.midOffsetAtHalf = order.midOffsetAtHalf
     order.id = iborder.orderId
+    order.notHeld = true
     push!(exchange.orderbook.pendingOrders[instr], order)
     contract = InteractiveBrokers.Contract(
         symbol=String(Symbol(instr)),

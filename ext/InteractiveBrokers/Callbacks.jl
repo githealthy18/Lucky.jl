@@ -111,8 +111,9 @@ function tickReqParams(ib::InteractiveBrokersObservable, tickerId::Int, minTick:
 end
 
 function position(ib::InteractiveBrokersObservable, account::String, contract::InteractiveBrokers.Contract, position::Float64, avgCost::Float64) 
+    local pos
     try
-        position = Position(
+        pos = Position(
             Lucky.Instrument(contract),
             position,
             now() # TODO handle TimeZones
@@ -120,9 +121,9 @@ function position(ib::InteractiveBrokersObservable, account::String, contract::I
     catch e
         @warn e
     else
-        if position != 0
-            next!(ib.positions, position)
-        end 
+        if pos.size != 0.0
+            next!(ib.positions, pos)
+        end
     end
 end
 

@@ -27,7 +27,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::LimitOrde
     iborder.action = order.side == BUY_SIDE ? "BUY" : "SELL"
     iborder.totalQuantity = order.size
     iborder.orderType = "LMT"
-    iborder.lmtPrice = round(order.limit)
+    iborder.lmtPrice = round(order.limit, digits=2)
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
@@ -54,7 +54,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::Algorithm
     iborder.action = order.side == BUY_SIDE ? "BUY" : "SELL"
     iborder.totalQuantity = order.size
     iborder.orderType = "LMT"
-    iborder.lmtPrice = round(order.limit)
+    iborder.lmtPrice = round(order.limit, digits=2)
     iborder.algoStrategy = order.algorithm
     iborder.algoParams = order.algorithmParams
     order.id = iborder.orderId
@@ -71,7 +71,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::PegMidOrd
     iborder.orderType = "PEG MID"
     
     if order.limit != 0.0
-        iborder.lmtPrice = round(order.limit)
+        iborder.lmtPrice = round(order.limit, digits=2)
     end
     iborder.midOffsetAtWhole = order.midOffsetAtWhole
     iborder.midOffsetAtHalf = order.midOffsetAtHalf
@@ -99,7 +99,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::PegMidOrd
     iborder.orderType = "PEG MID"
     
     if order.limit != 0.0
-        iborder.lmtPrice = round(order.limit)
+        iborder.lmtPrice = round(order.limit, digits=2)
     end
     iborder.midOffsetAtWhole = order.midOffsetAtWhole
     iborder.midOffsetAtHalf = order.midOffsetAtHalf

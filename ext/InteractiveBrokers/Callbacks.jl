@@ -121,9 +121,7 @@ function position(ib::InteractiveBrokersObservable, account::String, contract::I
     catch e
         @warn e
     else
-        if pos.size != 0.0
-            next!(ib.positions, pos)
-        end
+        next!(ib.positions, pos)
     end
 end
 

@@ -418,7 +418,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, ::Val{:accountSummary}
         Lucky.end_feed(client, Val(:accountSummary))
     end
 
-    InteractiveBrokers.reqAccountSummary(client, requestId, "All", "TotalCashValue")
+    InteractiveBrokers.reqAccountSummary(client, requestId, "All", "BuyingPower")
     return accountSummarySubject
 end
 

@@ -29,6 +29,7 @@ RandomExt = "Random"
 TimeSeriesExt = "TimeSeries"
 
 [compat]
+Dictionaries = "0.4"
 DydxV3 = "0.7"
 InteractiveBrokers = "0.24"
 MarketData = "0.15"

@@ -5,9 +5,9 @@ struct InteractiveBrokersExchange <: AbstractExchange
     next::Actor
 end
 
-@inline InteractiveBrokersExchange(client::InteractiveBrokersObservable, fills::Subject) = InteractiveBrokersExchange(client, orderbook(:inmemory), fills)
+@inline InteractiveBrokersExchange(client::InteractiveBrokersObservable, fills::Subject, next::Actor) = InteractiveBrokersExchange(client, orderbook(:inmemory), fills, next)
 
-Lucky.exchange(::Val{:ib}, client::InteractiveBrokersObservable, fills::Subject) = InteractiveBrokersExchange(client, fills)
+Lucky.exchange(::Val{:ib}, client::InteractiveBrokersObservable, fills::Subject, next::Actor) = InteractiveBrokersExchange(client, fills, next)
 
 function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::MarketOrder)
     instr = order.instrument

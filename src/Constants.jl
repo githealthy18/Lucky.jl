@@ -21,3 +21,7 @@ convert(T::Type{OPTION_RIGHT}, s::String) = s == "C" ? CALL : PUT
 String(O::ORDER_SIDE) = O == BUY_SIDE ? "BUY" : "SELL"
 convert(T::Type{ORDER_SIDE}, s::String) = s == "BUY" ? BUY_SIDE : SELL_SIDE
 !(x::ORDER_SIDE) = x == BUY_SIDE ? SELL_SIDE : BUY_SIDE
+
+String(A::ACTION) = A == OPEN ? "OPEN" : "CLOSE"
+convert(T::Type{ACTION}, s::String) = s == "OPEN" ? OPEN : CLOSE
+!(x::ACTION) = x == OPEN ? CLOSE : OPEN

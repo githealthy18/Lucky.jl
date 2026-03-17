@@ -18,7 +18,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::MarketOrd
     iborder.orderType = "MKT"
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
-    next!(exchange.next, order)
+    
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
 end
 
@@ -32,7 +32,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::LimitOrde
     iborder.lmtPrice = round(order.limit, digits=2)
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
-    next!(exchange.next, order)
+    
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
 end
 
@@ -47,7 +47,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::Algorithm
     iborder.algoParams = order.algorithmParams
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
-    next!(exchange.next, order)
+    
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
 end
 
@@ -63,7 +63,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::Algorithm
     iborder.algoParams = order.algorithmParams
     order.id = iborder.orderId
     push!(exchange.orderbook.pendingOrders[instr], order)
-    next!(exchange.next, order)
+    
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, instr, iborder)
 end
 
@@ -92,7 +92,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::PegMidOrd
     contract.lastTradeDateOrContractMonth = Dates.format(instr.expiry, "yyyymmdd")
     contract.strike = instr.strike
     contract.multiplier = "100"
-    next!(exchange.next, order)
+    
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, contract, iborder)
 end
 
@@ -118,7 +118,7 @@ function Lucky.placeorder(exchange::InteractiveBrokersExchange, order::PegMidOrd
         exchange="IBKRATS",
         currency=Lucky.currency(instr)
     )
-    next!(exchange.next, order)
+    
     InteractiveBrokers.placeOrder(exchange.client, iborder.orderId, contract, iborder)
 end
 

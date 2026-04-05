@@ -407,7 +407,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, instr::Instrument,
     end
 end
 
-function Lucky.feed(client::InteractiveBrokersObservable, ::Val{:accountSummary})
+function Lucky.feed(client::InteractiveBrokersObservable, ::Val{:accountSummary}; tag="BuyingPower")
     requestId = nextRequestId(client)
 
     accountSummarySubject = RecentSubject(Float64)
@@ -418,7 +418,7 @@ function Lucky.feed(client::InteractiveBrokersObservable, ::Val{:accountSummary}
         Lucky.end_feed(client, Val(:accountSummary))
     end
 
-    InteractiveBrokers.reqAccountSummary(client, requestId, "All", "BuyingPower")
+    InteractiveBrokers.reqAccountSummary(client, requestId, "All", tag)
     return accountSummarySubject
 end
 

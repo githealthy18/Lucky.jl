@@ -432,6 +432,7 @@ function Lucky.end_feed(client::InteractiveBrokersObservable, ::Val{:accountSumm
     end
     ongoingRequests = getRequests(client.requestMappings, [:accountSummary])
     if !isempty(ongoingRequests)
+        [InteractiveBrokers.cancelAccountSummary(client, i.requestId) for i in keys(ongoingRequests)]
         deletefrom!(client.requestMappings, keys(ongoingRequests))
     end
 end
